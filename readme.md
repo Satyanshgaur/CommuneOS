@@ -1,6 +1,6 @@
 # CommunityOS --- Adaptive AI Community Platform
+![Uploading WhatsApp Image 2026-06-25 at 10.51.53 PM.jpeg…]()
 
-![CommunityOS Architecture & Concept Diagrams](./WhatsApp%20Image%202026-06-25%20at%2010.51.53%20PM.jpeg)
 
 > **Hackathon Track 2: AI-Powered Community Operations Agent**
 > 
