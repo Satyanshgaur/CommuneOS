@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentField.ai — Community Operations Agent</title>
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="nav-capsule">
+      <a href="#" class="logo-container">
+        ventriloc<span class="logo-swoosh">~</span>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#" class="active">Dashboard</a></li>
+          <li><a href="#agent-view">Agent Engine</a></li>
+          <li><a href="#communities-section">Channels</a></li>
+        </ul>
+      </nav>
+      <div class="header-right">
+        <button class="lang-toggle">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Global Control Bar -->
+    <div class="control-bar">
+      <div class="user-selector-wrapper">
+        <span class="user-selector-label">Active Member:</span>
+        <select id="user-select" class="user-select">
+          <option value="rahul">Rahul (Intermediate GPU Engineer)</option>
+          <option value="priya">Priya (Beginner ML Learner)</option>
+          <option value="sarah">Sarah (Expert Systems Architect)</option>
+          <option value="alex">Alex (Product Designer)</option>
+          <option value="emily">Emily (Community Organizer)</option>
+          <option value="new">+ Add Custom Profile (LinkedIn & GitHub Onboard)</option>
+        </select>
+      </div>
+      <div class="role-toggle-group">
+        <button id="role-member" class="role-btn active">Member View</button>
+        <button id="role-organizer" class="role-btn">Organizer Console</button>
+      </div>
+    </div>
+
+    <!-- Onboarding Form Section (Shown only when 'new' user is selected) -->
+    <div id="onboarding-container" class="onboarding-card" style="display: none;">
+      <h2 class="onboarding-title">Create Personalized Environment</h2>
+      <p class="onboarding-subtitle">Input your coordinates to trigger the Identity Agent. The model will parse your repository tags and construct a personalized learning path.</p>
+      
+      <form id="onboarding-form">
+        <div class="form-group">
+          <label class="form-label" for="onboard-name">Your Full Name</label>
+          <input type="text" id="onboard-name" class="form-input" placeholder="e.g. Suraj Kumar" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="onboard-github">GitHub Profile URL</label>
+          <input type="url" id="onboard-github" class="form-input" placeholder="e.g. https://github.com/suraj-kumar" required>
+          <span style="font-size: 11px; color: var(--color-slate); margin-top: 4px; display: block;">Used to scan tags like "cuda", "pytorch", "react" for personalized roadmap generation.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="onboard-linkedin">LinkedIn Profile URL</label>
+          <input type="url" id="onboard-linkedin" class="form-input" placeholder="e.g. https://linkedin.com/in/suraj-kumar" required>
+        </div>
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" class="btn-outlined" onclick="document.getElementById('user-select').value='rahul'; handleUserChange({target: {value: 'rahul'}});">Cancel</button>
+          <button type="submit" class="btn-filled">Initialize Environment & Onboard</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- MEMBER DASHBOARD SECTION -->
+    <div id="main-dashboard">
+      
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <div class="hero-left">
+          <h1 class="hero-headline" id="hero-headline">Welcome back, Rahul 👋</h1>
+          <p class="hero-body" id="hero-body">
+            Your intermediate CUDA tracks are heating up. Today you have 2 key workshops aligning with your memory architecture objectives.
+          </p>
+          <div class="btn-group" id="hero-pills">
+            <button class="btn-filled">Continue Path</button>
+            <button class="btn-outlined">GitHub Profile</button>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="floating-card-container">
+            <!-- Overlapping mock cards representing product interface -->
+            <div class="mock-card mock-card-1">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="card-badge orange">Identity Agent</span>
+                <span style="font-size: 11px; color: var(--color-slate);">Active Status</span>
+              </div>
+              <p style="font-size: 14px; font-weight: 600; color: var(--color-carbon);">GPU Cluster Nodes Optimization</p>
+              <div style="height: 60px; margin-top: 12px; position: relative;">
+                <!-- Simulated Mini Area Chart -->
+                <svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="var(--color-signal-orange)" stop-opacity="0.4"/>
+                      <stop offset="100%" stop-color="var(--color-signal-orange)" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,40 L0,25 Q15,10 30,22 T60,8 T90,28 T100,10 L100,40 Z" fill="url(#orangeGrad)"/>
+                  <path d="M0,25 Q15,10 30,22 T60,8 T90,28 T100,10" fill="none" stroke="var(--color-signal-orange)" stroke-width="2"/>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="mock-card mock-card-2">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 11px; color: var(--color-slate);">Verification Score</span>
+                <span style="font-size: 12px; font-weight: 700; color: var(--color-signal-orange);">94%</span>
+              </div>
+              <p style="font-size: 13px; font-weight: 500; color: var(--color-graphite);">CUDA memory structures matched with Sarah Jenkins (Mentor)</p>
+            </div>
+
+            <div class="mock-card mock-card-3" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px;">
+              <span style="font-size: 10px; color: var(--color-slate); text-transform: uppercase;">Confidence</span>
+              <span style="font-size: 28px; font-family: var(--font-polysans); color: var(--color-carbon); margin: 4px 0;">96%</span>
+              <span class="card-badge" style="font-size: 9px; padding: 2px 6px;">Consensus Reached</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Partner Logo Strip -->
+      <section class="partner-strip">
+        <span class="partner-label">Empowering Developer Cohorts At</span>
+        <div class="partner-logos">
+          <span class="partner-logo">ABB</span>
+          <span class="partner-logo">OLYMEL</span>
+          <span class="partner-logo">CASCADES</span>
+          <span class="partner-logo">ANGELCARE</span>
+          <span class="partner-logo">NVIDIA</span>
+        </div>
+      </section>
+
+      <!-- Core Priorities Grid -->
+      <section style="margin-bottom: var(--section-gap);">
+        <h2 class="section-title">Today's Focus Items <span style="font-size: 13px; font-family: var(--font-inter); color: var(--color-slate); font-weight: normal;">Ranked by Orchestrator Agent</span></h2>
+        <div class="grid-3" id="priority-grid">
+          <!-- Dynamically populated priorities -->
+        </div>
+      </section>
+
+      <!-- Primary Content Row -->
+      <div class="grid-2-1">
+        
+        <!-- Left Column: KPI Cards and Lists -->
+        <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+          
+          <!-- Profile Analytics Card -->
+          <div class="card">
+            <h3 class="card-title">Identity & Goals Profile</h3>
+            <span class="card-subtitle" style="margin-bottom: var(--spacing-16);">Calculated by Identity Agent</span>
+            
+            <div style="border-top: 1px solid var(--color-chalk); padding-top: 16px; margin-top: 8px;">
+              <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Active Learning Path</span>
+              <div id="kpi-paths-name" style="font-size: 15px; font-weight: 600; color: var(--color-carbon); margin-top: 4px;">CUDA Optimization Roadmap</div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+                <div style="flex-grow: 1; background-color: var(--color-fog); height: 8px; border-radius: 4px; overflow: hidden;">
+                  <div id="kpi-paths-progress-bar" style="background-color: var(--color-signal-orange); height: 100%; width: 70%;"></div>
+                </div>
+                <span id="kpi-paths-progress" style="font-size: 14px; font-weight: bold; color: var(--color-carbon);">70%</span>
+              </div>
+              <p id="kpi-paths-next" style="font-size: 12px; color: var(--color-graphite); margin-top: 8px;">Next: Milestone 8: CUDA Shared Memory Coalescing</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; border-top: 1px solid var(--color-chalk); padding-top: 16px;">
+              <div>
+                <span style="font-size: 11px; color: var(--color-slate); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 8px;">Verified Skills</span>
+                <div id="kpi-skills-list"></div>
+              </div>
+              <div>
+                <span style="font-size: 11px; color: var(--color-slate); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 8px;">Stated Interests</span>
+                <div id="kpi-interests-list" style="display: flex; flex-wrap: wrap;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommended Mentor Match Section -->
+          <div class="card" id="mentor-section">
+            <h3 class="card-title">1:1 Mentorship Recommendations</h3>
+            <span class="card-subtitle" style="margin-bottom: 16px;">Suggested matches based on learning paths and skill gaps</span>
+            <div class="mentor-list" id="mentor-list">
+              <!-- Mentors loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Notifications & Channels -->
+        <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+          
+          <!-- Agent Insights / Notices -->
+          <div class="card">
+            <h3 class="card-title">Orchestrator Logs & Insights</h3>
+            <span class="card-subtitle" style="margin-bottom: 12px;">Real-time notifications generated by background agents</span>
+            <div id="insights-list">
+              <!-- Insights loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Communities/Channels Pillbox -->
+          <div class="card" id="communities-section">
+            <h3 class="card-title">Communities & Channels</h3>
+            <span class="card-subtitle">AI displays relative channels, hides noise channels</span>
+            <div class="communities-list" id="communities-list">
+              <!-- Loaded dynamically -->
+            </div>
+            <span style="font-size: 11px; color: var(--color-slate); margin-top: 16px; display: block;">Muted/struck-through channels are hidden by Discovery Agent to combat notification fatigue.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Resources Section -->
+      <section style="margin-top: var(--spacing-40); margin-bottom: var(--spacing-40);">
+        <h2 class="section-title">Recommended Learning Resources <span style="font-size: 13px; font-family: var(--font-inter); color: var(--color-slate); font-weight: normal;">Ranked by Discovery Agent</span></h2>
+        <div class="grid-2" id="resources-list">
+          <!-- Dynamically populated learning items -->
+        </div>
+      </section>
+
+      <!-- Events Calendar Section -->
+      <section style="margin-bottom: var(--section-gap);">
+        <h2 class="section-title">Upcoming Live Events <span style="font-size: 13px; font-family: var(--font-inter); color: var(--color-slate); font-weight: normal;">Temporally prioritized</span></h2>
+        <div class="card" style="padding: 24px 32px;">
+          <div id="events-list">
+            <!-- Dynamically populated events list -->
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ORGANIZER DASHBOARD SECTION -->
+    <div id="organizer-dashboard" style="display: none;">
+      
+      <!-- Operations Header -->
+      <section style="margin-bottom: var(--spacing-40);">
+        <h1 class="hero-headline" style="font-size: 40px; line-height: 1.1;">Community Operations Intelligence</h1>
+        <p style="color: var(--color-graphite); font-size: 16px; margin-top: 6px;">Organizer console showing overall stats, engagement flags, and automated intervention actions.</p>
+      </section>
+
+      <!-- KPI Health Scorecards Row -->
+      <div class="grid-3" style="margin-bottom: var(--spacing-36);">
+        
+        <!-- Scorecard 1: Health Score -->
+        <div class="card" style="align-items: center; justify-content: center; text-align: center;">
+          <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Community Health Score</span>
+          <div class="kpi-value" id="org-health-score">82%</div>
+          <span class="kpi-delta positive">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            +2.4% vs last week
+          </span>
+        </div>
+
+        <!-- Scorecard 2: Engagement Numbers -->
+        <div class="card" style="align-items: center; justify-content: center; text-align: center;">
+          <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Active Members (Weekly)</span>
+          <div class="kpi-value" id="org-active-members">3,482</div>
+          <span style="font-size: 12px; color: var(--color-slate);">New this week: <strong id="org-new-members">+142</strong></span>
+        </div>
+
+        <!-- Scorecard 3: Intervention Flags -->
+        <div class="card" style="align-items: center; justify-content: center; text-align: center;">
+          <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Intervention Flags</span>
+          <div class="kpi-value" id="org-at-risk-members" style="font-size: 24px; margin: 16px 0 8px 0;">8 members</div>
+          <span class="kpi-delta neutral">At risk of churning (>30d inactivity)</span>
+        </div>
+
+      </div>
+
+      <!-- Main Columns for Organizer Insights -->
+      <div class="grid-2-1">
+        
+        <!-- Left: Action center & Mentors -->
+        <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+          
+          <!-- Suggested Interventions -->
+          <div class="card">
+            <h3 class="card-title">Orchestrator Actions Center</h3>
+            <span class="card-subtitle" style="margin-bottom: 16px;">Automated recommendations from the Organizer Agent. Approve to execute.</span>
+            
+            <div id="org-actions-list">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Trending Topics & Mentor Pool -->
+        <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+          
+          <!-- Trending Heatmap -->
+          <div class="card">
+            <h3 class="card-title">Trending Conversation Topics</h3>
+            <span class="card-subtitle" style="margin-bottom: 12px;">Identified by keyword extraction models</span>
+            <div id="org-trending-topics" style="display: flex; flex-wrap: wrap;"></div>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-chalk); display: flex; justify-content: space-between; font-size: 13px;">
+              <span>Unanswered Support Queries:</span>
+              <strong style="color: var(--color-signal-orange);" id="org-unanswered">14</strong>
+            </div>
+          </div>
+
+          <!-- Mentorship Pool Tracker -->
+          <div class="card">
+            <h3 class="card-title">Expert Mentors Pool</h3>
+            <span class="card-subtitle">Active community teachers tracked by Mentor Agent</span>
+            <div id="org-mentors-list">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- AGENT FLOW PIPELINE VISUALIZATION (Visible on both views) -->
+    <section id="agent-view" class="agent-flow-section" style="margin-top: var(--spacing-40);">
+      <h3 class="card-title" style="font-size: 18px;">How Agents Work (Execution Pipeline)</h3>
+      <span class="card-subtitle" style="margin-bottom: 16px;">Orchestration trace showing parallel execution of cooperative agent workflows.</span>
+      
+      <div class="agent-timeline" id="agent-timeline">
+        <!-- Loaded dynamically -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="container">
+      <p>© 2026 AgentField.ai • Powered by Ventriloc Design Engine. Created for Personalized Developer Environments.</p>
+    </div>
+  </footer>
+
+  <!-- EXPLAINABILITY MODAL OVERLAY -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <h3 class="modal-title" id="modal-title">Why am I seeing this?</h3>
+      <div class="modal-body" id="modal-body">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript File -->
+  <script src="app.js"></script>
+</body>
+</html>

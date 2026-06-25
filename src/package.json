@@ -1,0 +1,17 @@
+{
+  "name": "communityos-frontend",
+  "version": "1.0.0",
+  "description": "Hardcoded frontend for CommunityOS AgentField.ai built according to Ventriloc design guidelines.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y browser-sync start --server --files \"*.html, *.css, *.js\""
+  },
+  "keywords": [
+    "frontend",
+    "ventriloc",
+    "agentfield",
+    "communityos"
+  ],
+  "author": "Suraj",
+  "license": "ISC"
+}
