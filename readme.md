@@ -1,8 +1,8 @@
 # CommunityOS --- Adaptive AI Community Platform
-![Uploading WhatsApp Image 2026-06-25 at 10.51.53 PM.jpeg…]()
+![CommunityOS Architecture & Concept Diagrams](./images/frontend_dashboard.jpeg)
 
 
-> **Hackathon Track 2: AI-Powered Community Operations Agent**
+> **AI-Powered Community Operations Agent**
 > 
 > *Instead of one static chatbot, CommunityOS deploys a team of specialized AI agents to continuously personalize every member's experience while giving community organizers actionable operational intelligence.*
 
