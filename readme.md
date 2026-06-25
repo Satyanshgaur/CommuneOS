@@ -18,7 +18,7 @@ Traditional communities are static: everyone receives the same welcome, channels
 
 ## 📸 Architecture & Platform Visual
 
-![CommunityOS Architecture & Concept Diagrams](file:///home/satyansh/communeos/WhatsApp%20Image%202026-06-25%20at%2010.51.53%20PM.jpeg)
+![CommunityOS Architecture & Concept Diagrams](./WhatsApp%20Image%202026-06-25%20at%2010.51.53%20PM.jpeg)
 
 ---
 
