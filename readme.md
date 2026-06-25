@@ -1,5 +1,7 @@
 # CommunityOS --- Adaptive AI Community Platform
 
+![CommunityOS Architecture & Concept Diagrams](./WhatsApp%20Image%202026-06-25%20at%2010.51.53%20PM.jpeg)
+
 > **Hackathon Track 2: AI-Powered Community Operations Agent**
 > 
 > *Instead of one static chatbot, CommunityOS deploys a team of specialized AI agents to continuously personalize every member's experience while giving community organizers actionable operational intelligence.*
@@ -13,12 +15,6 @@ Traditional communities are static: everyone receives the same welcome, channels
 **CommunityOS introduces an intelligent operating layer.** By observing member messages, code queries, and interactions, specialized AI agents customize each member's space dynamically:
 - **For Members**: Hyper-personalized welcome roadmaps, custom-matched mentors, and context-aware resource discovery.
 - **For Organizers**: Actionable community operations metrics, churn-risk alerts, automated welcome triggers, and AI-suggested events.
-
----
-
-## 📸 Architecture & Platform Visual
-
-![CommunityOS Architecture & Concept Diagrams](./WhatsApp%20Image%202026-06-25%20at%2010.51.53%20PM.jpeg)
 
 ---
 
