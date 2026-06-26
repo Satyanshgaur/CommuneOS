@@ -5,7 +5,7 @@ import {
   User, Sparkles, Cpu, BookOpen, Calendar, Users, Award, Activity, 
   TrendingUp, AlertTriangle, CheckCircle2, ArrowRight, ChevronRight, 
   Info, Lock, RefreshCw, Play, Check, CheckSquare, ShieldCheck, 
-  Search, MessageSquare, Terminal, Eye, AlertCircle
+  Search, MessageSquare, Terminal, Eye, AlertCircle, ChevronDown
 } from "lucide-react";
 
 // Local high-fidelity fallback data in case the backend is loading or unavailable
@@ -156,7 +156,6 @@ export default function Home() {
   const [backendStatus, setBackendStatus] = useState<"connected" | "disconnected" | "checking">("checking");
   
   // Explainability drawer state
-  const [activeExplainAgent, setActiveExplainAgent] = useState<string | null>(null);
   const [showAllExplainability, setShowAllExplainability] = useState<boolean>(false);
   
   // Simulation states
@@ -200,11 +199,9 @@ export default function Home() {
           const json = await res.json();
           setData(json);
         } else {
-          // Fallback to client-side data
           setData(FALLBACK_DATA[persona]);
         }
       } catch (e) {
-        // Fallback to client-side data
         setData(FALLBACK_DATA[persona]);
       } finally {
         setLoading(false);
@@ -224,54 +221,67 @@ export default function Home() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden min-h-screen">
+    <div className="flex-1 flex flex-col bg-mist text-carbon font-inter selection:bg-signal-orange selection:text-white min-h-screen">
       
-      {/* BACKGROUND DECORATIONS */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-900/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-80 h-80 bg-blue-900/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+      {/* HEADER / FLOATING NAV BAR */}
+      <header className="w-full py-6 px-6 md:px-12 flex justify-between items-center max-w-[1200px] mx-auto z-40">
+        
+        {/* LOGO MARK: ventriloc with trailing orange swoosh */}
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setScreen("landing")}>
+          <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon relative flex items-center">
+            ventriloc
+            <svg className="w-6 h-6 text-signal-orange ml-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 17C9 17 15 13 21 5" />
+            </svg>
+          </span>
+          <span className="text-[10px] bg-carbon text-white px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold">
+            COMMUNEOS
+          </span>
+        </div>
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 py-4 px-6 md:px-12 flex items-center justify-between">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setScreen("landing")}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Cpu className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              CommunityOS
-            </span>
-            <span className="text-[10px] block text-slate-500 font-mono tracking-wider">ADAPTIVE AGENT LAYER</span>
+        {/* FLOATING NAV CAPSULE */}
+        <div className="hidden md:flex items-center bg-white border border-slate/30 rounded-full px-4 py-1.5 shadow-[0_1px_3px_rgba(32,32,32,0.04)]">
+          <button 
+            onClick={() => setScreen("landing")} 
+            className={`px-3 py-1 text-sm font-medium transition-all rounded-full ${screen === "landing" ? "text-signal-orange" : "text-carbon hover:text-graphite"}`}
+          >
+            Home
+          </button>
+          <button 
+            onClick={() => setScreen("demo")} 
+            className={`px-3 py-1 text-sm font-medium transition-all rounded-full ${screen === "demo" ? "text-signal-orange" : "text-carbon hover:text-graphite"}`}
+          >
+            Interactive Demo
+          </button>
+          <span className="w-px h-4 bg-slate/20 mx-2" />
+          <div className="flex items-center gap-1.5 text-xs text-graphite">
+            <span className={`w-2 h-2 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} />
+            <span>API {backendStatus === "connected" ? "Connected" : "Offline"}</span>
           </div>
         </div>
 
-        <nav className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800 text-xs">
-            <span className={`w-2 h-2 rounded-full ${backendStatus === "connected" ? "bg-emerald-500 animate-pulse" : backendStatus === "checking" ? "bg-amber-500 animate-pulse" : "bg-red-500"}`} />
-            <span className="text-slate-400">
-              Backend API: {backendStatus === "connected" ? "Connected" : backendStatus === "checking" ? "Checking Status..." : "Offline (Using Local Fallback)"}
-            </span>
-          </div>
-          
+        {/* LANGUAGE TOGGLE & PRIMARY CTA */}
+        <div className="flex items-center gap-6">
+          <span className="text-sm font-medium text-carbon hover:underline cursor-pointer">EN</span>
           {screen === "landing" ? (
             <button 
               onClick={() => setScreen("demo")}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-500 active:scale-95 transition-all shadow-lg shadow-indigo-600/25 flex items-center gap-2 hover:gap-3"
+              className="px-5 py-2.5 rounded-full bg-carbon text-white font-medium text-[15px] hover:bg-graphite active:scale-95 transition-all shadow-[0_1px_3px_rgba(32,32,32,0.04)] flex items-center gap-2"
             >
-              View Interactive Demo <ArrowRight className="w-4 h-4" />
+              Demo console
             </button>
           ) : (
             <button 
               onClick={() => setScreen("landing")}
-              className="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 font-medium text-sm hover:bg-slate-850 hover:text-white transition-all border border-slate-800 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-full border border-carbon text-carbon font-medium text-[15px] hover:bg-fog active:scale-95 transition-all"
             >
-              Landing Page
+              Overview
             </button>
           )}
-        </nav>
+        </div>
       </header>
 
-      {/* MAIN CONTAINER */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col">
         
         {/* ================= LANDING SCREEN ================= */}
@@ -279,159 +289,228 @@ export default function Home() {
           <div className="flex-1 flex flex-col">
             
             {/* HERO SECTION */}
-            <section className="px-6 py-20 md:py-32 max-w-5xl mx-auto text-center flex flex-col items-center justify-center">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold tracking-wide uppercase mb-8 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" /> Hackathon Track 2 Project
+            <section className="px-6 py-16 md:py-24 max-w-[1200px] mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+              
+              {/* Left Column: Headline & Action Buttons */}
+              <div className="md:col-span-6 flex flex-col items-start text-left">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sienna-bronze/10 border border-sienna-bronze/20 text-sienna-bronze text-[11px] font-semibold uppercase tracking-wider mb-6">
+                  <Sparkles className="w-3.5 h-3.5" /> Hackathon Track 2 Project
+                </div>
+                
+                {/* HERO HEADLINE: Compressed Monument style (PolySans, tight line-height) */}
+                <h1 className="font-polysans font-normal text-[52px] md:text-[66px] leading-[0.91] tracking-[-1.32px] text-carbon">
+                  Traditional <br />
+                  Communities <br />
+                  Are Static.
+                </h1>
+                
+                <p className="text-base md:text-lg text-graphite mt-6 leading-relaxed max-w-[480px]">
+                  Everyone receives the same onboarding, channels, resources, events, and notifications. 
+                  <strong className="text-carbon font-semibold mt-2 block">CommunityOS introduces an AI operating layer.</strong>
+                  A team of specialized agents continuously personalizes the experience for every member while helping organizers automate community operations.
+                </p>
+                
+                {/* CTA CLUSTER: Carbon-filled & outlined pill buttons */}
+                <div className="flex flex-row gap-4 mt-8 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setScreen("demo")}
+                    className="px-6 py-3 rounded-full bg-carbon text-white font-medium text-[15px] hover:bg-graphite active:scale-95 transition-all shadow-[0_1px_3px_rgba(32,32,32,0.04)] flex items-center justify-center gap-2"
+                  >
+                    Interactive Demo <Play className="w-4 h-4 fill-white" />
+                  </button>
+                  <a 
+                    href="#agents-info"
+                    className="px-6 py-3 rounded-full border border-carbon text-carbon font-medium text-[15px] hover:bg-fog active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    Meet the Agents
+                  </a>
+                </div>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                <span className="bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-                  Traditional Communities
-                </span>{" "}
-                <br className="hidden md:inline" />
-                <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Are Completely Static.
-                </span>
-              </h1>
-              
-              <p className="text-lg md:text-xl text-slate-400 max-w-3xl mb-12 leading-relaxed">
-                Everyone receives the same onboarding, channels, resources, events, and notifications. 
-                <strong className="text-white block mt-2">CommunityOS introduces an AI operating layer.</strong>
-                A team of specialized agents continuously personalize the experience for every member while helping organizers automate community operations.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                <button 
-                  onClick={() => setScreen("demo")}
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold hover:from-indigo-500 hover:to-purple-500 active:scale-95 transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3 text-base"
-                >
-                  Launch Interactive Demo <Play className="w-5 h-5 fill-white" />
-                </button>
-                <a 
-                  href="#agents-info"
-                  className="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-850 hover:border-slate-700 transition-all flex items-center justify-center gap-2 text-base"
-                >
-                  Meet the Agents
-                </a>
+              {/* Right Column: Overlapping Dashboard Preview Cards */}
+              <div className="md:col-span-6 relative w-full h-[320px] md:h-[400px] flex items-center">
+                
+                {/* Card 1: Back/Left */}
+                <div className="absolute top-0 left-0 w-[72%] bg-white p-6 rounded-[8px] border border-chalk shadow-[0_1px_3px_rgba(32,32,32,0.04),0_4px_12px_rgba(32,32,32,0.03)] z-0">
+                  <span className="text-[10px] text-slate uppercase font-bold tracking-widest block mb-1">Active Members Ratio</span>
+                  <div className="font-polysans text-3xl font-normal text-carbon mb-4">83%</div>
+                  
+                  {/* Signal Orange Area Chart */}
+                  <svg className="w-full h-24 overflow-visible" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="orangeGrad1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ff682c" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#ff682c" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    <line x1="0" y1="25" x2="300" y2="25" stroke="#f5f5f5" strokeWidth="1" />
+                    <line x1="0" y1="50" x2="300" y2="50" stroke="#f5f5f5" strokeWidth="1" />
+                    <line x1="0" y1="75" x2="300" y2="75" stroke="#f5f5f5" strokeWidth="1" />
+                    <path d="M 0 100 L 0 75 Q 60 40 120 70 T 240 30 T 300 15 L 300 100 Z" fill="url(#orangeGrad1)" />
+                    <path d="M 0 75 Q 60 40 120 70 T 240 30 T 300 15" fill="none" stroke="#202020" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                {/* Card 2: Front/Right (Overlapping) */}
+                <div className="absolute bottom-4 right-0 w-[68%] bg-white p-6 rounded-[8px] border border-chalk shadow-[0_2px_6px_rgba(32,32,32,0.06),0_8px_24px_rgba(32,32,32,0.04)] z-10 transition-transform hover:translate-y-[-4px]">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-[10px] text-slate uppercase font-bold tracking-widest block">GPU Kernel Optimization</span>
+                    <span className="text-[10px] bg-sienna-bronze/10 text-sienna-bronze px-2 py-0.5 rounded-full font-medium">Active</span>
+                  </div>
+                  <div className="font-polysans text-2xl font-normal text-carbon mb-3">4.8x Velocity</div>
+                  
+                  {/* Signal Orange Area Chart */}
+                  <svg className="w-full h-20 overflow-visible" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="orangeGrad2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ff682c" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#ff682c" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 0 100 L 0 90 Q 50 85 100 50 T 200 35 T 300 5 L 300 100 Z" fill="url(#orangeGrad2)" />
+                    <path d="M 0 90 Q 50 85 100 50 T 200 35 T 300 5" fill="none" stroke="#202020" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </div>
               </div>
             </section>
 
-            {/* PLATFORM + AGENTS ARCHITECTURE GRAPHIC */}
-            <section className="px-6 py-12 bg-slate-950 border-t border-slate-900/60 flex flex-col items-center">
-              <div className="max-w-4xl w-full text-center mb-8">
-                <h3 className="text-xs uppercase tracking-widest text-slate-500 font-mono">Platform Integration Architecture</h3>
-                <h2 className="text-2xl font-bold mt-2">How CommunityOS Plugs In</h2>
+            {/* PARTNER LOGO STRIP (no background, sits on Mist canvas) */}
+            <section className="w-full border-y border-chalk/80 py-10">
+              <div className="max-w-[1200px] mx-auto px-6">
+                <p className="text-[11px] font-bold text-graphite uppercase tracking-widest mb-6">
+                  Trusted by 80+ partners
+                </p>
+                <div className="flex flex-wrap items-center gap-x-16 gap-y-6 opacity-75">
+                  <span className="font-polysans font-bold text-lg text-slate tracking-wider">ABB</span>
+                  <span className="font-sans font-extrabold text-xl text-slate tracking-tighter">OLYMEL</span>
+                  <span className="font-serif italic font-bold text-xl text-slate">Cascades</span>
+                  <span className="font-mono font-semibold text-lg text-slate">ANGELCARE</span>
+                  <span className="font-polysans font-normal text-lg text-slate tracking-tight">LOGITECH</span>
+                  <span className="font-sans font-light text-xl text-slate tracking-widest">NVIDIA</span>
+                </div>
+              </div>
+            </section>
+
+            {/* PLATFORM ARCHITECTURE GRAPHIC */}
+            <section className="px-6 py-20 max-w-[1200px] mx-auto w-full text-center">
+              <div className="mb-12">
+                <span className="text-[11px] uppercase tracking-widest text-slate font-bold">Platform Integration Architecture</span>
+                <h2 className="font-polysans text-3xl md:text-4px font-normal text-carbon mt-2">How CommunityOS Plugs In</h2>
               </div>
               
-              <div className="w-full max-w-3xl p-8 rounded-2xl bg-slate-900/40 border border-slate-900 backdrop-blur-xl relative overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center justify-center relative">
-                  
-                  {/* Left Box: Core Platform */}
-                  <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center mb-4">
-                      <Users className="w-6 h-6 text-slate-400" />
-                    </div>
-                    <h4 className="font-semibold text-white">Community Platform</h4>
-                    <p className="text-[11px] text-slate-500 text-center mt-2">Discord, Slack, Discourse, custom portal database</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                {/* Left: Core Platform */}
+                <div className="p-8 rounded-[8px] bg-white border border-chalk flex flex-col items-center shadow-sm">
+                  <div className="w-12 h-12 rounded-full bg-fog border border-chalk flex items-center justify-center mb-6">
+                    <Users className="w-5 h-5 text-graphite" />
                   </div>
-                  
-                  {/* Middle Box: Agent Layer */}
-                  <div className="p-6 rounded-xl bg-gradient-to-tr from-indigo-950 via-slate-900 to-purple-950 border border-indigo-900/50 flex flex-col items-center relative shadow-2xl">
-                    <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 rounded-full animate-ping m-2" />
-                    <div className="w-12 h-12 rounded-lg bg-indigo-900/40 border border-indigo-500/30 flex items-center justify-center mb-4">
-                      <Cpu className="w-6 h-6 text-indigo-400" />
-                    </div>
-                    <h4 className="font-semibold text-indigo-200">AI Agent Layer</h4>
-                    <p className="text-[11px] text-indigo-400/80 text-center mt-2">AgentField control plane running LLM microservices</p>
+                  <h3 className="font-polysans font-normal text-lg text-carbon mb-2">Community Platform</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
+                    Discord, Slack, Discourse, or custom portals feeding raw workspace logs and profiles.
+                  </p>
+                </div>
+                
+                {/* Middle: Agent Layer */}
+                <div className="p-8 rounded-[8px] bg-white border border-t-4 border-t-signal-orange border-chalk flex flex-col items-center shadow-sm relative">
+                  <div className="w-12 h-12 rounded-full bg-fog border border-chalk flex items-center justify-center mb-6">
+                    <Cpu className="w-5 h-5 text-signal-orange" />
                   </div>
+                  <h3 className="font-polysans font-normal text-lg text-carbon mb-2">AI Agent Layer</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
+                    Agentfield control plane runs orchestrated LLMs that trace signals, activity thresholds, and query topics.
+                  </p>
+                </div>
 
-                  {/* Right Box: Output */}
-                  <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center mb-4">
-                      <Sparkles className="w-6 h-6 text-pink-400" />
-                    </div>
-                    <h4 className="font-semibold text-white">Hyper-Personalization</h4>
-                    <p className="text-[11px] text-slate-500 text-center mt-2">Dynamic onboardings, learning roadmaps, mentor matching</p>
+                {/* Right: Output */}
+                <div className="p-8 rounded-[8px] bg-white border border-chalk flex flex-col items-center shadow-sm">
+                  <div className="w-12 h-12 rounded-full bg-fog border border-chalk flex items-center justify-center mb-6">
+                    <Sparkles className="w-5 h-5 text-sienna-bronze" />
                   </div>
+                  <h3 className="font-polysans font-normal text-lg text-carbon mb-2">Hyper-Personalization</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
+                    Dynamic onboarding timelines, recommended checklists, calendar events, and direct mentor matchups.
+                  </p>
                 </div>
               </div>
             </section>
 
             {/* THE AGENT TEAM LIST */}
-            <section id="agents-info" className="px-6 py-20 bg-slate-950 border-t border-slate-900 max-w-5xl mx-auto">
+            <section id="agents-info" className="px-6 py-20 border-t border-chalk/80 max-w-[1200px] mx-auto w-full">
               <div className="text-center mb-16">
-                <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-                  The Multi-Agent Core Network
+                <span className="text-[11px] uppercase tracking-widest text-slate font-bold">The Multi-Agent Core Network</span>
+                <h2 className="font-polysans text-3xl md:text-4px font-normal text-carbon mt-2">
+                  Meet the Orchestration Engine
                 </h2>
-                <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-                  Instead of a single general chatbot, CommunityOS uses six specialized agents orchestrating raw member behaviors into insights.
+                <p className="mt-3 text-sm text-graphite max-w-2xl mx-auto">
+                  Instead of a single chat interface, CommunityOS employs six specialized agents that parse behaviors and automate operations.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 
                 {/* 1. Identity Agent */}
-                <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/60 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
-                    <User className="w-5 h-5" />
+                <div className="p-8 rounded-[8px] bg-white border border-chalk hover:border-slate/30 transition-all flex flex-col shadow-sm">
+                  <div className="w-10 h-10 rounded-[8px] bg-fog border border-chalk text-carbon flex items-center justify-center mb-5">
+                    <User className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Identity Agent</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
+                  <h3 className="font-polysans text-lg font-normal text-carbon mb-2">Identity Agent</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
                     Continuously observes chat logs, code queries, and intro posts. Formulates interests, skills, confidence level, and learning style.
                   </p>
                 </div>
 
                 {/* 2. Discovery Agent */}
-                <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/60 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
-                    <Search className="w-5 h-5" />
+                <div className="p-8 rounded-[8px] bg-white border border-chalk hover:border-slate/30 transition-all flex flex-col shadow-sm">
+                  <div className="w-10 h-10 rounded-[8px] bg-fog border border-chalk text-carbon flex items-center justify-center mb-5">
+                    <Search className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Discovery Agent</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
+                  <h3 className="font-polysans text-lg font-normal text-carbon mb-2">Discovery Agent</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
                     Matches the dynamically built identity model with relevant channels, resources, templates, and events to deliver a custom community portal.
                   </p>
                 </div>
 
                 {/* 3. Learning Agent */}
-                <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/60 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
-                    <BookOpen className="w-5 h-5" />
+                <div className="p-8 rounded-[8px] bg-white border border-chalk hover:border-slate/30 transition-all flex flex-col shadow-sm">
+                  <div className="w-10 h-10 rounded-[8px] bg-fog border border-chalk text-carbon flex items-center justify-center mb-5">
+                    <BookOpen className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Learning Agent</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
-                    Creates daily priorities and custom step-by-step roadmap paths. Adjusts technical difficulty depending on user progress and questions.
+                  <h3 className="font-polysans text-lg font-normal text-carbon mb-2">Learning Agent</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
+                    Creates daily checklists and custom step-by-step roadmap paths. Adjusts technical difficulty depending on user progress and queries.
                   </p>
                 </div>
 
                 {/* 4. Mentor Agent */}
-                <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/60 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
-                    <Users className="w-5 h-5" />
+                <div className="p-8 rounded-[8px] bg-white border border-chalk hover:border-slate/30 transition-all flex flex-col shadow-sm">
+                  <div className="w-10 h-10 rounded-[8px] bg-fog border border-chalk text-carbon flex items-center justify-center mb-5">
+                    <Users className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Mentor Agent</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
+                  <h3 className="font-polysans text-lg font-normal text-carbon mb-2">Mentor Agent</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
                     Examines profiles of expert members and rookies. Computes technical overlaps to recommend optimal mentor assignments.
                   </p>
                 </div>
 
                 {/* 5. Community Health Agent */}
-                <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/60 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
-                    <Activity className="w-5 h-5" />
+                <div className="p-8 rounded-[8px] bg-white border border-chalk hover:border-slate/30 transition-all flex flex-col shadow-sm">
+                  <div className="w-10 h-10 rounded-[8px] bg-fog border border-chalk text-carbon flex items-center justify-center mb-5">
+                    <Activity className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Community Health Agent</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
+                  <h3 className="font-polysans text-lg font-normal text-carbon mb-2">Community Health Agent</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
                     Surveys inactive periods, ignored newcomers, and unanswered technical posts to highlight potential operational risks and churn signs.
                   </p>
                 </div>
 
                 {/* 6. Organizer Agent */}
-                <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-850 hover:border-slate-800 hover:bg-slate-900/60 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
-                    <ShieldCheck className="w-5 h-5" />
+                <div className="p-8 rounded-[8px] bg-white border border-chalk hover:border-slate/30 transition-all flex flex-col shadow-sm">
+                  <div className="w-10 h-10 rounded-[8px] bg-fog border border-chalk text-carbon flex items-center justify-center mb-5">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Organizer Agent</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
+                  <h3 className="font-polysans text-lg font-normal text-carbon mb-2">Organizer Agent</h3>
+                  <p className="text-xs text-graphite leading-relaxed">
                     Translates data diagnostics from Health Agent into concrete suggested events, mentor invites, churn rescues, and automated moderation actions.
                   </p>
                 </div>
@@ -441,32 +520,32 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= DEMO DASHBOARD ================= */}
+        {/* ================= DEMO DASHBOARD SCREEN ================= */}
         {screen === "demo" && (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col w-full max-w-[1200px] mx-auto px-6 py-8">
             
             {/* PERSONA CHANGER HEADER */}
-            <div className="bg-slate-900/40 border-b border-slate-900 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-mono">Select Persona:</span>
-                <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <div className="bg-white border border-chalk rounded-[8px] px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 mb-6 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate uppercase tracking-wider font-bold">Select Persona:</span>
+                <div className="flex bg-fog p-1 rounded-full border border-chalk">
                   <button 
                     onClick={() => { setPersona("rahul"); setData(null); }}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${persona === "rahul" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "rahul" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
                   >
-                    <User className="w-3.5 h-3.5" /> Rahul (Systems/GPU)
+                    <User className="w-3.5 h-3.5" /> Rahul (GPU)
                   </button>
                   <button 
                     onClick={() => { setPersona("priya"); setData(null); }}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${persona === "priya" ? "bg-purple-600 text-white shadow-md shadow-purple-600/10" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "priya" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
                   >
-                    <User className="w-3.5 h-3.5" /> Priya (Beginner AI)
+                    <User className="w-3.5 h-3.5" /> Priya (AI Rookie)
                   </button>
                   <button 
                     onClick={() => { setPersona("organizer"); setData(null); }}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${persona === "organizer" ? "bg-rose-600 text-white shadow-md shadow-rose-600/10" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "organizer" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5" /> Organizer Dashboard
+                    <ShieldCheck className="w-3.5 h-3.5" /> Organizer Console
                   </button>
                 </div>
               </div>
@@ -474,335 +553,377 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowAllExplainability(!showAllExplainability)}
-                  className="px-3.5 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs font-medium text-indigo-400 hover:bg-indigo-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-full border border-slate text-xs font-semibold text-carbon hover:bg-fog active:scale-95 transition-all flex items-center gap-1.5 bg-white shadow-sm"
                 >
-                  <Sparkles className="w-3.5 h-3.5" /> {showAllExplainability ? "Hide AI Reasoning" : "Why am I seeing this?"}
+                  <Sparkles className="w-3.5 h-3.5 text-signal-orange" /> {showAllExplainability ? "Hide AI Reasoning" : "Why am I seeing this?"}
                 </button>
                 
                 <button
                   onClick={() => { setData(null); }}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                  className="p-2 rounded-full border border-chalk hover:bg-fog text-slate hover:text-carbon transition-all"
                   title="Reload Agent Reasoning"
                 >
-                  <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-indigo-400" : ""}`} />
+                  <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-signal-orange" : ""}`} />
                 </button>
               </div>
             </div>
 
-            {/* EXPLAINABILITY DRAWER (WHOLE TEAM AT A GLANCE) */}
+            {/* EXPLAINABILITY DRAWER / SESSION DIAGNOSTICS */}
             {showAllExplainability && data && (
-              <div className="bg-gradient-to-r from-indigo-950/40 via-slate-900/60 to-purple-950/40 border-b border-indigo-950 px-6 py-6 transition-all duration-300">
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Terminal className="w-4 h-4 text-indigo-400" />
-                    <h3 className="text-xs uppercase font-bold text-indigo-300 tracking-widest font-mono">Agentfield Control Plane --- Multi-Agent Session Diagnostics</h3>
-                  </div>
-
-                  {persona !== "organizer" ? (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      
-                      {/* Identity agent explanation */}
-                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-850 hover:border-blue-900/40 transition-all">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900">
-                          <User className="w-4 h-4 text-blue-400" />
-                          <span className="text-xs font-bold text-blue-300 font-mono">Identity Agent</span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-sans">{data.explainability?.identity_agent}</p>
-                      </div>
-
-                      {/* Discovery Agent explanation */}
-                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-850 hover:border-purple-900/40 transition-all">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900">
-                          <Search className="w-4 h-4 text-purple-400" />
-                          <span className="text-xs font-bold text-purple-300 font-mono">Discovery Agent</span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-sans">{data.explainability?.discovery_agent}</p>
-                      </div>
-
-                      {/* Learning Agent explanation */}
-                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-850 hover:border-emerald-900/40 transition-all">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900">
-                          <BookOpen className="w-4 h-4 text-emerald-400" />
-                          <span className="text-xs font-bold text-emerald-300 font-mono">Learning Agent</span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-sans">{data.explainability?.learning_agent}</p>
-                      </div>
-
-                      {/* Mentor Agent explanation */}
-                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-850 hover:border-pink-900/40 transition-all">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900">
-                          <Users className="w-4 h-4 text-pink-400" />
-                          <span className="text-xs font-bold text-pink-300 font-mono">Mentor Agent</span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-sans">{data.explainability?.mentor_agent}</p>
-                      </div>
-
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      
-                      {/* Health agent explanation */}
-                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-850 hover:border-amber-900/40 transition-all">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900">
-                          <Activity className="w-4 h-4 text-amber-400" />
-                          <span className="text-xs font-bold text-amber-300 font-mono">Community Health Agent</span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-sans">{data.health_summary?.explainability}</p>
-                      </div>
-
-                      {/* Organizer Agent explanation */}
-                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-850 hover:border-rose-900/40 transition-all">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-900">
-                          <ShieldCheck className="w-4 h-4 text-rose-400" />
-                          <span className="text-xs font-bold text-rose-300 font-mono">Organizer Agent</span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-sans">{data.insights?.explainability}</p>
-                      </div>
-
-                    </div>
-                  )}
+              <div className="bg-[#f5f5f5] border border-slate/30 rounded-[8px] p-6 mb-8 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Terminal className="w-4 h-4 text-carbon" />
+                  <h3 className="text-xs uppercase font-bold text-carbon tracking-widest font-mono">Agentfield Control Plane --- Diagnostics Trace</h3>
                 </div>
+
+                {persona !== "organizer" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    
+                    {/* Identity agent explanation */}
+                    <div className="p-4 rounded-[8px] bg-white border border-chalk">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-chalk">
+                        <User className="w-4 h-4 text-sienna-bronze" />
+                        <span className="text-xs font-bold text-carbon font-mono">Identity Agent</span>
+                      </div>
+                      <p className="text-xs text-graphite leading-relaxed">{data.explainability?.identity_agent}</p>
+                    </div>
+
+                    {/* Discovery Agent explanation */}
+                    <div className="p-4 rounded-[8px] bg-white border border-chalk">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-chalk">
+                        <Search className="w-4 h-4 text-sienna-bronze" />
+                        <span className="text-xs font-bold text-carbon font-mono">Discovery Agent</span>
+                      </div>
+                      <p className="text-xs text-graphite leading-relaxed">{data.explainability?.discovery_agent}</p>
+                    </div>
+
+                    {/* Learning Agent explanation */}
+                    <div className="p-4 rounded-[8px] bg-white border border-chalk">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-chalk">
+                        <BookOpen className="w-4 h-4 text-sienna-bronze" />
+                        <span className="text-xs font-bold text-carbon font-mono">Learning Agent</span>
+                      </div>
+                      <p className="text-xs text-graphite leading-relaxed">{data.explainability?.learning_agent}</p>
+                    </div>
+
+                    {/* Mentor Agent explanation */}
+                    <div className="p-4 rounded-[8px] bg-white border border-chalk">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-chalk">
+                        <Users className="w-4 h-4 text-sienna-bronze" />
+                        <span className="text-xs font-bold text-carbon font-mono">Mentor Agent</span>
+                      </div>
+                      <p className="text-xs text-graphite leading-relaxed">{data.explainability?.mentor_agent}</p>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    {/* Health agent explanation */}
+                    <div className="p-4 rounded-[8px] bg-white border border-chalk">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-chalk">
+                        <Activity className="w-4 h-4 text-signal-orange" />
+                        <span className="text-xs font-bold text-carbon font-mono">Community Health Agent</span>
+                      </div>
+                      <p className="text-xs text-graphite leading-relaxed">{data.health_summary?.explainability}</p>
+                    </div>
+
+                    {/* Organizer Agent explanation */}
+                    <div className="p-4 rounded-[8px] bg-white border border-chalk">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-chalk">
+                        <ShieldCheck className="w-4 h-4 text-signal-orange" />
+                        <span className="text-xs font-bold text-carbon font-mono">Organizer Agent</span>
+                      </div>
+                      <p className="text-xs text-graphite leading-relaxed">{data.insights?.explainability}</p>
+                    </div>
+
+                  </div>
+                )}
               </div>
             )}
 
-            {/* DASHBOARD BODY */}
+            {/* DASHBOARD CARD CONTAINER WITH SIDEBAR & CONTENT */}
             {loading ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-24 gap-4">
-                <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-                <div className="text-sm text-slate-400 font-mono">AgentField invoking LLM reasoners...</div>
+              <div className="bg-white rounded-[8px] border border-chalk p-24 flex flex-col items-center justify-center gap-4 shadow-sm min-h-[500px]">
+                <RefreshCw className="w-8 h-8 text-signal-orange animate-spin" />
+                <div className="text-xs font-mono text-slate">AgentField invoking LLM reasoners...</div>
               </div>
             ) : data ? (
-              <div className="flex-1 overflow-y-auto px-6 py-8 md:px-12">
-                <div className="max-w-6xl mx-auto">
+              <div className="bg-white rounded-[8px] border border-chalk shadow-[0_1px_3px_rgba(32,32,32,0.04),0_4px_12px_rgba(32,32,32,0.03)] flex flex-col md:flex-row min-h-[600px] overflow-hidden">
+                
+                {/* 200px WIDTH LEFT SIDEBAR */}
+                <aside className="w-full md:w-[220px] shrink-0 bg-fog border-r border-chalk p-6 flex flex-col gap-8">
                   
-                  {/* ================= MEMBER PERSONA PANEL ================= */}
+                  {/* Navigation links */}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Dashboard Nav</span>
+                    <nav className="flex flex-col gap-2">
+                      <button className="flex items-center justify-between text-left text-xs font-semibold text-carbon bg-white border border-chalk px-3 py-2 rounded-[6px] shadow-sm">
+                        <span>Overview</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-signal-orange" />
+                      </button>
+                      <button className="flex items-center text-left text-xs font-medium text-graphite hover:text-carbon px-3 py-2 rounded-[6px] transition-all">
+                        <span>Roadmaps</span>
+                      </button>
+                      <button className="flex items-center text-left text-xs font-medium text-graphite hover:text-carbon px-3 py-2 rounded-[6px] transition-all">
+                        <span>Mentors</span>
+                      </button>
+                      <button className="flex items-center text-left text-xs font-medium text-graphite hover:text-carbon px-3 py-2 rounded-[6px] transition-all">
+                        <span>Analytics</span>
+                      </button>
+                    </nav>
+                  </div>
+
+                  {/* Filters section */}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Filter Context</span>
+                    
+                    {persona !== "organizer" ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
+                            Focus Topic <ChevronDown className="w-3 h-3 text-slate" />
+                          </label>
+                          <select className="w-full text-xs bg-white border border-chalk rounded-[6px] px-2 py-1.5 text-carbon outline-none" defaultValue="all">
+                            <option value="all">All Topics</option>
+                            <option value="gpu">GPU Computing</option>
+                            <option value="systems">Systems Programming</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
+                            Resources <ChevronDown className="w-3 h-3 text-slate" />
+                          </label>
+                          <select className="w-full text-xs bg-white border border-chalk rounded-[6px] px-2 py-1.5 text-carbon outline-none" defaultValue="guides">
+                            <option value="guides">Guides & Books</option>
+                            <option value="code">Code Snippets</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
+                            Risk Segment <ChevronDown className="w-3 h-3 text-slate" />
+                          </label>
+                          <select className="w-full text-xs bg-white border border-chalk rounded-[6px] px-2 py-1.5 text-carbon outline-none" defaultValue="high">
+                            <option value="high">High Risk</option>
+                            <option value="medium">Medium Risk</option>
+                            <option value="low">Low Risk</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
+                            Action Queue <ChevronDown className="w-3 h-3 text-slate" />
+                          </label>
+                          <select className="w-full text-xs bg-white border border-chalk rounded-[6px] px-2 py-1.5 text-carbon outline-none" defaultValue="moderation">
+                            <option value="moderation">Moderator Tasks</option>
+                            <option value="events">Event Triggers</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                {/* MAIN CONTENT AREA */}
+                <div className="flex-1 p-8 bg-white overflow-y-auto">
+                  
+                  {/* ================= PERSONA: MEMBER VIEW ================= */}
                   {persona !== "organizer" && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="space-y-8">
                       
-                      {/* LEFT 2 COLUMNS */}
-                      <div className="lg:col-span-2 space-y-8">
+                      {/* Welcome Banner (Parchment background with signal orange left border) */}
+                      <div className="p-6 rounded-[8px] bg-fog border-l-4 border-l-signal-orange border-y border-r border-chalk relative overflow-hidden">
+                        <h2 className="font-polysans text-2xl font-normal text-carbon mb-2">Welcome back, {data.name}!</h2>
+                        <p className="text-xs text-graphite leading-relaxed max-w-2xl">{data.welcome_message}</p>
                         
-                        {/* WELCOME BANNER */}
-                        <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-950/50 border border-indigo-900/30 relative overflow-hidden shadow-xl">
-                          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl" />
-                          <h2 className="text-3xl font-extrabold text-white mb-3">Welcome back, {data.name}!</h2>
-                          <p className="text-slate-300 leading-relaxed">{data.welcome_message}</p>
-                          
-                          {/* User Bio and Tags */}
-                          <div className="mt-6 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center gap-4">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Skills Model:</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {data.skills?.map((skill: string) => (
-                                <span key={skill} className="px-2.5 py-0.5 rounded-full bg-slate-950 text-indigo-300 border border-slate-800 text-[11px] font-medium">
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
+                        {/* Skills Model */}
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Detected Skills:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {data.skills?.map((skill: string) => (
+                              <span key={skill} className="px-2.5 py-0.5 rounded-full bg-white border border-chalk text-[10px] font-medium text-carbon shadow-sm">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* STATS TILES (Metric KPI Cards) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        
+                        {/* Stat 1 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex flex-col justify-between">
+                          <div>
+                            <span className="text-[11px] font-medium text-slate block mb-1">Rank Status</span>
+                            <div className="font-polysans text-3xl font-normal text-carbon">{persona === "rahul" ? "Top 15%" : "Top 95%"}</div>
+                          </div>
+                          <div className="mt-4 flex items-center gap-1 text-[11px] text-[#2e7d32] font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full w-fit">
+                            <TrendingUp className="w-3 h-3" /> {persona === "rahul" ? "Systems Leader" : "Newcomer"}
                           </div>
                         </div>
 
-                        {/* PRIORITIES & ROADMAP */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          
-                          {/* TODAY'S PRIORITIES */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80 flex flex-col h-full">
-                            <div className="flex items-center gap-2.5 mb-5">
-                              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                                <CheckSquare className="w-4 h-4" />
-                              </div>
-                              <h3 className="font-bold text-white text-base">Today's Priorities</h3>
-                            </div>
-                            
-                            <ul className="space-y-4 flex-1">
-                              {data.priorities?.map((priority: string, i: number) => (
-                                <li key={i} className="flex gap-3 text-sm text-slate-300 items-start">
-                                  <span className="w-5 h-5 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-[10px] text-slate-500 font-mono mt-0.5">{i+1}</span>
-                                  <span className="flex-1">{priority}</span>
-                                </li>
-                              ))}
-                            </ul>
+                        {/* Stat 2 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex flex-col justify-between">
+                          <div>
+                            <span className="text-[11px] font-medium text-slate block mb-1">Helpers Thread</span>
+                            <div className="font-polysans text-3xl font-normal text-carbon">{persona === "rahul" ? "6 members" : "0 members"}</div>
                           </div>
-
-                          {/* PERSONALIZED PATHWAY */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80 flex flex-col h-full">
-                            <div className="flex items-center gap-2.5 mb-5">
-                              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
-                                <BookOpen className="w-4 h-4" />
-                              </div>
-                              <h3 className="font-bold text-white text-base">Learning Roadmap</h3>
-                            </div>
-
-                            {/* Timeline steps */}
-                            <div className="relative border-l border-slate-800 ml-3 pl-6 space-y-5 flex-1">
-                              {persona === "rahul" ? (
-                                <>
-                                  <div className="relative">
-                                    <div className="absolute -left-[30px] top-1 w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-950" />
-                                    <h4 className="text-xs font-semibold text-indigo-400">Step 1: Code Kernel</h4>
-                                    <p className="text-xs text-slate-400 mt-1">Analyze shared memory bank conflicts in matrix multiplication.</p>
-                                  </div>
-                                  <div className="relative">
-                                    <div className="absolute -left-[30px] top-1 w-2 h-2 rounded-full bg-slate-700" />
-                                    <h4 className="text-xs font-semibold text-slate-300">Step 2: Benchmark Padding</h4>
-                                    <p className="text-xs text-slate-400 mt-1">Implement memory padding configurations and test grid speed.</p>
-                                  </div>
-                                  <div className="relative">
-                                    <div className="absolute -left-[30px] top-1 w-2 h-2 rounded-full bg-slate-700" />
-                                    <h4 className="text-xs font-semibold text-slate-300">Step 3: Meet Expert Sarah</h4>
-                                    <p className="text-xs text-slate-400 mt-1">Attend the GPU AMA to run profile reviews of CUDA code.</p>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="relative">
-                                    <div className="absolute -left-[30px] top-1 w-2 h-2 rounded-full bg-purple-500 ring-4 ring-purple-950" />
-                                    <h4 className="text-xs font-semibold text-purple-400">Step 1: Tensor Basics</h4>
-                                    <p className="text-xs text-slate-400 mt-1">Run basic operations in PyTorch interactive notebooks.</p>
-                                  </div>
-                                  <div className="relative">
-                                    <div className="absolute -left-[30px] top-1 w-2 h-2 rounded-full bg-slate-700" />
-                                    <h4 className="text-xs font-semibold text-slate-300">Step 2: Build MNIST</h4>
-                                    <p className="text-xs text-slate-400 mt-1">Attend PyTorch 101 workshop to program your first classifier.</p>
-                                  </div>
-                                  <div className="relative">
-                                    <div className="absolute -left-[30px] top-1 w-2 h-2 rounded-full bg-slate-700" />
-                                    <h4 className="text-xs font-semibold text-slate-300">Step 3: Mentor Check-In</h4>
-                                    <p className="text-xs text-slate-400 mt-1">Connect with Elena for custom feedback on deep learning books.</p>
-                                  </div>
-                                </>
-                              )}
-                            </div>
+                          <div className="mt-4 flex items-center gap-1 text-[11px] text-graphite bg-fog px-2 py-0.5 rounded-full w-fit">
+                            {persona === "rahul" ? "Helped this week" : "Needs mentorship"}
                           </div>
-
                         </div>
 
-                        {/* RECOMMENDATIONS: CHANNELS, FILES, MEETUPS */}
-                        <div className="space-y-6">
-                          <h3 className="font-bold text-white text-lg border-b border-slate-900 pb-3 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-indigo-400" /> Discovery recommendations
-                          </h3>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
-                            {/* Resources list */}
-                            <div className="space-y-4">
-                              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> Recommended Resources
-                              </h4>
-                              <div className="space-y-3">
-                                {data.resources?.map((res: any) => (
-                                  <div key={res.id} className="p-4 rounded-xl bg-slate-900/20 border border-slate-900 hover:border-slate-850 hover:bg-slate-900/40 transition-all flex flex-col justify-between">
-                                    <div>
-                                      <h5 className="text-sm font-semibold text-slate-200">{res.name}</h5>
-                                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">{res.description}</p>
-                                    </div>
-                                    <div className="mt-3 flex justify-end">
-                                      <a href={res.url} className="text-xs text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
-                                        Read Guide <ChevronRight className="w-3.5 h-3.5" />
-                                      </a>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Events list */}
-                            <div className="space-y-4">
-                              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-indigo-400" /> Suggested Events
-                              </h4>
-                              <div className="space-y-3">
-                                {data.events?.map((evt: any) => (
-                                  <div key={evt.id} className="p-4 rounded-xl bg-slate-900/20 border border-slate-900 hover:border-slate-850 hover:bg-slate-900/40 transition-all">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <h5 className="text-sm font-semibold text-slate-200">{evt.name}</h5>
-                                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0 font-medium">
-                                        {evt.time}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">{evt.description}</p>
-                                    <div className="mt-3 flex justify-end">
-                                      <button className="text-xs px-2.5 py-1 rounded bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-300 transition-all">
-                                        Add to Calendar
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
+                        {/* Stat 3 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex flex-col justify-between">
+                          <div>
+                            <span className="text-[11px] font-medium text-slate block mb-1">Mentor Matching</span>
+                            <div className="font-polysans text-3xl font-normal text-carbon">{persona === "rahul" ? "Matched" : "Assigned"}</div>
+                          </div>
+                          <div className="mt-4 flex items-center gap-1 text-[11px] text-sienna-bronze bg-sienna-bronze/10 px-2 py-0.5 rounded-full w-fit">
+                            {persona === "rahul" ? "Sarah (Nvidia)" : "Elena (Researcher)"}
                           </div>
                         </div>
 
                       </div>
 
-                      {/* RIGHT COLUMN (SIDEBAR) */}
-                      <div className="space-y-8">
+                      {/* PRIORITIES & TIMELINE ROADMAP */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         
-                        {/* RECOMMENDED MENTOR */}
-                        <div className="p-6 rounded-2xl bg-gradient-to-b from-indigo-950/20 to-slate-900/40 border border-indigo-900/20 shadow-xl">
-                          <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-4">Recommended Mentor</h4>
-                          
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-indigo-900/30 flex items-center justify-center shrink-0 border border-indigo-500/20 font-bold text-indigo-300">
-                              {data.recommended_mentor?.name[0]}
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-white text-base">{data.recommended_mentor?.name}</h3>
-                              <p className="text-xs text-slate-400">{data.recommended_mentor?.role}</p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 p-3 rounded-lg bg-slate-950/80 border border-slate-850 text-xs text-slate-300 leading-relaxed">
-                            <span className="font-semibold text-indigo-300 block mb-1">Agent Match Reason:</span>
-                            {data.recommended_mentor?.overlap_reason}
-                          </div>
-
-                          <button className="w-full mt-4 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5">
-                            <MessageSquare className="w-3.5 h-3.5" /> Direct Message {data.recommended_mentor?.name}
-                          </button>
+                        {/* Priorities card */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                          <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
+                            <CheckSquare className="w-4 h-4 text-signal-orange" /> Priorities Checklist
+                          </h3>
+                          <ul className="space-y-4">
+                            {data.priorities?.map((priority: string, i: number) => (
+                              <li key={i} className="flex gap-3 text-xs text-graphite items-start">
+                                <span className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center text-[10px] text-slate font-mono shrink-0 mt-0.5">{i+1}</span>
+                                <span className="flex-1 leading-normal">{priority}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
 
-                        {/* COMMUNITIES GRID */}
-                        <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Matched Channels</h4>
-                          
-                          <div className="space-y-4">
-                            <div>
-                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-2">High Priority</span>
-                              <div className="space-y-2">
-                                {data.communities?.recommended?.map((com: any) => (
-                                  <div key={com.id} className="p-3 rounded-xl bg-indigo-950/10 border border-indigo-950/50 hover:border-indigo-900 flex items-center justify-between transition-all">
-                                    <span className="text-xs font-medium text-slate-200"># {com.name}</span>
-                                    <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-2">Lower Priority</span>
-                              <div className="space-y-2">
-                                {data.communities?.lower_priority?.map((com: any) => (
-                                  <div key={com.id} className="p-3 rounded-xl bg-slate-950/60 border border-slate-900 flex items-center justify-between opacity-50 hover:opacity-100 transition-all">
-                                    <span className="text-xs font-medium text-slate-400"># {com.name}</span>
-                                    <Lock className="w-3 h-3 text-slate-600" />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                        {/* Timeline Roadmap */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                          <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-signal-orange" /> Pathways Milestones
+                          </h3>
+                          <div className="relative border-l border-chalk ml-3 pl-6 space-y-4">
+                            {persona === "rahul" ? (
+                              <>
+                                <div className="relative">
+                                  <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-signal-orange" />
+                                  <h4 className="text-xs font-semibold text-carbon">Analyze shared memory bank conflicts</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">Explore Matrix Multiplication stride configurations.</p>
+                                </div>
+                                <div className="relative">
+                                  <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-chalk border border-slate" />
+                                  <h4 className="text-xs font-semibold text-graphite">Implement memory padding layouts</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">Profile CUDA throughput speedups.</p>
+                                </div>
+                                <div className="relative">
+                                  <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-chalk border border-slate" />
+                                  <h4 className="text-xs font-semibold text-graphite">Schedule profile review with Sarah</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">Share code repository in GPU Computing AMA.</p>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="relative">
+                                  <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-signal-orange" />
+                                  <h4 className="text-xs font-semibold text-carbon">Run PyTorch interactive notebooks</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">Load autograd tensors and basic training loops.</p>
+                                </div>
+                                <div className="relative">
+                                  <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-chalk border border-slate" />
+                                  <h4 className="text-xs font-semibold text-graphite">Build MNIST Digit Classifier</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">Attend PyTorch 101 workshop to deploy the model.</p>
+                                </div>
+                                <div className="relative">
+                                  <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-chalk border border-slate" />
+                                  <h4 className="text-xs font-semibold text-graphite">Connect with mentor Elena</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">Ask questions about neural networks mathematical fundamentals.</p>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
 
-                        {/* COMMUNITY INSIGHTS CARD */}
-                        <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Community Insights</h4>
+                      </div>
+
+                      {/* AREA CHART CARD: Code & Activity Velocity */}
+                      <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                        <h4 className="text-xs font-bold text-slate uppercase tracking-wider mb-4">Member Activity Profile</h4>
+                        <div className="font-polysans text-2xl font-normal text-carbon mb-4">Weekly Signal Velocity</div>
+                        
+                        {/* Signal Orange Area Chart */}
+                        <svg className="w-full h-32 overflow-visible" viewBox="0 0 600 100" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="orangeGradMain" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#ff682c" stopOpacity="0.18" />
+                              <stop offset="100%" stopColor="#ff682c" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+                          <line x1="0" y1="20" x2="600" y2="20" stroke="#f5f5f5" strokeWidth="1" />
+                          <line x1="0" y1="50" x2="600" y2="50" stroke="#f5f5f5" strokeWidth="1" />
+                          <line x1="0" y1="80" x2="600" y2="80" stroke="#f5f5f5" strokeWidth="1" />
                           
+                          <path d="M 0 100 L 0 75 Q 100 85 200 45 T 400 30 T 600 8 L 600 100 Z" fill="url(#orangeGradMain)" />
+                          <path d="M 0 75 Q 100 85 200 45 T 400 30 T 600 8" fill="none" stroke="#202020" strokeWidth="2.2" strokeLinecap="round" />
+                        </svg>
+                        
+                        <div className="flex justify-between text-[10px] text-slate mt-2">
+                          <span>Monday</span>
+                          <span>Wednesday</span>
+                          <span>Friday</span>
+                          <span>Sunday</span>
+                        </div>
+                      </div>
+
+                      {/* RECOMMENDATIONS (RESOURCES, EVENTS, MENTORS) */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        {/* Resources */}
+                        <div className="lg:col-span-2 space-y-4">
+                          <h4 className="text-[11px] font-bold text-slate uppercase tracking-widest flex items-center gap-1">
+                            <BookOpen className="w-3.5 h-3.5 text-signal-orange" /> Suggested Guides
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {data.resources?.map((res: any) => (
+                              <div key={res.id} className="p-5 rounded-[8px] bg-white border border-chalk hover:border-slate/40 flex flex-col justify-between shadow-sm">
+                                <div>
+                                  <h5 className="text-xs font-semibold text-carbon">{res.name}</h5>
+                                  <p className="text-[11px] text-graphite mt-1 leading-relaxed">{res.description}</p>
+                                </div>
+                                <div className="mt-3 flex justify-end">
+                                  <a href={res.url} className="text-[11px] text-signal-orange hover:underline inline-flex items-center gap-0.5 font-semibold">
+                                    Read Guide <ChevronRight className="w-3 h-3" />
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Events list */}
+                        <div className="space-y-4">
+                          <h4 className="text-[11px] font-bold text-slate uppercase tracking-widest flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-signal-orange" /> Recommended Events
+                          </h4>
                           <div className="space-y-3">
-                            {data.insights?.map((insight: string, idx: number) => (
-                              <div key={idx} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-950/40 border border-slate-900 text-xs text-slate-300">
-                                <Award className="w-4 h-4 text-amber-500" />
-                                <span>{insight}</span>
+                            {data.events?.map((evt: any) => (
+                              <div key={evt.id} className="p-4 rounded-[8px] bg-white border border-chalk shadow-sm">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h5 className="text-xs font-semibold text-carbon leading-snug">{evt.name}</h5>
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-sienna-bronze/10 text-sienna-bronze border border-sienna-bronze/20 shrink-0 font-medium font-mono">
+                                    {evt.time.split(" at ")[0]}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-graphite mt-1.5 leading-relaxed">{evt.description}</p>
                               </div>
                             ))}
                           </div>
@@ -810,116 +931,177 @@ export default function Home() {
 
                       </div>
 
-                    </div>
-                  )}
-
-                  {/* ================= ORGANIZER DASHBOARD PANEL ================= */}
-                  {persona === "organizer" && (
-                    <div className="space-y-8">
-                      
-                      {/* STATS OVERVIEW HEADER */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* MENTOR MATCH & CHANNELS */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         
-                        {/* Health score */}
-                        <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80 flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                            <Activity className="w-5 h-5" />
-                          </div>
+                        {/* Mentor card */}
+                        <div className="p-6 rounded-[8px] bg-fog border border-chalk shadow-sm flex flex-col justify-between">
                           <div>
-                            <span className="text-[10px] text-slate-500 block uppercase font-mono tracking-wider">Health Score</span>
-                            <span className="text-xl font-bold text-white">{data.metrics?.active_members_ratio === "83%" ? "92%" : "88%"}</span>
+                            <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Recommended Mentor</span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-full bg-white border border-chalk flex items-center justify-center font-bold text-carbon text-lg">
+                                {data.recommended_mentor?.name[0]}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-carbon text-sm">{data.recommended_mentor?.name}</h4>
+                                <p className="text-xs text-graphite">{data.recommended_mentor?.role}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4 p-3.5 rounded-[8px] bg-white border border-chalk text-[11px] text-graphite leading-relaxed">
+                              <strong className="text-carbon block mb-1">Agent Matching Reasoning:</strong>
+                              {data.recommended_mentor?.overlap_reason}
+                            </div>
                           </div>
+
+                          <button className="w-full mt-4 py-2 px-4 rounded-full bg-carbon hover:bg-graphite text-white text-xs font-semibold transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm">
+                            <MessageSquare className="w-3.5 h-3.5" /> Direct Message {data.recommended_mentor?.name}
+                          </button>
                         </div>
 
-                        {/* Active members */}
-                        <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80 flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
-                            <Users className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-500 block uppercase font-mono tracking-wider">Active Members</span>
-                            <span className="text-xl font-bold text-white">{data.metrics?.active_members_ratio}</span>
-                          </div>
-                        </div>
+                        {/* Matched channels list */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                          <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Matched Workspace Channels</span>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <span className="text-[9px] text-slate font-bold uppercase tracking-wider block mb-2">High Affinity (Unlocked)</span>
+                              <div className="space-y-1.5">
+                                {data.communities?.recommended?.map((com: any) => (
+                                  <div key={com.id} className="p-3 rounded-[6px] bg-fog border border-chalk flex items-center justify-between hover:border-slate/40 transition-all cursor-pointer">
+                                    <span className="text-xs font-medium text-carbon"># {com.name}</span>
+                                    <ChevronRight className="w-3.5 h-3.5 text-slate" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
 
-                        {/* Weekly posts */}
-                        <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80 flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-                            <MessageSquare className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-500 block uppercase font-mono tracking-wider">Weekly Messages</span>
-                            <span className="text-xl font-bold text-white">{data.metrics?.weekly_messages}</span>
-                          </div>
-                        </div>
-
-                        {/* Unanswered posts */}
-                        <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80 flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                            <AlertTriangle className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-500 block uppercase font-mono tracking-wider">Unanswered Posts</span>
-                            <span className="text-xl font-bold text-white">{data.metrics?.unanswered_threads}</span>
+                            <div>
+                              <span className="text-[9px] text-slate font-bold uppercase tracking-wider block mb-2">Low Priority (Archived)</span>
+                              <div className="space-y-1.5">
+                                {data.communities?.lower_priority?.map((com: any) => (
+                                  <div key={com.id} className="p-3 rounded-[6px] bg-white border border-chalk flex items-center justify-between opacity-50 hover:opacity-100 transition-all cursor-not-allowed">
+                                    <span className="text-xs font-medium text-graphite"># {com.name}</span>
+                                    <Lock className="w-3.5 h-3.5 text-slate" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
 
                       </div>
 
-                      {/* AI SUGGESTED ACTIONS - MAIN OPERATIONS COMPONENT */}
-                      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-950/20 border border-indigo-900/20 shadow-xl">
+                    </div>
+                  )}
+
+                  {/* ================= PERSONA: ORGANIZER VIEW ================= */}
+                  {persona === "organizer" && (
+                    <div className="space-y-8">
+                      
+                      {/* STATS OVERVIEW GRID */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        
+                        {/* Card 1 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0">
+                            <Activity className="w-5 h-5 text-signal-orange" />
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate block uppercase font-bold tracking-wider">Health Score</span>
+                            <span className="font-polysans text-2xl font-normal text-carbon">
+                              {data.metrics?.active_members_ratio === "83%" ? "92%" : "88%"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Card 2 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0">
+                            <Users className="w-5 h-5 text-carbon" />
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate block uppercase font-bold tracking-wider">Active Members</span>
+                            <span className="font-polysans text-2xl font-normal text-carbon">{data.metrics?.active_members_ratio}</span>
+                          </div>
+                        </div>
+
+                        {/* Card 3 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0">
+                            <MessageSquare className="w-5 h-5 text-carbon" />
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate block uppercase font-bold tracking-wider">Weekly Messages</span>
+                            <span className="font-polysans text-2xl font-normal text-carbon">{data.metrics?.weekly_messages}</span>
+                          </div>
+                        </div>
+
+                        {/* Card 4 */}
+                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-5 h-5 text-signal-orange" />
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate block uppercase font-bold tracking-wider">Unanswered</span>
+                            <span className="font-polysans text-2xl font-normal text-carbon">{data.metrics?.unanswered_threads}</span>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* AI SUGGESTED ACTIONS (Main Ops Console widget) */}
+                      <div className="p-6 rounded-[8px] bg-fog border border-chalk shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                          <Cpu className="w-5 h-5 text-indigo-400 animate-pulse" />
-                          <h3 className="font-bold text-white text-lg">AI Suggested Actions</h3>
+                          <Cpu className="w-5 h-5 text-signal-orange animate-pulse" />
+                          <h3 className="font-polysans text-base font-normal text-carbon">AI Suggested Automations</h3>
                         </div>
 
                         <div className="space-y-4">
                           {data.insights?.suggested_actions?.map((act: any) => (
                             <div 
-                              key={act.id} 
-                              className={`p-5 rounded-xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                                executedActions[act.id] 
-                                  ? "bg-emerald-950/15 border-emerald-900/40 opacity-80" 
-                                  : "bg-slate-950/80 border-slate-850 hover:border-slate-800"
+                              key={act.id}
+                              className={`p-5 rounded-[8px] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white ${
+                                executedActions[act.id] ? "border-emerald-500/30 opacity-75" : "border-chalk"
                               }`}
                             >
-                              <div className="space-y-2">
+                              <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-semibold tracking-wider ${
                                     act.agent.includes("Health") 
-                                      ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" 
-                                      : "bg-pink-500/10 text-pink-400 border border-pink-500/20"
+                                      ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" 
+                                      : "bg-sienna-bronze/10 text-sienna-bronze border border-sienna-bronze/20"
                                   }`}>
                                     {act.agent}
                                   </span>
-                                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold tracking-wider">
+                                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-carbon text-white font-semibold tracking-wider">
                                     HIGH PRIORITY
                                   </span>
                                 </div>
-                                <h4 className={`text-sm font-semibold text-slate-200 ${executedActions[act.id] ? "line-through text-slate-500" : ""}`}>
+                                <h4 className={`text-xs font-bold text-carbon ${executedActions[act.id] ? "line-through text-slate" : ""}`}>
                                   {act.action}
                                 </h4>
-                                <p className="text-xs text-slate-400">{act.reason}</p>
+                                <p className="text-[11px] text-graphite leading-relaxed">{act.reason}</p>
                               </div>
 
-                              <div className="shrink-0 flex items-center gap-3">
+                              <div className="shrink-0 flex items-center">
                                 {executedActions[act.id] ? (
-                                  <span className="text-xs text-emerald-400 font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                    <Check className="w-3.5 h-3.5" /> Action Executed
+                                  <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                    <Check className="w-3.5 h-3.5" /> Flow Triggered
                                   </span>
                                 ) : (
                                   <button
                                     onClick={() => handleExecuteAction(act.id)}
                                     disabled={executingActionId === act.id}
-                                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-900 disabled:text-slate-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/15"
+                                    className="px-4 py-2 rounded-full bg-carbon hover:bg-graphite disabled:bg-chalk disabled:text-slate text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
                                   >
                                     {executingActionId === act.id ? (
                                       <>
-                                        <RefreshCw className="w-3 h-3 animate-spin" /> Executing Flow...
+                                        <RefreshCw className="w-3 h-3 animate-spin" /> Invoking...
                                       </>
                                     ) : (
                                       <>
-                                        <Play className="w-3 h-3 fill-white" /> Execute Action
+                                        <Play className="w-3 h-3 fill-white" /> Run Agent Flow
                                       </>
                                     )}
                                   </button>
@@ -930,38 +1112,36 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* MAIN GRID BLOCK */}
+                      {/* MAIN GRID BLOCK: Rescue, Trends, Funnel, Progress */}
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         
-                        {/* LEFT AND MID PANEL */}
+                        {/* Left & Middle Column */}
                         <div className="lg:col-span-2 space-y-8">
                           
-                          {/* NEW / IGNORED MEMBERS */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                            <h3 className="font-bold text-white text-base mb-4 flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-amber-400" /> Member Rescue Pipeline
+                          {/* Member Rescue pipeline */}
+                          <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                            <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-signal-orange" /> Member Rescue Pipeline
                             </h3>
                             <div className="space-y-4">
                               {data.health_summary?.ignored_newcomers?.map((newcomer: string, idx: number) => (
-                                <div key={idx} className="p-4 rounded-xl bg-slate-950 border border-amber-900/30 hover:border-amber-900/50 transition-all flex items-center justify-between gap-4">
+                                <div key={idx} className="p-4 rounded-[8px] bg-fog border border-chalk flex items-center justify-between gap-4">
                                   <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                                      <h4 className="text-sm font-semibold text-slate-200">{newcomer}</h4>
+                                      <span className="w-2 h-2 rounded-full bg-signal-orange animate-pulse" />
+                                      <h4 className="text-xs font-bold text-carbon">{newcomer}</h4>
                                     </div>
-                                    <p className="text-xs text-slate-400">Bio: Non-CS learner looking to build her first neural network in PyTorch.</p>
-                                    <span className="text-[10px] text-amber-400 block font-mono">12 hours since introduction in #introductions. 0 responses.</span>
+                                    <p className="text-[11px] text-graphite">Bio: Non-CS learner looking to build her first neural network in PyTorch.</p>
+                                    <span className="text-[10px] text-signal-orange block font-mono">12 hours since introduction in #introductions. 0 replies.</span>
                                   </div>
 
                                   <button 
                                     onClick={() => setWelcomedMembers(prev => ({ ...prev, [newcomer]: true }))}
                                     disabled={welcomedMembers[newcomer]}
-                                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-850 text-xs font-semibold text-slate-300 disabled:text-emerald-400 disabled:border-emerald-950 disabled:bg-emerald-950/10 flex items-center gap-1.5 shrink-0 transition-all"
+                                    className="px-3.5 py-1.5 rounded-full bg-white border border-slate text-xs font-bold text-carbon disabled:text-emerald-600 disabled:bg-emerald-500/10 disabled:border-emerald-500/20 shrink-0 transition-all shadow-sm"
                                   >
                                     {welcomedMembers[newcomer] ? (
-                                      <>
-                                        <Check className="w-3 h-3" /> Welcomed
-                                      </>
+                                      <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Welcomed</span>
                                     ) : (
                                       "Welcome Her"
                                     )}
@@ -971,23 +1151,91 @@ export default function Home() {
                             </div>
                           </div>
 
-                          {/* SUGGESTED EVENTS GENERATION */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                            <h3 className="font-bold text-white text-base mb-4 flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-purple-400" /> AI Suggested Events (Based on Trends)
+                          {/* Funnel & Donut charts */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            
+                            {/* Funnel Visualization */}
+                            <div className="space-y-4 bg-white p-6 rounded-[8px] border border-chalk shadow-sm">
+                              <h4 className="text-xs font-bold text-slate uppercase tracking-wider">Conversion Funnel</h4>
+                              <div className="flex items-center gap-1.5 h-20">
+                                {/* Stage 1 */}
+                                <div className="flex-1 h-full bg-[#ff682c] rounded-l-[4px] relative flex flex-col justify-center items-center text-white px-2">
+                                  <span className="font-polysans text-sm font-semibold">100%</span>
+                                  <span className="text-[8px] opacity-90 font-medium uppercase font-mono">Visitor</span>
+                                </div>
+                                {/* Stage 2 */}
+                                <div className="flex-1 h-full bg-[#ff682c]/75 relative flex flex-col justify-center items-center text-white px-2">
+                                  <span className="font-polysans text-sm font-semibold">68%</span>
+                                  <span className="text-[8px] opacity-90 font-medium uppercase font-mono">Sign-up</span>
+                                </div>
+                                {/* Stage 3 */}
+                                <div className="flex-1 h-full bg-[#ff682c]/45 relative flex flex-col justify-center items-center text-carbon px-2">
+                                  <span className="font-polysans text-sm font-semibold">42%</span>
+                                  <span className="text-[8px] opacity-90 font-medium uppercase font-mono">Active</span>
+                                </div>
+                                {/* Stage 4 */}
+                                <div className="flex-1 h-full border border-[#ff682c]/40 rounded-r-[4px] relative flex flex-col justify-center items-center text-carbon px-2">
+                                  <span className="font-polysans text-sm font-semibold">12%</span>
+                                  <span className="text-[8px] opacity-90 font-medium uppercase font-mono">Sub</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Donut/Progress Chart */}
+                            <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex flex-col items-center">
+                              <h4 className="text-xs font-bold text-slate uppercase tracking-wider mb-4 self-start">Member Retention</h4>
+                              <div className="relative w-24 h-24 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                  <path
+                                    className="text-fog"
+                                    strokeWidth="3.5"
+                                    stroke="currentColor"
+                                    fill="none"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  />
+                                  <path
+                                    className="text-signal-orange"
+                                    strokeWidth="3.5"
+                                    strokeDasharray="83, 100"
+                                    strokeLinecap="round"
+                                    stroke="currentColor"
+                                    fill="none"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  />
+                                </svg>
+                                <div className="absolute font-polysans text-lg font-normal text-carbon">83%</div>
+                              </div>
+                              <div className="mt-4 flex gap-4 text-[10px]">
+                                <div className="flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full bg-signal-orange" />
+                                  <span className="text-graphite">Active</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full bg-fog border border-chalk" />
+                                  <span className="text-graphite">Inactive</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Proposed Events list */}
+                          <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                            <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-sienna-bronze" /> AI Suggested Events (Based on Trends)
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               {data.insights?.suggested_events?.map((evt: any, i: number) => (
-                                <div key={i} className="p-4 rounded-xl bg-slate-950 border border-slate-900 hover:border-slate-850 transition-all flex flex-col justify-between">
+                                <div key={i} className="p-5 rounded-[8px] bg-fog border border-chalk flex flex-col justify-between">
                                   <div>
-                                    <span className="text-[9px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded font-semibold tracking-wider">
+                                    <span className="text-[9px] font-mono bg-sienna-bronze/10 text-sienna-bronze border border-sienna-bronze/20 px-2 py-0.5 rounded font-semibold tracking-wider">
                                       EVENT PROPOSAL
                                     </span>
-                                    <h4 className="text-sm font-semibold text-slate-200 mt-2">{evt.title}</h4>
-                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{evt.reason}</p>
+                                    <h4 className="text-xs font-bold text-carbon mt-2.5">{evt.title}</h4>
+                                    <p className="text-[11px] text-graphite mt-1 leading-relaxed">{evt.reason}</p>
                                   </div>
                                   <div className="mt-4 flex justify-end">
-                                    <button className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all">
+                                    <button className="px-4 py-2 rounded-full bg-carbon hover:bg-graphite text-white text-xs font-bold transition-all shadow-sm">
                                       Schedule Event
                                     </button>
                                   </div>
@@ -998,41 +1246,42 @@ export default function Home() {
 
                         </div>
 
-                        {/* RIGHT COLUMNS */}
+                        {/* Right Sidebar Columns */}
                         <div className="space-y-8">
                           
-                          {/* TRENDING TOPICS */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                            <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                              <TrendingUp className="w-4 h-4 text-indigo-400" /> Trending Topics
+                          {/* Trending Topics */}
+                          <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                            <h3 className="font-polysans text-sm font-normal text-carbon mb-4 flex items-center gap-1.5">
+                              <TrendingUp className="w-4 h-4 text-signal-orange" /> Trending Topics
                             </h3>
-                            <div className="space-y-3">
+                            <div className="space-y-2.5">
                               {data.health_summary?.trending_topics?.map((topic: string, i: number) => (
-                                <div key={i} className="p-3 rounded-lg bg-slate-950 border border-slate-900 text-xs text-slate-300">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block mr-2" />
+                                <div key={i} className="p-3 rounded-[6px] bg-fog border border-chalk text-xs text-carbon leading-relaxed">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-signal-orange inline-block mr-2" />
                                   <span>{topic}</span>
                                 </div>
                               ))}
                             </div>
                           </div>
 
-                          {/* POTENTIAL MENTORS */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                            <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                              <Award className="w-4 h-4 text-emerald-400" /> Potential Mentors
+                          {/* Potential Mentors */}
+                          <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                            <h3 className="font-polysans text-sm font-normal text-carbon mb-4 flex items-center gap-1.5">
+                              <Award className="w-4 h-4 text-sienna-bronze" /> Potential Mentors
                             </h3>
-                            <div className="space-y-3">
+                            <div className="space-y-3.5">
                               {data.insights?.potential_mentors?.map((mentor: any, i: number) => (
-                                <div key={i} className="p-4 rounded-xl bg-slate-950 border border-slate-900 text-xs space-y-2">
+                                <div key={i} className="p-4 rounded-[8px] bg-fog border border-chalk text-xs space-y-3">
                                   <div className="flex items-center justify-between">
-                                    <span className="font-bold text-slate-200">{mentor.name}</span>
-                                    <span className="text-[10px] text-emerald-400 font-mono">Eligible</span>
+                                    <span className="font-bold text-carbon">{mentor.name}</span>
+                                    <span className="text-[9px] bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-bold">ELIGIBLE</span>
                                   </div>
-                                  <p className="text-slate-400 leading-relaxed">{mentor.reason}</p>
+                                  <p className="text-[11px] text-graphite leading-relaxed">{mentor.reason}</p>
+                                  
                                   <button 
                                     onClick={() => setInvitedMentors(prev => ({ ...prev, [mentor.name]: true }))}
                                     disabled={invitedMentors[mentor.name]}
-                                    className="w-full mt-2 py-1.5 bg-slate-900 hover:bg-slate-850 disabled:bg-emerald-950/20 disabled:text-emerald-400 border border-slate-800 disabled:border-emerald-900/40 text-slate-300 rounded text-[11px] font-semibold transition-all"
+                                    className="w-full py-2 bg-white hover:bg-fog disabled:bg-emerald-500/10 border border-slate disabled:border-emerald-500/20 disabled:text-emerald-600 text-carbon rounded-full text-[11px] font-bold transition-all shadow-sm"
                                   >
                                     {invitedMentors[mentor.name] ? "Invitation Sent" : "Promote to Mentor"}
                                   </button>
@@ -1041,23 +1290,24 @@ export default function Home() {
                             </div>
                           </div>
 
-                          {/* MEMBERS AT RISK */}
-                          <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-850/80">
-                            <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                              <AlertTriangle className="w-4 h-4 text-rose-400" /> Churn Risk Members
+                          {/* Churn Risk Members */}
+                          <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                            <h3 className="font-polysans text-sm font-normal text-carbon mb-4 flex items-center gap-1.5">
+                              <AlertTriangle className="w-4 h-4 text-signal-orange" /> Churn Risk Members
                             </h3>
-                            <div className="space-y-3">
+                            <div className="space-y-3.5">
                               {data.insights?.members_at_risk?.map((member: any, i: number) => (
-                                <div key={i} className="p-4 rounded-xl bg-slate-950 border border-rose-950/25 text-xs space-y-2">
+                                <div key={i} className="p-4 rounded-[8px] bg-fog border border-chalk text-xs space-y-3">
                                   <div className="flex items-center justify-between">
-                                    <span className="font-bold text-slate-200">{member.name}</span>
-                                    <span className="text-[10px] text-rose-400 font-mono">HIGH RISK</span>
+                                    <span className="font-bold text-carbon">{member.name}</span>
+                                    <span className="text-[9px] bg-signal-orange/10 text-signal-orange border border-signal-orange/20 px-2 py-0.5 rounded-full font-mono font-bold">HIGH RISK</span>
                                   </div>
-                                  <p className="text-slate-400 leading-relaxed">{member.reason}</p>
+                                  <p className="text-[11px] text-graphite leading-relaxed">{member.reason}</p>
+                                  
                                   <button 
                                     onClick={() => setReengagedMembers(prev => ({ ...prev, [member.name]: true }))}
                                     disabled={reengagedMembers[member.name]}
-                                    className="w-full mt-2 py-1.5 bg-slate-900 hover:bg-slate-850 disabled:bg-slate-950 border border-slate-800 disabled:text-slate-600 disabled:border-slate-900 text-slate-300 rounded text-[11px] font-semibold transition-all"
+                                    className="w-full py-2 bg-white hover:bg-fog disabled:bg-chalk border border-slate disabled:border-chalk disabled:text-slate text-carbon rounded-full text-[11px] font-bold transition-all shadow-sm"
                                   >
                                     {reengagedMembers[member.name] ? "Nudge Message Sent" : "Send Re-engagement Nudge"}
                                   </button>
@@ -1076,9 +1326,9 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center py-24 gap-2">
-                <AlertCircle className="w-8 h-8 text-rose-500" />
-                <div className="text-sm text-slate-400">Failed to render dashboard data.</div>
+              <div className="bg-white rounded-[8px] border border-chalk p-24 flex flex-col items-center justify-center gap-2 shadow-sm min-h-[500px]">
+                <AlertCircle className="w-8 h-8 text-signal-orange animate-pulse" />
+                <div className="text-xs text-graphite font-mono">Failed to render dashboard data.</div>
               </div>
             )}
           </div>
@@ -1086,10 +1336,10 @@ export default function Home() {
 
       </main>
 
-          {/* FOOTER */}
-          <footer className="py-8 px-6 border-t border-slate-900 text-center text-xs text-slate-500 mt-auto">
-            &copy; {new Date().getFullYear()} CommunityOS --- AI-Powered Community Operations Agent. Built for Track 2.
-          </footer>
-        </div>
-      );
-    }
+      {/* FOOTER */}
+      <footer className="py-10 px-6 border-t border-chalk text-center text-xs text-slate max-w-[1200px] mx-auto w-full mt-auto">
+        &copy; {new Date().getFullYear()} Ventriloc --- CommunityOS AI-Powered personalizations. Built for Track 2.
+      </footer>
+    </div>
+  );
+}
