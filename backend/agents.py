@@ -83,8 +83,7 @@ async def run_identity_agent(member_id: str) -> IdentityProfile:
     if not member:
         raise ValueError(f"Member {member_id} not found.")
 
-    if not OPENROUTER_API_KEY:
-        # Fallback to high-fidelity mock profile
+    def get_fallback():
         if member_id == "rahul":
             return IdentityProfile(
                 interests=["CUDA", "Systems Programming", "Rust", "GPU Architecture"],
@@ -102,7 +101,6 @@ async def run_identity_agent(member_id: str) -> IdentityProfile:
                 reasoning="Identity Agent: Detected that Priya is a brand new member from a non-CS background. Her introductory post in #introductions highlights high enthusiasm for PyTorch but requires structured, non-intimidating beginner-level starting points."
             )
         else:
-            # Generic fallback for other members
             return IdentityProfile(
                 interests=member.get("skills", []),
                 skill_level=member.get("skill_level", "Intermediate"),
@@ -111,7 +109,9 @@ async def run_identity_agent(member_id: str) -> IdentityProfile:
                 reasoning=f"Identity Agent: Analyzed {member['name']}'s bio and metrics. Detected skill level as {member['skill_level']}."
             )
 
-    # Calling OpenRouter via AgentField
+    if not OPENROUTER_API_KEY:
+        return get_fallback()
+
     prompt = f"""
     Analyze the following community member profile and activity logs to generate a structured Identity Profile:
     Member Data: {member}
@@ -124,16 +124,20 @@ async def run_identity_agent(member_id: str) -> IdentityProfile:
     5. Write a detailed reason explaining your classification as the "Identity Agent".
     """
     
-    out = await app.ai(
-        system="You are the Identity Agent of CommunityOS. Your job is to analyze member profiles and behavior to build an accurate identity model.",
-        user=prompt,
-        schema=IdentityProfile
-    )
-    return out
+    try:
+        out = await app.ai(
+            system="You are the Identity Agent of CommunityOS. Your job is to analyze member profiles and behavior to build an accurate identity model.",
+            user=prompt,
+            schema=IdentityProfile
+        )
+        return out
+    except Exception as e:
+        print(f"Identity Agent OpenRouter error: {e}. Falling back to high-fidelity mock reasoning.")
+        return get_fallback()
 
 @app.reasoner()
 async def run_discovery_agent(member_id: str, profile: IdentityProfile) -> DiscoveryRecommendations:
-    if not OPENROUTER_API_KEY:
+    def get_fallback():
         if member_id == "rahul":
             return DiscoveryRecommendations(
                 recommended_communities=["systems-programming", "gpu-computing", "ai-infrastructure"],
@@ -159,6 +163,9 @@ async def run_discovery_agent(member_id: str, profile: IdentityProfile) -> Disco
                 reasoning="Discovery Agent: Generated generic matched recommendations based on member profile."
             )
 
+    if not OPENROUTER_API_KEY:
+        return get_fallback()
+
     prompt = f"""
     Based on the following Identity Profile, recommend relevant communities, resources, and events from our database.
     
@@ -175,16 +182,20 @@ async def run_discovery_agent(member_id: str, profile: IdentityProfile) -> Disco
     5. Write a detailed reason explaining your choices as the "Discovery Agent".
     """
 
-    out = await app.ai(
-        system="You are the Discovery Agent of CommunityOS. Your job is to match member profiles with channels, files, events, and learning pathways.",
-        user=prompt,
-        schema=DiscoveryRecommendations
-    )
-    return out
+    try:
+        out = await app.ai(
+            system="You are the Discovery Agent of CommunityOS. Your job is to match member profiles with channels, files, events, and learning pathways.",
+            user=prompt,
+            schema=DiscoveryRecommendations
+        )
+        return out
+    except Exception as e:
+        print(f"Discovery Agent OpenRouter error: {e}. Falling back to high-fidelity mock reasoning.")
+        return get_fallback()
 
 @app.reasoner()
 async def run_learning_agent(member_id: str, profile: IdentityProfile) -> LearningPath:
-    if not OPENROUTER_API_KEY:
+    def get_fallback():
         if member_id == "rahul":
             return LearningPath(
                 priorities=["Attend GPU Workshop with Sarah", "Reply to Aman's Rust ownership thread", "Finish CUDA Roadmap (Shared Memory Bank Conflicts)"],
@@ -214,6 +225,9 @@ async def run_learning_agent(member_id: str, profile: IdentityProfile) -> Learni
                 reasoning="Learning Agent: Generated default learning path steps."
             )
 
+    if not OPENROUTER_API_KEY:
+        return get_fallback()
+
     prompt = f"""
     Create a personalized list of 3 immediate priorities and a structured step-by-step learning path.
     
@@ -228,16 +242,20 @@ async def run_learning_agent(member_id: str, profile: IdentityProfile) -> Learni
     3. Write a detailed reason explaining your plan as the "Learning Agent".
     """
 
-    out = await app.ai(
-        system="You are the Learning Agent of CommunityOS. Your job is to design highly customized milestones and actions that fit each member's skill level and style.",
-        user=prompt,
-        schema=LearningPath
-    )
-    return out
+    try:
+        out = await app.ai(
+            system="You are the Learning Agent of CommunityOS. Your job is to design highly customized milestones and actions that fit each member's skill level and style.",
+            user=prompt,
+            schema=LearningPath
+        )
+        return out
+    except Exception as e:
+        print(f"Learning Agent OpenRouter error: {e}. Falling back to high-fidelity mock reasoning.")
+        return get_fallback()
 
 @app.reasoner()
 async def run_mentor_agent(member_id: str, profile: IdentityProfile) -> MentorMatch:
-    if not OPENROUTER_API_KEY:
+    def get_fallback():
         if member_id == "rahul":
             return MentorMatch(
                 mentor_name="Sarah",
@@ -260,6 +278,9 @@ async def run_mentor_agent(member_id: str, profile: IdentityProfile) -> MentorMa
                 reasoning="Mentor Agent: Assigned Sarah as a general mentor."
             )
 
+    if not OPENROUTER_API_KEY:
+        return get_fallback()
+
     # Filter experts in mock database
     potential_mentors = [m for m in MEMBERS.values() if m.get("metrics", {}).get("is_mentor")]
     
@@ -276,18 +297,20 @@ async def run_mentor_agent(member_id: str, profile: IdentityProfile) -> MentorMa
     4. Write a detailed reason explaining your match as the "Mentor Agent".
     """
 
-    out = await app.ai(
-        system="You are the Mentor Agent of CommunityOS. Your job is to match experienced mentors with members needing guidance based on skill alignment, interests, and goals.",
-        user=prompt,
-        schema=MentorMatch
-    )
-    return out
-
-# --- Community Health and Organizer Agents ---
+    try:
+        out = await app.ai(
+            system="You are the Mentor Agent of CommunityOS. Your job is to match experienced mentors with members needing guidance based on skill alignment, interests, and goals.",
+            user=prompt,
+            schema=MentorMatch
+        )
+        return out
+    except Exception as e:
+        print(f"Mentor Agent OpenRouter error: {e}. Falling back to high-fidelity mock reasoning.")
+        return get_fallback()
 
 @app.reasoner()
 async def run_health_agent() -> HealthReport:
-    if not OPENROUTER_API_KEY:
+    def get_fallback():
         return HealthReport(
             ignored_newcomers=["Priya"],
             unanswered_questions=["Priya's post: 'Where should I start with PyTorch? I have some basic python knowledge...'"],
@@ -295,6 +318,9 @@ async def run_health_agent() -> HealthReport:
             trending_topics=["CUDA optimizations (Matrix multiplication, memory bank conflicts)", "Rust lifetmes & compiler errors", "PyTorch deep learning for beginners"],
             reasoning="Community Health Agent: Scanned activity logs and timestamps. Flagged Priya as an ignored newcomer since she joined and posted in #introductions over 12 hours ago with zero replies. Detected Vikram as inactive based on lack of events in over 21 days. Trending topics extracted from recent message content in #gpu-computing and #rust."
         )
+
+    if not OPENROUTER_API_KEY:
+        return get_fallback()
 
     prompt = f"""
     Analyze the overall community state:
@@ -309,16 +335,20 @@ async def run_health_agent() -> HealthReport:
     5. Write a detailed reason explaining your health diagnostics as the "Community Health Agent".
     """
 
-    out = await app.ai(
-        system="You are the Community Health Agent of CommunityOS. Your job is to observe community health metrics, identify neglected members, drop-off risks, and trending discussions.",
-        user=prompt,
-        schema=HealthReport
-    )
-    return out
+    try:
+        out = await app.ai(
+            system="You are the Community Health Agent of CommunityOS. Your job is to observe community health metrics, identify neglected members, drop-off risks, and trending discussions.",
+            user=prompt,
+            schema=HealthReport
+        )
+        return out
+    except Exception as e:
+        print(f"Health Agent OpenRouter error: {e}. Falling back to high-fidelity mock reasoning.")
+        return get_fallback()
 
 @app.reasoner()
 async def run_organizer_agent(health_report: HealthReport) -> OrganizerInsights:
-    if not OPENROUTER_API_KEY:
+    def get_fallback():
         return OrganizerInsights(
             suggested_events=[
                 {"title": "GPU Shared Memory & CUDA Optimizations AMA", "reason": "High interest in CUDA bank conflicts from Rahul, plus upcoming AMA with Sarah. Expanding it to cover common kernel issues would engage intermediate coders."},
@@ -338,6 +368,9 @@ async def run_organizer_agent(health_report: HealthReport) -> OrganizerInsights:
             reasoning="Organizer Agent: Synthesized the findings of the Identity, Mentor, and Health agents. Crafted high-value, actionable tasks for community moderators to reduce churn, match mentors, and schedule targeted content to address the CUDA and PyTorch trending demands."
         )
 
+    if not OPENROUTER_API_KEY:
+        return get_fallback()
+
     prompt = f"""
     Based on the Community Health Report and the Members database, generate operational insights and suggested actions for the community organizer:
     
@@ -352,12 +385,16 @@ async def run_organizer_agent(health_report: HealthReport) -> OrganizerInsights:
     5. Write a detailed reason explaining these insights as the "Organizer Agent".
     """
 
-    out = await app.ai(
-        system="You are the Organizer Agent of CommunityOS. Your job is to transform raw community health metrics and member profiles into actionable operational intelligence to help organizers grow engagement.",
-        user=prompt,
-        schema=OrganizerInsights
-    )
-    return out
+    try:
+        out = await app.ai(
+            system="You are the Organizer Agent of CommunityOS. Your job is to transform raw community health metrics and member profiles into actionable operational intelligence to help organizers grow engagement.",
+            user=prompt,
+            schema=OrganizerInsights
+        )
+        return out
+    except Exception as e:
+        print(f"Organizer Agent OpenRouter error: {e}. Falling back to high-fidelity mock reasoning.")
+        return get_fallback()
 
 # --- Unified Personalization Dashboard Execution ---
 

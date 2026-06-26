@@ -125,3 +125,27 @@ class TestCommunityOSAgents(unittest.TestCase):
             self.assertEqual(dashboard["metrics"]["active_members_ratio"], "83%")
 
         self.loop.run_until_complete(run_loop())
+
+
+## 🔒 Phase 1: Authentication & Multi-Tenant Integration Tests (`backend/test_phase1.py`)
+
+In Phase 1, we introduced SQLAlchemy database models, user registration, JWT access token issuance, profile updates, and tenant-based community management.
+
+To validate these endpoints, `backend/test_phase1.py` uses:
+1. **Isolated Test Database:** It creates a local `test_communityos.db` SQLite engine during `setUpClass` and cleans it up in `tearDownClass`.
+2. **Dependency Overrides:** Overrides the FastAPI `get_db` dependency to inject the test database session.
+3. **Validation Loops:** Checks key constraints (e.g., 400 for duplicate registrations, 401 for unauthorized calls, and 200/201 for happy paths).
+
+### Run Test Command
+To run the Phase 1 integration tests:
+```bash
+python3 -m unittest backend.test_phase1
+```
+
+### Output Summary
+```
+Ran 3 tests in 2.253s
+
+OK
+```
+
