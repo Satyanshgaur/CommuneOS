@@ -10,6 +10,10 @@ from backend.mock_data import MEMBERS, COMMUNITIES, RESOURCES, EVENTS
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 model_name = os.getenv("OPENROUTER_MODEL", "openrouter/google/gemma-2-9b-it:free")
 
+# Ensure the model is correctly routed through OpenRouter in LiteLLM/AgentField
+if model_name and not model_name.startswith("openrouter/") and not model_name.startswith("openai/"):
+    model_name = f"openrouter/{model_name}"
+
 # Ensure LiteLLM / AgentField environment variables are set correctly for OpenRouter
 if OPENROUTER_API_KEY:
     os.environ["OPENROUTER_API_KEY"] = OPENROUTER_API_KEY
