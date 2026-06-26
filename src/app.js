@@ -1,4 +1,6 @@
-// app.js - Ventriloc / AgentField.ai Hardcoded Frontend Logic
+// app.js - Ventriloc / AgentField.ai Frontend Logic with Backend Integration
+
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 // 1. Initial Hardcoded Users Data
 const hardcodedUsers = {
@@ -647,7 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Load Initial Dashboard
-  renderApp();
+  loadMemberPersonalization("rahul");
 });
 
 // 8. Event Handlers
@@ -661,22 +663,21 @@ function handleUserChange(e) {
     document.getElementById("agent-view").style.display = "none";
   } else {
     elements.onboardingContainer.style.display = "none";
-    if (userId === "custom") {
-      currentUser = customUserProfile;
-    } else {
-      currentUser = hardcodedUsers[userId];
-    }
-    
-    // Automatically adjust role availability
-    if (currentUser.id === "emily") {
+    if (userId === "emily") {
       switchRole("organizer");
     } else {
       switchRole("member");
+      if (userId === "custom") {
+        currentUser = customUserProfile;
+        renderApp();
+      } else {
+        loadMemberPersonalization(userId);
+      }
     }
   }
 }
 
-function handleOnboardingSubmit(e) {
+async function handleOnboardingSubmit(e) {
   e.preventDefault();
   
   const name = document.getElementById("onboard-name").value.trim();
@@ -688,39 +689,76 @@ function handleOnboardingSubmit(e) {
     return;
   }
   
-  // Generate Profile
-  customUserProfile = generateCustomProfile(name, github, linkedin);
-  
-  // Add to select options dynamically if not already added
-  let hasCustomOption = false;
-  for (let option of elements.userSelect.options) {
-    if (option.value === "custom") {
-      hasCustomOption = true;
-      break;
-    }
-  }
-  
-  if (!hasCustomOption) {
-    const option = document.createElement("option");
-    option.value = "custom";
-    option.text = `${name} (Personalized)`;
-    elements.userSelect.add(option, elements.userSelect.options[elements.userSelect.options.length - 1]);
-  } else {
-    // Update label
+  // Create loading state
+  elements.onboardingContainer.style.display = "none";
+  elements.mainDashboard.style.display = "block";
+  switchRole("member");
+
+  try {
+    // 1. Register user on the backend
+    const body = {
+      username: name,
+      bio: `GitHub Profile: ${github}. LinkedIn Profile: ${linkedin}. Custom onboarding profile.`,
+      tags: [github.toLowerCase().includes("cuda") ? "cuda" : "python"],
+      interests: [github.toLowerCase().includes("cuda") ? "Systems Programming" : "Machine Learning"],
+      goals: ["Complete personalized onboarding", "Build AI integration frameworks"],
+      github_url: github,
+      linkedin_url: linkedin,
+      timezone: "Asia/Kolkata"
+    };
+
+    const response = await fetch(`${API_BASE_URL}/users/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) throw new Error("Failed to create user in backend");
+    const result = await response.json();
+    const newUserId = result.data.user_id;
+
+    // Add option dynamically to selection dropdown
+    let hasCustomOption = false;
     for (let option of elements.userSelect.options) {
-      if (option.value === "custom") {
-        option.text = `${name} (Personalized)`;
+      if (option.value === newUserId) {
+        hasCustomOption = true;
         break;
       }
     }
+    
+    if (!hasCustomOption) {
+      const option = document.createElement("option");
+      option.value = newUserId;
+      option.text = `${name} (Personalized)`;
+      elements.userSelect.add(option, elements.userSelect.options[elements.userSelect.options.length - 1]);
+    }
+    
+    elements.userSelect.value = newUserId;
+    
+    // 2. Trigger personalization pipeline
+    await loadMemberPersonalization(newUserId);
+
+  } catch (err) {
+    console.error("Onboarding failed on backend, running local fallback", err);
+    // Local fallback path
+    customUserProfile = generateCustomProfile(name, github, linkedin);
+    let hasCustomOption = false;
+    for (let option of elements.userSelect.options) {
+      if (option.value === "custom") {
+        hasCustomOption = true;
+        break;
+      }
+    }
+    if (!hasCustomOption) {
+      const option = document.createElement("option");
+      option.value = "custom";
+      option.text = `${name} (Personalized)`;
+      elements.userSelect.add(option, elements.userSelect.options[elements.userSelect.options.length - 1]);
+    }
+    elements.userSelect.value = "custom";
+    currentUser = customUserProfile;
+    renderApp();
   }
-  
-  // Select custom user and render
-  elements.userSelect.value = "custom";
-  currentUser = customUserProfile;
-  
-  elements.onboardingContainer.style.display = "none";
-  switchRole("member");
 }
 
 function switchRole(role) {
@@ -740,6 +778,8 @@ function switchRole(role) {
     elements.mainDashboard.style.display = "none";
     elements.organizerDashboard.style.display = "block";
     document.getElementById("agent-view").style.display = "block";
+    // Load organizer data from backend!
+    loadOrganizerData();
   }
   
   renderApp();
@@ -1107,4 +1147,276 @@ window.updateCoef = function(val) {
 
 function closeModal() {
   elements.modalOverlay.classList.remove("active");
+}
+
+// ─── Backend Integration Helper Functions ────────────────────────────────────
+
+function useLocalFallback(userId) {
+  console.log(`Using local fallback profile data for user: ${userId}`);
+  if (userId === "custom") {
+    currentUser = customUserProfile || hardcodedUsers["rahul"];
+  } else {
+    currentUser = hardcodedUsers[userId] || hardcodedUsers["rahul"];
+  }
+  renderAgentFlow();
+}
+
+async function loadMemberPersonalization(userId) {
+  // Show loading state
+  elements.heroHeadline.textContent = "AI Orchestration Running...";
+  elements.heroBody.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <p>Please wait while the Agent Orchestrator runs: <strong>Identity Agent</strong> → (<strong>Discovery Agent</strong> + <strong>Learning Agent</strong>) → <strong>Mentor Agent</strong>...</p>
+      <div style="width: 100%; height: 6px; background-color: var(--color-chalk); border-radius: 3px; overflow: hidden; position: relative;">
+        <div style="width: 50%; height: 100%; background-color: var(--color-signal-orange); position: absolute; animation: loading-bar 2s infinite ease-in-out;"></div>
+      </div>
+    </div>
+  `;
+  elements.heroPills.innerHTML = "";
+  elements.priorityGrid.innerHTML = `
+    <div class="card" style="grid-column: span 3; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
+      <div class="spinner" style="border: 4px solid var(--color-chalk); border-top: 4px solid var(--color-signal-orange); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 12px;"></div>
+      <p style="font-weight: 500; color: var(--color-carbon);">Orchestrating agent decisions & memory state...</p>
+      <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Connecting to backend on port 8000. Caching layers are engaged.</p>
+    </div>
+  `;
+
+  if (!document.getElementById("backend-integration-styles")) {
+    const style = document.createElement("style");
+    style.id = "backend-integration-styles";
+    style.innerHTML = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes loading-bar {
+        0% { left: -50%; }
+        100% { left: 100%; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  try {
+    const start = Date.now();
+    const response = await fetch(`${API_BASE_URL}/agents/personalize/${userId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    const elapsed = Date.now() - start;
+    console.log(`Backend pipeline took ${elapsed}ms:`, result);
+
+    if (result.success && result.data) {
+      const adapted = adaptBackendProfileToFrontend(result.data, userId);
+      currentUser = adapted;
+      renderAgentFlowWithTimings(result.data);
+    } else {
+      console.warn("API succeeded but returned failure payload. Using local fallback.");
+      useLocalFallback(userId);
+    }
+  } catch (error) {
+    console.error("Failed to fetch personalization from backend:", error);
+    useLocalFallback(userId);
+  }
+
+  renderApp();
+}
+
+function renderAgentFlowWithTimings(backendData) {
+  const steps = [];
+  const identityMs = backendData.step_timings_ms?.identity_ms || "1.2s";
+  const discLearnMs = backendData.step_timings_ms?.discovery_learning_ms || "1.5s";
+  const mentorMs = backendData.step_timings_ms?.mentor_ms || "1.0s";
+  const totalMs = backendData.pipeline_time_ms ? `${(backendData.pipeline_time_ms / 1000).toFixed(1)}s` : "3.0s";
+
+  steps.push({ name: "Identity Agent", desc: "Profile understanding & verified skills detection", timing: `${identityMs}ms` });
+  steps.push({ name: "Discovery Agent", desc: "Relevance calculations, interest matching", timing: `${discLearnMs}ms (parallel)` });
+  steps.push({ name: "Learning Agent", desc: "Learning path milestone check & active skill gaps analysis", timing: `${discLearnMs}ms (parallel)` });
+  steps.push({ name: "Mentor Agent", desc: "Co-collaborator & teacher search matrix comparison", timing: `${mentorMs}ms` });
+
+  elements.agentTimeline.innerHTML = steps.map((s, index) => `
+    <div class="agent-node active">
+      <div class="agent-node-header">
+        <span>${s.name}</span>
+        <span style="color: var(--color-signal-orange);">${s.timing}</span>
+      </div>
+      <div class="agent-node-desc">${s.desc}</div>
+      <div class="agent-node-meta">Inputs parsed: user_id, active_session_logs, graph_nodes_cache</div>
+    </div>
+  `).join("") + `
+    <div style="font-size: 13px; color: #10b981; font-weight: 600; margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      Dashboard refreshed in ${totalMs} (Fallback used: ${backendData.fallback_used}).
+    </div>
+  `;
+}
+
+async function loadOrganizerData() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/agents/community/health`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!response.ok) throw new Error("Failed to load community health metrics");
+    const result = await response.json();
+    console.log("Community health report loaded:", result);
+
+    if (result.success && result.data) {
+      const data = result.data;
+      const h = data.health || {};
+      const a = data.actions || {};
+
+      // Map to UI variables
+      communityHealthMetrics.score = Math.round((h.community_health_score || 0.8) * 100);
+      communityHealthMetrics.new_members = 142; // static scaling reference
+      communityHealthMetrics.active_members = h.total_members || 247;
+      communityHealthMetrics.at_risk_members = (h.at_risk_members || []).length;
+      communityHealthMetrics.unanswered_questions = (h.topic_gaps || []).reduce((sum, g) => sum + (g.unanswered_questions || 0), 0);
+      communityHealthMetrics.trending_topics = h.trending_topics || [];
+
+      // Map suggested actions
+      suggestedActions.length = 0;
+      (a.action_items || []).forEach(item => {
+        suggestedActions.push({
+          id: item.action_id || `act-${Math.random().toString(36).substr(2, 9)}`,
+          action: item.title,
+          reason: item.description,
+          impact: item.expected_impact || "Improves member retention.",
+          assign_to: item.assignee || "Organizer",
+          status: item.completed ? "approved" : "suggested"
+        });
+      });
+
+      renderApp();
+    }
+  } catch (error) {
+    console.error("Failed to load organizer data from backend:", error);
+  }
+}
+
+function adaptBackendProfileToFrontend(backendProfile, user_id) {
+  const identity = backendProfile.identity || {};
+  const discovery = backendProfile.discovery || {};
+  const learning = backendProfile.learning || {};
+  const mentor = backendProfile.mentor || {};
+
+  // Map skills: detect level from proficiency
+  const levelMap = { "Beginner": 2, "Intermediate": 3, "Advanced": 4, "Expert": 5 };
+  const verified_skills = (identity.detected_skills || []).map(s => ({
+    name: s.name,
+    level: levelMap[s.proficiency] || 3
+  }));
+
+  // Map learning paths
+  const roadmapName = learning.roadmap_title || "Custom Pathway";
+  const milestones = learning.milestones || [];
+  const nextMilestone = milestones[0] ? `Week ${milestones[0].week}: ${milestones[0].title}` : "Milestone 1: Getting Started";
+  const learning_paths = [
+    {
+      name: roadmapName,
+      progress: 25,
+      completed: 1,
+      total: milestones.length || 4,
+      next_milestone: nextMilestone
+    }
+  ];
+
+  // Map recommended people
+  const recommended_people = [];
+  if (mentor.primary_mentor) {
+    const pm = mentor.primary_mentor;
+    recommended_people.push({
+      name: pm.name,
+      role: pm.role || "Expert Mentor",
+      match: Math.round((pm.compatibility_score || 0.9) * 100),
+      avatar: pm.avatar || pm.name.substring(0, 2).toUpperCase(),
+      reason: pm.match_reason || "Aligned with your learning goals."
+    });
+  }
+  (mentor.backup_mentors || []).forEach(bm => {
+    recommended_people.push({
+      name: bm.name,
+      role: bm.role || "Backup Mentor",
+      match: Math.round((bm.compatibility_score || 0.8) * 100),
+      avatar: bm.avatar || bm.name.substring(0, 2).toUpperCase(),
+      reason: bm.match_reason || "Expert in overlapping interests."
+    });
+  });
+
+  // Map channels to show/hide
+  const showChannels = (discovery.recommended_channels || []).map(ch => ch.name);
+  const allChannels = ["Systems Programming", "GPU & Accelerators", "AI Infrastructure", "Machine Learning", "Data Science & Python", "Frontend Development", "Design Systems & UI UX", "Web3 & Blockchain", "Mobile Design", "React Frameworks", "Open Source Contribution"];
+  const hideChannels = allChannels.filter(c => !showChannels.includes(c));
+
+  // Map resources
+  const resources = (discovery.recommended_resources || []).map(r => ({
+    id: r.resource_id || `res-${Math.random().toString(36).substr(2, 9)}`,
+    title: r.title,
+    type: r.type || "Article",
+    duration: r.duration || "20 min",
+    difficulty: r.difficulty || "Intermediate",
+    score: Math.round((r.relevance_score || 0.85) * 100),
+    reasoning: r.reason || "Highly relevant resource for your active milestone."
+  }));
+
+  // Map events
+  const primaryChannel = showChannels[0] || "General";
+  const events = [
+    {
+      id: `evt-1`,
+      title: `${primaryChannel} Deep Dive Session`,
+      time: "Tonight, 7:00 PM (1h 30m)",
+      type: "Workshop",
+      difficulty: "Intermediate",
+      score: 95,
+      reasoning: `Highly relevant for your ${roadmapName} goals. Led by community mentors.`
+    },
+    {
+      id: `evt-2`,
+      title: "Rust FFI & Python Interop Panel",
+      time: "Tomorrow, 5:30 PM (1h)",
+      type: "AMA",
+      difficulty: "Advanced",
+      score: 82,
+      reasoning: "Great complement to low level programming and MLOps paths."
+    }
+  ];
+
+  // Map insights
+  const insights = [
+    { message: identity.summary || "Your custom learning environment is now fully active.", type: "momentum" }
+  ];
+  if (mentor.primary_mentor) {
+    insights.push({ message: `${mentor.primary_mentor.name} is available for scheduling sessions.`, type: "match" });
+  }
+
+  const formattedName = backendProfile.username || user_id.charAt(0).toUpperCase() + user_id.slice(1);
+
+  return {
+    id: user_id,
+    name: formattedName,
+    avatar: formattedName.substring(0, 2).toUpperCase(),
+    role: "member",
+    skill_level: identity.growth_areas ? "Intermediate" : "Beginner",
+    headline: `Welcome back, ${formattedName} 👋`,
+    subtext: identity.summary || "Your personalized path is active.",
+    verified_skills: verified_skills,
+    goals: identity.growth_areas || [],
+    learning_paths: learning_paths,
+    interests: identity.expertise_areas || [],
+    recommended_people: recommended_people,
+    communities: {
+      show: showChannels,
+      hide: hideChannels.slice(0, 4)
+    },
+    resources: resources,
+    events: events,
+    insights: insights
+  };
 }
