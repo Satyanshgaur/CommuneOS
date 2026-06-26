@@ -103,6 +103,18 @@ def get_mock_discovery(user_id: str, identity: Optional[Dict] = None) -> Dict[st
         {"resource_id": "res-003", "title": "Linux Kernel Module Programming Guide", "type": "Guide", "duration": "60 min", "difficulty": "Intermediate", "relevance_score": 0.83, "reason": "Aligns with systems programming interest"},
         {"resource_id": "res-004", "title": "NumPy Matrix Operations in Practice", "type": "Interactive Notebook", "duration": "30 min", "difficulty": "Beginner", "relevance_score": 0.78, "reason": "Bridges your math background to Python"},
         {"resource_id": "res-005", "title": "Distributed PyTorch Training Guide", "type": "Tutorial", "duration": "45 min", "difficulty": "Advanced", "relevance_score": 0.75, "reason": "Next step in your AI infrastructure journey"},
+        {"resource_id": "res-006", "title": "Rust Programming for Systems Engineers", "type": "Guide", "duration": "90 min", "difficulty": "Advanced", "relevance_score": 0.88, "reason": "Great addition for learning low-level safety"},
+        {"resource_id": "res-007", "title": "FastAPI Complete Tutorial: From Zero to Production", "type": "Video", "duration": "120 min", "difficulty": "Intermediate", "relevance_score": 0.85, "reason": "Build production-ready backend APIs using Python"},
+        {"resource_id": "res-008", "title": "Docker & Kubernetes: MLOps Containerization", "type": "Article", "duration": "35 min", "difficulty": "Intermediate", "relevance_score": 0.80, "reason": "Necessary for scaling and deploying ML models"},
+        {"resource_id": "res-009", "title": "Introduction to Transformers & NLP", "type": "Tutorial", "duration": "50 min", "difficulty": "Intermediate", "relevance_score": 0.82, "reason": "Deep dive into language models and modern neural architectures"},
+        {"resource_id": "res-010", "title": "UI/UX Design Patterns for AI Applications", "type": "Guide", "duration": "40 min", "difficulty": "Beginner", "relevance_score": 0.70, "reason": "Design interfaces that feel alive and responsive"},
+        {"resource_id": "res-011", "title": "Deep Reinforcement Learning in PyTorch", "type": "Tutorial", "duration": "75 min", "difficulty": "Advanced", "relevance_score": 0.77, "reason": "Learn DQN, PPO and how to build game agents"},
+        {"resource_id": "res-012", "title": "Advanced C++ Memory Management", "type": "Article", "duration": "30 min", "difficulty": "Advanced", "relevance_score": 0.84, "reason": "Important for high performance C++ and GPU interaction"},
+        {"resource_id": "res-013", "title": "Git Workflows for Large Engineering Teams", "type": "Guide", "duration": "25 min", "difficulty": "Beginner", "relevance_score": 0.72, "reason": "Collaborate effectively with main branches and checkpoints"},
+        {"resource_id": "res-014", "title": "Model Deployment with MLflow & Triton", "type": "Tutorial", "duration": "55 min", "difficulty": "Advanced", "relevance_score": 0.79, "reason": "Learn to serve models with ultra-low latency"},
+        {"resource_id": "res-015", "title": "Data Visualization Best Practices with Seaborn", "type": "Interactive Notebook", "duration": "45 min", "difficulty": "Beginner", "relevance_score": 0.76, "reason": "Improve user-facing data reporting and dashboards"},
+        {"resource_id": "res-016", "title": "Introduction to GPU Programming with WebGPU", "type": "Video", "duration": "35 min", "difficulty": "Intermediate", "relevance_score": 0.81, "reason": "GPU acceleration directly in the web browser"},
+        {"resource_id": "res-017", "title": "FastAPI Authentication and Security Best Practices", "type": "Guide", "duration": "50 min", "difficulty": "Intermediate", "relevance_score": 0.83, "reason": "Secure endpoints and build robust auth pipelines"},
     ]
     
     # Select channels deterministically
@@ -111,7 +123,7 @@ def get_mock_discovery(user_id: str, identity: Optional[Dict] = None) -> Dict[st
     for i in range(min(n_channels, len(channel_pool))):
         selected_channels.append(channel_pool[(seed + i) % len(channel_pool)])
     
-    n_resources = 2 + (seed % 3)  # 2-4 resources
+    n_resources = 3 + (seed % 4)  # 3-6 resources
     selected_resources = []
     for i in range(min(n_resources, len(resource_pool))):
         selected_resources.append(resource_pool[(seed + i) % len(resource_pool)])
@@ -220,6 +232,69 @@ def get_mock_mentor(user_id: str, identity: Optional[Dict] = None) -> Dict[str, 
             "match_reason": "Strong foundation in data science fundamentals. Great for beginners.",
             "availability": "Flexible evenings", "teaching_style": "Structured curriculum with checkpoints",
             "years_experience": 5
+        },
+        {
+            "mentor_id": "mentor-marcus", "name": "Marcus Chen",
+            "role": "Senior Systems Developer", "avatar": "MC",
+            "expertise_areas": ["C++", "Linux Systems", "Rust"],
+            "compatibility_score": 0.89,
+            "match_reason": "Deep background in low-level systems programming and memory safety using Rust.",
+            "availability": "Mon/Wed/Fri 7-9 PM", "teaching_style": "Deep dive into system internals and debugging",
+            "years_experience": 10
+        },
+        {
+            "mentor_id": "mentor-elena", "name": "Elena Rostova",
+            "role": "Deep Learning Researcher", "avatar": "ER",
+            "expertise_areas": ["NLP", "Transformers", "PyTorch"],
+            "compatibility_score": 0.87,
+            "match_reason": "Passionate about large language models, custom attention heads and transformers.",
+            "availability": "Tuesday evenings", "teaching_style": "Paper discussions combined with implementation",
+            "years_experience": 7
+        },
+        {
+            "mentor_id": "mentor-david", "name": "David Miller",
+            "role": "DevOps Architect", "avatar": "DM",
+            "expertise_areas": ["Kubernetes", "Docker", "Cloud Infra"],
+            "compatibility_score": 0.83,
+            "match_reason": "Enjoys containerizing large systems and managing distributed clusters.",
+            "availability": "Saturdays 9-11 AM", "teaching_style": "Config-heavy step-by-step infrastructure building",
+            "years_experience": 9
+        },
+        {
+            "mentor_id": "mentor-aisha", "name": "Aisha Rahman",
+            "role": "MLOps Engineer", "avatar": "AR",
+            "expertise_areas": ["Model Deployment", "MLflow", "FastAPI"],
+            "compatibility_score": 0.85,
+            "match_reason": "Bridges research code and production deployment with high efficiency.",
+            "availability": "Weekdays 8-9 PM", "teaching_style": "Practical MLOps pipelines and APIs",
+            "years_experience": 4
+        },
+        {
+            "mentor_id": "mentor-yuki", "name": "Yuki Tanaka",
+            "role": "Frontend Tech Lead", "avatar": "YT",
+            "expertise_areas": ["React", "TypeScript", "UI/UX"],
+            "compatibility_score": 0.80,
+            "match_reason": "Expert in state management, responsive designs, and interactive AI dashboards.",
+            "availability": "Fridays 4-6 PM", "teaching_style": "Interactive frontend pairing and layout refactoring",
+            "years_experience": 6
+        },
+        {
+            "mentor_id": "mentor-clara", "name": "Clara Dupont",
+            "role": "Product Manager AI", "avatar": "CD",
+            "expertise_areas": ["Product Strategy", "UX Research", "Agile"],
+            "compatibility_score": 0.82,
+            "match_reason": "Specializes in product lifecycle, user interviewing, and metrics-driven development.",
+            "availability": "Thursday afternoons", "teaching_style": "Case studies, mockup reviews, and user flow feedback",
+            "years_experience": 7
+        },
+        {
+            "mentor_id": "mentor-james", "name": "James Wilson",
+            "role": "Reinforcement Learning Expert", "avatar": "JW",
+            "expertise_areas": ["RL", "Robotics", "Python"],
+            "compatibility_score": 0.84,
+            "match_reason": "Experienced in building complex simulation environments and Q-learning architectures.",
+            "availability": "Weekends variable", "teaching_style": "Simulation builds and agent tuning sessions",
+            "years_experience": 8
         },
     ]
     
