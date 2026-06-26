@@ -405,49 +405,7 @@ def get_mock_organizer(health_data: Optional[Dict] = None) -> Dict[str, Any]:
 
 
 # In-memory user store for development (replaces database in Phase 1)
-_user_store: Dict[str, Dict] = {
-    "rahul": {
-        "user_id": "rahul", "username": "Rahul", "email": "rahul@example.com",
-        "bio": "Intermediate GPU engineer working on CUDA kernels and ML infrastructure",
-        "skills": {"CUDA": 3, "C++": 4, "Linux Systems": 3}, "skill_level": "Intermediate",
-        "interests": ["Systems Programming", "GPU Architecture", "AI Infrastructure"],
-        "goals": ["GPU Optimization", "Kernel Development", "ML Infrastructure"],
-        "tags": ["cuda", "cpp", "linux", "gpu"],
-    },
-    "priya": {
-        "user_id": "priya", "username": "Priya", "email": "priya@example.com",
-        "bio": "Beginner ML learner with strong math background. Working through PyTorch basics.",
-        "skills": {"Python": 2, "Linear Algebra": 3}, "skill_level": "Beginner",
-        "interests": ["Machine Learning", "Data Science", "Python Programming"],
-        "goals": ["Machine Learning Fundamentals", "PyTorch Mastery", "Data Visualisation"],
-        "tags": ["python", "ml", "pytorch", "data-science"],
-    },
-    "sarah": {
-        "user_id": "sarah", "username": "Sarah", "email": "sarah@example.com",
-        "bio": "Expert GPU systems architect. Mentoring 12 community learners. Research-focused.",
-        "skills": {"CUDA": 5, "Distributed Clusters": 5, "Linux Kernels": 4}, "skill_level": "Expert",
-        "interests": ["Distributed Systems", "GPU Infrastructure", "Open Source Contribution"],
-        "goals": ["Mentoring Community Devs", "Designing Distributed GPU Runtimes"],
-        "tags": ["cuda", "distributed", "gpu", "linux", "research"],
-    },
-    "alex": {
-        "user_id": "alex", "username": "Alex", "email": "alex@example.com",
-        "bio": "Product designer pivoting to AI tools. Exploring ML interfaces and UX patterns.",
-        "skills": {"Figma": 4, "Python": 2, "React": 3}, "skill_level": "Beginner",
-        "interests": ["AI Product Design", "UX Research", "Frontend Engineering"],
-        "goals": ["Build AI-powered products", "Learn ML basics", "Design better interfaces"],
-        "tags": ["design", "ux", "figma", "python", "react"],
-    },
-    "emily": {
-        "user_id": "emily", "username": "Emily", "email": "emily@example.com",
-        "bio": "Community organizer running events and programs. Focus on engagement and retention.",
-        "skills": {"Community Management": 5, "Data Analysis": 3, "Communication": 5},
-        "skill_level": "Expert", "role": "organizer",
-        "interests": ["Community Building", "Events", "Retention Strategies"],
-        "goals": ["Grow active membership by 30%", "Improve onboarding retention"],
-        "tags": ["community", "events", "engagement", "organizer"],
-    },
-}
+_user_store: Dict[str, Dict] = {}
 
 
 def get_mock_user(user_id: str) -> Optional[Dict]:

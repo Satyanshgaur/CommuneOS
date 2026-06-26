@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     USE_REDIS: bool = False
     REDIS_URL: str = "redis://localhost:6379"
 
+    # ─── Supabase Configuration ────────────────────────────────────────────────
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+
     # ─── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/communeos.log"

@@ -10,7 +10,7 @@
 <body>
 
   <!-- Header Navigation -->
-  <header>
+  <header id="main-header" style="display: none;">
     <div class="nav-capsule">
       <a href="#" class="logo-container">
         ventriloc<span class="logo-swoosh">~</span>
@@ -32,20 +32,87 @@
 
     <!-- Global Control Bar -->
     <div class="control-bar">
-      <div class="user-selector-wrapper">
-        <span class="user-selector-label">Active Member:</span>
-        <select id="user-select" class="user-select">
-          <option value="rahul">Rahul (Intermediate GPU Engineer)</option>
-          <option value="priya">Priya (Beginner ML Learner)</option>
-          <option value="sarah">Sarah (Expert Systems Architect)</option>
-          <option value="alex">Alex (Product Designer)</option>
-          <option value="emily">Emily (Community Organizer)</option>
-          <option value="new">+ Add Custom Profile (LinkedIn & GitHub Onboard)</option>
-        </select>
+      <div class="user-profile-wrapper user-selector-wrapper" id="user-profile-wrapper" style="display: none;">
+        <span class="user-selector-label">Authenticated User:</span>
+        <span id="auth-user-name" style="font-weight: 600; color: var(--color-carbon); margin-right: 12px;">Loading...</span>
+        <button id="btn-signout" class="btn-outlined" style="padding: 4px 10px; font-size: 11px; border-radius: var(--radius-buttons); cursor: pointer;">Sign Out</button>
       </div>
       <div class="role-toggle-group">
         <button id="role-member" class="role-btn active">Member View</button>
         <button id="role-organizer" class="role-btn">Organizer Console</button>
+      </div>
+    </div>
+
+    <!-- AUTHENTICATION PANELS -->
+    <div id="auth-container" class="card" style="display: none; max-width: 420px; margin: 40px auto; padding: 32px; border-radius: var(--radius-cards);">
+      
+      <!-- Login Panel -->
+      <div id="login-panel">
+        <h2 class="onboarding-title" style="margin-bottom: 8px;">Login to CommuneOS</h2>
+        <p class="onboarding-subtitle" style="margin-bottom: 24px;">Enter your credentials to enter your agent-orchestrated space.</p>
+        
+        <!-- Credential Warning message if API not configured -->
+        <div id="auth-config-warning" style="display: none; padding: 12px; font-size: 12px; color: #816729; border: 1px solid rgba(129, 103, 41, 0.3); border-radius: var(--radius-cards); background-color: rgba(129, 103, 41, 0.05); margin-bottom: 16px;">
+          <strong>Warning:</strong> Supabase environment variables are missing in your backend <code>.env</code> file. Please set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>.
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email Address</label>
+            <input type="email" id="login-email" class="form-input" required placeholder="e.g. suraj@example.com">
+          </div>
+          <div class="form-group" style="margin-top: 16px;">
+            <label class="form-label" for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-input" required placeholder="••••••••">
+          </div>
+          <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+            <button type="submit" class="btn-filled" style="width: 100%; border-radius: var(--radius-buttons); cursor: pointer;">Log In</button>
+            <p style="font-size: 13px; color: var(--color-slate); text-align: center; margin: 8px 0 0 0;">
+              Don't have an account? <a href="#" id="link-show-signup" style="color: var(--color-signal-orange); font-weight: 600;">Sign Up</a>
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Signup Panel -->
+      <div id="signup-panel" style="display: none;">
+        <h2 class="onboarding-title" style="margin-bottom: 8px;">Create Account</h2>
+        <p class="onboarding-subtitle" style="margin-bottom: 24px;">Sign up to begin your personalized developer environment.</p>
+        <form id="signup-form">
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email Address</label>
+            <input type="email" id="signup-email" class="form-input" required placeholder="e.g. suraj@example.com">
+          </div>
+          <div class="form-group" style="margin-top: 16px;">
+            <label class="form-label" for="signup-password">Password (min 6 characters)</label>
+            <input type="password" id="signup-password" class="form-input" required placeholder="••••••••" minlength="6">
+          </div>
+          <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+            <button type="submit" class="btn-filled" style="width: 100%; border-radius: var(--radius-buttons); cursor: pointer;">Sign Up</button>
+            <p style="font-size: 13px; color: var(--color-slate); text-align: center; margin: 8px 0 0 0;">
+              Already have an account? <a href="#" id="link-show-login" style="color: var(--color-signal-orange); font-weight: 600;">Log In</a>
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Email Verification Panel -->
+      <div id="verification-panel" style="display: none; text-align: center;">
+        <div style="font-size: 40px; margin-bottom: 16px;">✉️</div>
+        <h2 class="onboarding-title" style="margin-bottom: 8px;">Verify Your Email</h2>
+        <p class="onboarding-subtitle" style="margin-bottom: 24px;">A verification email has been sent. Please check your inbox and verify your email, then return here to log in.</p>
+        <button id="btn-verification-done" class="btn-filled" style="width: 100%; border-radius: var(--radius-buttons); cursor: pointer;">Go to Login</button>
+      </div>
+
+    </div>
+
+    <!-- Community Assignment Section -->
+    <div id="community-assignment-container" class="card" style="display: none; max-width: 500px; margin: 40px auto; padding: 40px; text-align: center; border-radius: var(--radius-cards);">
+      <div class="spinner" style="border: 4px solid var(--color-chalk); border-top: 4px solid var(--color-signal-orange); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto;"></div>
+      <h2 class="onboarding-title" style="margin-bottom: 8px;">Analyzing Coordinates & Assigning Community</h2>
+      <p class="onboarding-subtitle" style="margin-bottom: 24px;">Discovery Agent and Learning Agent are matching your GitHub repositories with learning pathways and community channels...</p>
+      <div style="width: 100%; height: 6px; background-color: var(--color-chalk); border-radius: 3px; overflow: hidden; position: relative;">
+        <div style="width: 50%; height: 100%; background-color: var(--color-signal-orange); position: absolute; animation: loading-bar 2s infinite ease-in-out;"></div>
       </div>
     </div>
 
@@ -69,7 +136,7 @@
           <input type="url" id="onboard-linkedin" class="form-input" placeholder="e.g. https://linkedin.com/in/suraj-kumar" required>
         </div>
         <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
-          <button type="button" class="btn-outlined" onclick="document.getElementById('user-select').value='rahul'; handleUserChange({target: {value: 'rahul'}});">Cancel</button>
+          <button type="button" class="btn-outlined" id="btn-onboard-cancel" onclick="cancelOnboarding();">Cancel</button>
           <button type="submit" class="btn-filled">Initialize Environment & Onboard</button>
         </div>
       </form>
@@ -81,65 +148,32 @@
       <!-- Hero Section -->
       <section class="hero-section">
         <div class="hero-left">
-          <h1 class="hero-headline" id="hero-headline">Welcome back, Rahul 👋</h1>
+          <h1 class="hero-headline" id="hero-headline">Welcome back 👋</h1>
           <p class="hero-body" id="hero-body">
-            Your intermediate CUDA tracks are heating up. Today you have 2 key workshops aligning with your memory architecture objectives.
+            Loading your personalized environment...
           </p>
           <div class="btn-group" id="hero-pills">
-            <button class="btn-filled">Continue Path</button>
-            <button class="btn-outlined">GitHub Profile</button>
+            <!-- Rendered dynamically -->
           </div>
         </div>
-        <div class="hero-right">
-          <div class="floating-card-container">
-            <!-- Overlapping mock cards representing product interface -->
-            <div class="mock-card mock-card-1">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span class="card-badge orange">Identity Agent</span>
-                <span style="font-size: 11px; color: var(--color-slate);">Active Status</span>
-              </div>
-              <p style="font-size: 14px; font-weight: 600; color: var(--color-carbon);">GPU Cluster Nodes Optimization</p>
-              <div style="height: 60px; margin-top: 12px; position: relative;">
-                <!-- Simulated Mini Area Chart -->
-                <svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="var(--color-signal-orange)" stop-opacity="0.4"/>
-                      <stop offset="100%" stop-color="var(--color-signal-orange)" stop-opacity="0.0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,40 L0,25 Q15,10 30,22 T60,8 T90,28 T100,10 L100,40 Z" fill="url(#orangeGrad)"/>
-                  <path d="M0,25 Q15,10 30,22 T60,8 T90,28 T100,10" fill="none" stroke="var(--color-signal-orange)" stroke-width="2"/>
-                </svg>
-              </div>
-            </div>
-            
-            <div class="mock-card mock-card-2">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 11px; color: var(--color-slate);">Verification Score</span>
-                <span style="font-size: 12px; font-weight: 700; color: var(--color-signal-orange);">94%</span>
-              </div>
-              <p style="font-size: 13px; font-weight: 500; color: var(--color-graphite);">CUDA memory structures matched with Sarah Jenkins (Mentor)</p>
-            </div>
-
-            <div class="mock-card mock-card-3" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px;">
-              <span style="font-size: 10px; color: var(--color-slate); text-transform: uppercase;">Confidence</span>
-              <span style="font-size: 28px; font-family: var(--font-polysans); color: var(--color-carbon); margin: 4px 0;">96%</span>
-              <span class="card-badge" style="font-size: 9px; padding: 2px 6px;">Consensus Reached</span>
-            </div>
+        <div class="hero-right" id="hero-right-container">
+          <div class="card" style="padding: 24px; border: 1px dashed var(--color-slate); border-radius: var(--radius-cards); height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background-color: transparent; width: 100%;">
+            <div style="font-size: 32px; margin-bottom: 12px; color: var(--color-slate);">📊</div>
+            <h4 style="font-size: 15px; font-weight: 600; color: var(--color-carbon); margin: 0;">Telemetry Stream</h4>
+            <p style="font-size: 12px; color: var(--color-slate); margin: 6px 0 0 0; max-width: 200px;">No active telemetry. Connect repositories to begin ingestion.</p>
           </div>
         </div>
       </section>
-
-      <!-- Partner Logo Strip -->
-      <section class="partner-strip">
-        <span class="partner-label">Empowering Developer Cohorts At</span>
-        <div class="partner-logos">
-          <span class="partner-logo">ABB</span>
-          <span class="partner-logo">OLYMEL</span>
-          <span class="partner-logo">CASCADES</span>
-          <span class="partner-logo">ANGELCARE</span>
-          <span class="partner-logo">NVIDIA</span>
+      <!-- Community Branding Section -->
+      <section class="partner-strip" id="community-branding">
+        <div class="community-branding-container" style="display: flex; align-items: center; gap: 16px; width: 100%;">
+          <div id="community-logo" class="partner-logo" style="font-weight: bold; border: 1px solid var(--color-slate); padding: 4px 12px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; height: 32px; min-width: 32px; margin: 0;">
+            [Logo]
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+            <h2 id="community-name" style="font-size: 18px; font-weight: 600; margin: 0; color: var(--color-carbon);">Community Name</h2>
+            <p id="community-desc" style="font-size: 12px; color: var(--color-slate); margin: 4px 0 0 0;">Community Description</p>
+          </div>
         </div>
       </section>
 
@@ -256,25 +290,24 @@
         <!-- Scorecard 1: Health Score -->
         <div class="card" style="align-items: center; justify-content: center; text-align: center;">
           <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Community Health Score</span>
-          <div class="kpi-value" id="org-health-score">82%</div>
-          <span class="kpi-delta positive">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
-            +2.4% vs last week
+          <div class="kpi-value" id="org-health-score">--%</div>
+          <span class="kpi-delta neutral" id="org-health-delta">
+            Data loading...
           </span>
         </div>
 
         <!-- Scorecard 2: Engagement Numbers -->
         <div class="card" style="align-items: center; justify-content: center; text-align: center;">
           <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Active Members (Weekly)</span>
-          <div class="kpi-value" id="org-active-members">3,482</div>
-          <span style="font-size: 12px; color: var(--color-slate);">New this week: <strong id="org-new-members">+142</strong></span>
+          <div class="kpi-value" id="org-active-members">---</div>
+          <span style="font-size: 12px; color: var(--color-slate);" id="org-new-members-wrapper">New: <strong id="org-new-members">---</strong></span>
         </div>
 
         <!-- Scorecard 3: Intervention Flags -->
         <div class="card" style="align-items: center; justify-content: center; text-align: center;">
           <span style="font-size: 12px; color: var(--color-slate); text-transform: uppercase; font-weight: 600;">Intervention Flags</span>
-          <div class="kpi-value" id="org-at-risk-members" style="font-size: 24px; margin: 16px 0 8px 0;">8 members</div>
-          <span class="kpi-delta neutral">At risk of churning (>30d inactivity)</span>
+          <div class="kpi-value" id="org-at-risk-members" style="font-size: 24px; margin: 16px 0 8px 0;">---</div>
+          <span class="kpi-delta neutral" id="org-at-risk-wrapper">Status check loading</span>
         </div>
 
       </div>
@@ -357,6 +390,8 @@
     </div>
   </div>
 
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Main JavaScript File -->
   <script src="app.js"></script>
 </body>

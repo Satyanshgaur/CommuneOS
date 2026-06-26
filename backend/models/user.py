@@ -105,6 +105,7 @@ class UserProfile(BaseModel):
 
 class UserCreateRequest(BaseModel):
     """Request body for creating a new user profile."""
+    user_id: Optional[str] = Field(None, description="Optional custom user ID (e.g. Supabase User UUID)")
     username: str = Field(..., min_length=1, max_length=64)
     email: Optional[str] = Field(None)
     bio: Optional[str] = Field(None, max_length=2000)

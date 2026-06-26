@@ -28,10 +28,10 @@ async def create_user(
     Create a new user profile.
     
     - Accepts basic profile data (username, bio, tags, interests, goals)
-    - Generates a unique user_id
-    - Stores in mock data store (Phase 1 — no database yet)
+    - Integrates with Supabase Auth session user_id
+    - Stores in mock data store
     """
-    user_id = str(uuid.uuid4())[:8]
+    user_id = request.user_id or str(uuid.uuid4())[:8]
     profile = request.to_user_profile(user_id)
     
     user_dict = profile.model_dump(mode="json")
@@ -146,5 +146,18 @@ async def list_users(request_id: str = Depends(get_request_id)) -> Dict[str, Any
     users = list_mock_users()
     return success_response(
         data={"users": users, "count": len(users)},
+        request_id=request_id
+    )
+
+
+@router.get("/config")
+async def get_config(request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get dynamic configurations (e.g. Supabase credentials)."""
+    from config import settings
+    return success_response(
+        data={
+            "supabase_url": settings.SUPABASE_URL,
+            "supabase_anon_key": settings.SUPABASE_ANON_KEY
+        },
         request_id=request_id
     )

@@ -133,10 +133,16 @@ def test_mock_organizer_returns_actions():
 
 
 def test_mock_user_exists():
-    """Pre-seeded users exist in the mock store."""
-    rahul = get_mock_user("rahul")
-    assert rahul is not None
-    assert rahul["username"] == "Rahul"
+    """Mock user can be saved and retrieved in the store."""
+    from services.mock_data import save_mock_user
+    user_data = {
+        "user_id": "test_user", "username": "Test User", "email": "test@example.com"
+    }
+    save_mock_user("test_user", user_data)
+    retrieved = get_mock_user("test_user")
+    assert retrieved is not None
+    assert retrieved["username"] == "Test User"
+
 
 
 def test_mock_user_not_found():

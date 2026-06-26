@@ -1,530 +1,43 @@
-// app.js - Ventriloc / AgentField.ai Frontend Logic with Backend Integration
+// app.js - CommuneOS Frontend Logic with Supabase Auth and Backend Integration
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
-// 1. Initial Hardcoded Users Data
-const hardcodedUsers = {
-  "rahul": {
-    id: "rahul",
-    name: "Rahul",
-    avatar: "R",
-    role: "member",
-    skill_level: "Intermediate",
-    headline: "Welcome back, Rahul 👋",
-    subtext: "Your intermediate CUDA tracks are heating up. Today you have 2 key workshops aligning with your memory architecture objectives.",
-    verified_skills: [
-      { name: "CUDA", level: 3 },
-      { name: "C++", level: 4 },
-      { name: "Linux Systems", level: 3 }
-    ],
-    goals: ["GPU Optimization", "Kernel Development", "ML Infrastructure"],
-    learning_paths: [
-      { name: "CUDA Optimization Roadmap", progress: 70, completed: 7, total: 10, next_milestone: "Milestone 8: CUDA Shared Memory Coalescing" }
-    ],
-    interests: ["Systems Programming", "GPU Architecture", "AI Infrastructure"],
-    recommended_people: [
-      { name: "Sarah Jenkins", role: "Principal GPU Engineer at Nvidia", match: 94, avatar: "SJ", reason: "Expert in CUDA Memory optimization & Shared Memory architectures. Has 5+ years experience and mentored 12+ developers." },
-      { name: "Amit Sharma", role: "AI Infra Lead", match: 86, avatar: "AS", reason: "Works on distributed PyTorch engines. Good match for ML infrastructure goals." }
-    ],
-    communities: {
-      show: ["Systems Programming", "GPU & Accelerators", "AI Infrastructure"],
-      hide: ["Web3 & Blockchain", "Mobile Design", "React Frameworks"]
-    },
-    resources: [
-      { id: "res-cuda-mem", title: "CUDA Shared Memory & Coalescing Techniques", type: "Article", duration: "25 min", difficulty: "Advanced", score: 96, reasoning: "Matches CUDA learning path (skill gap: memory coalescing) and GPU Systems Workshop is tonight." },
-      { id: "res-kernel-dev", title: "Linux Kernel Module Programming Guide", type: "Guide", duration: "60 min", difficulty: "Intermediate", score: 82, reasoning: "Aligns with your kernel development interest & recent activity on systems threads." }
-    ],
-    events: [
-      { id: "evt-gpu-ws", title: "GPU Memory Architectures Workshop", time: "Today, 7:00 PM (1h 30m)", type: "Workshop", difficulty: "Advanced", score: 95, reasoning: "Aligns with CUDA roadmap. Led by Sarah Jenkins. 28/30 registered." },
-      { id: "evt-ama-rust", title: "Rust FFI & C++ Interoperability AMA", time: "Tomorrow, 5:30 PM (1h)", type: "AMA", difficulty: "Intermediate", score: 79, reasoning: "High overlap with your C++ background and growing systems interest." }
-    ],
-    insights: [
-      { message: "You're in the top 12% active learners in Systems Programming this week.", type: "momentum" },
-      { message: "Sarah Jenkins has available mentorship spots matching your timezone.", type: "match" }
-    ]
-  },
-  "priya": {
-    id: "priya",
-    name: "Priya",
-    avatar: "P",
-    role: "member",
-    skill_level: "Beginner",
-    headline: "Step by step, Priya 🚀",
-    subtext: "Welcome! Your journey into Machine Learning has started. Below is your AI-curated introduction path, matching your mathematics background.",
-    verified_skills: [
-      { name: "Python", level: 2 },
-      { name: "Linear Algebra", level: 3 }
-    ],
-    goals: ["Machine Learning Fundamentals", "PyTorch Mastery", "Data Visualisation"],
-    learning_paths: [
-      { name: "PyTorch Introduction Path", progress: 20, completed: 2, total: 10, next_milestone: "Milestone 3: AutoGrad & Computation Graphs" }
-    ],
-    interests: ["Machine Learning", "Data Science", "Python Programming"],
-    recommended_people: [
-      { name: "Amit Sharma", role: "AI Infra Lead", match: 92, avatar: "AS", reason: "Excellent mentor for PyTorch beginners. High rating in explanation clarity." },
-      { name: "Rahul", role: "Intermediate Systems Dev", match: 74, avatar: "R", reason: "Peer learner. Can assist with setting up CUDA runtimes on local Linux systems." }
-    ],
-    communities: {
-      show: ["Machine Learning", "Data Science & Python"],
-      hide: ["Systems Programming", "GPU & Accelerators", "Web3 & Blockchain", "Mobile Design"]
-    },
-    resources: [
-      { id: "res-torch-tensors", title: "PyTorch Tensors: A Visual Guide for Beginners", type: "Video", duration: "18 min", difficulty: "Beginner", score: 94, reasoning: "Directly maps to PyTorch milestone 3 (Autograd basics) and matches beginner skill level." },
-      { id: "res-numpy-linalg", title: "NumPy Matrix Operations in Practice", type: "Interactive Notebook", duration: "30 min", difficulty: "Beginner", score: 85, reasoning: "Bridges your linear algebra skills with Python libraries. 94% peer satisfaction." }
-    ],
-    events: [
-      { id: "evt-ml-kickoff", title: "ML Study Group Weekly Sync", time: "Tonight, 6:00 PM (1h)", type: "Study Group", difficulty: "Beginner", score: 91, reasoning: "Highly recommended for peer support. 4 members from your cohort are attending." },
-      { id: "evt-pytorch-live", title: "PyTorch Live Coding Session", time: "Friday, 4:00 PM (1h 30m)", type: "Webinar", difficulty: "Beginner", score: 88, reasoning: "Aligns with your PyTorch Introduction Roadmap. Code walkthroughs step-by-step." }
-    ],
-    insights: [
-      { message: "You completed 2 Python resources this week. Keep up the streak!", type: "momentum" },
-      { message: "ML community has 3 new introductory resources matching your roadmap.", type: "new" }
-    ]
-  },
-  "sarah": {
-    id: "sarah",
-    name: "Sarah",
-    avatar: "S",
-    role: "member",
-    skill_level: "Expert",
-    headline: "Expert Space, Sarah ⚡",
-    subtext: "You are currently guiding 12 community learners. Your systems optimization posts received high engagement this week.",
-    verified_skills: [
-      { name: "CUDA", level: 5 },
-      { name: "Distributed Clusters", level: 5 },
-      { name: "Linux Kernels", level: 4 }
-    ],
-    goals: ["Mentoring Community Devs", "Designing Distributed GPU Runtimes", "Writing Advanced Papers"],
-    learning_paths: [
-      { name: "Distributed GPU Systems Research", progress: 90, completed: 9, total: 10, next_milestone: "Milestone 10: Multi-Node NCCL Tuning" }
-    ],
-    interests: ["Distributed Systems", "GPU Infrastructure", "Open Source Contribution"],
-    recommended_people: [
-      { name: "Rahul", role: "Intermediate Systems Dev", match: 95, avatar: "R", reason: "Ideal mentee. Looking for CUDA shared memory guidance. Strong background in C++." },
-      { name: "Emily Rogers", role: "Community Organizer", match: 88, avatar: "ER", reason: "Requested your guidance for setting up the GPU AMA cluster next month." }
-    ],
-    communities: {
-      show: ["Systems Programming", "GPU & Accelerators", "AI Infrastructure", "Distributed Systems"],
-      hide: ["Web3 & Blockchain", "Mobile Design"]
-    },
-    resources: [
-      { id: "res-nccl-tuning", title: "Multi-GPU Communication: Optimizing NCCL Backends", type: "Research Paper", duration: "45 min", difficulty: "Expert", score: 98, reasoning: "Matches your research roadmap milestone 10 (NCCL tuning) and distributed systems focus." },
-      { id: "res-cuda-advanced", title: "CUDA 12.4 Pipeline Registers & Asynchronous Copies", type: "API Doc", duration: "20 min", difficulty: "Expert", score: 90, reasoning: "New documentation released. Aligns with your GPU hardware architecture insights." }
-    ],
-    events: [
-      { id: "evt-gpu-ws", title: "GPU Memory Architectures Workshop", time: "Tonight, 7:00 PM (1h 30m)", type: "Workshop (Speaker)", difficulty: "Expert", score: 99, reasoning: "You are the hosting speaker for this event. 28 members are attending." },
-      { id: "evt-ama-rust", title: "Rust FFI & C++ Interoperability AMA", time: "Tomorrow, 5:30 PM (1h)", type: "AMA", difficulty: "Advanced", score: 85, reasoning: "Relevant for designing native bindings for your distributed cluster framework." }
-    ],
-    insights: [
-      { message: "Your GPU Workshop is fully booked. Outstanding work!", type: "success" },
-      { message: "Rahul is waiting for your response on a CUDA shared memory query.", type: "action" }
-    ]
-  },
-  "alex": {
-    id: "alex",
-    name: "Alex",
-    avatar: "A",
-    role: "member",
-    skill_level: "Intermediate",
-    headline: "Welcome back, Alex 🎨",
-    subtext: "Blending layout code with design principles. Your React design systems track is halfway complete.",
-    verified_skills: [
-      { name: "Figma", level: 5 },
-      { name: "CSS Design Systems", level: 4 },
-      { name: "HTML/JS", level: 3 }
-    ],
-    goals: ["Mastering React Componentry", "AI Layout Orchestration", "Design Tokens Automation"],
-    learning_paths: [
-      { name: "React Starter for Designers", progress: 50, completed: 5, total: 10, next_milestone: "Milestone 6: Styled Components & Prop Mapping" }
-    ],
-    interests: ["Frontend Dev", "Design Systems", "UI/UX Architecture"],
-    recommended_people: [
-      { name: "Emily Rogers", role: "Community Organizer", match: 90, avatar: "ER", reason: "Needs assistance with community branding templates. Aligns with your Design Tokens goals." },
-      { name: "Amit Sharma", role: "AI Infra Lead", match: 72, avatar: "AS", reason: "Potential collaboration on building dashboard visual templates." }
-    ],
-    communities: {
-      show: ["Frontend Development", "Design Systems & UI UX"],
-      hide: ["Systems Programming", "GPU & Accelerators", "Distributed Systems"]
-    },
-    resources: [
-      { id: "res-react-design", title: "React Component Archetypes for Designers", type: "Video Course", duration: "40 min", difficulty: "Intermediate", score: 92, reasoning: "Directly targets milestone 6 of your React path. Highly rated for Figma-to-React converters." },
-      { id: "res-tokens", title: "Figma Variables & CSS Custom Properties Mapping", type: "Guide", duration: "15 min", difficulty: "Intermediate", score: 89, reasoning: "Fits your design tokens automation goal. Reviews design engineering best practices." }
-    ],
-    events: [
-      { id: "evt-design-token", title: "Design Systems & Token Architecture Panel", time: "Saturday, 2:00 PM (1h 30m)", type: "Panel", difficulty: "Intermediate", score: 94, reasoning: "Matches your design system focus. Guest speakers from Figma and Vercel. 42 registered." },
-      { id: "evt-ml-kickoff", title: "ML Study Group Weekly Sync", time: "Tonight, 6:00 PM (1h)", type: "Study Group", difficulty: "Beginner", score: 62, reasoning: "Lower relevance, but useful if you want to understand the design needs of ML engineers." }
-    ],
-    insights: [
-      { message: "You solved 3 CSS grid bugs for community members. +15 community points!", type: "success" },
-      { message: "New Figma variables guide added to the Design Systems resource hub.", type: "new" }
-    ]
-  },
-  "emily": {
-    id: "emily",
-    name: "Emily",
-    avatar: "E",
-    role: "organizer",
-    skill_level: "Organizer",
-    headline: "Organizer Console: AgentField Community",
-    subtext: "Tracking 14,230 active members across 18 specialized channels. The operational intelligence layer recommends 3 actions today.",
-    verified_skills: [
-      { name: "Community Management", level: 5 },
-      { name: "Public Relations", level: 4 }
-    ],
-    goals: ["Growth", "Mentorship Activation", "Event Scaling"],
-    learning_paths: [],
-    interests: ["Operations", "Growth", "Events"],
-    recommended_people: [],
-    communities: { show: [], hide: [] },
-    resources: [],
-    events: [],
-    insights: []
-  }
-};
+// Supabase Instance
+let supabase = null;
 
-// 2. State Variables
-let currentUser = hardcodedUsers["rahul"];
+// State Variables
+let currentUserId = null;
+let currentUserProfile = null;
 let currentRole = "member"; // "member" or "organizer"
-let customUserProfile = null; // Stored user onboarded profile
 
-// 3. Organizer Community Data (For Organizer Dashboard)
-const communityHealthMetrics = {
-  score: 82,
-  new_members: 142,
-  active_members: 3482,
-  at_risk_members: 8,
-  trending_topics: ["CUDA Memory", "PyTorch Tensors", "Design Tokens", "Rust FFI"],
-  unanswered_questions: 14,
-  mentor_pool_size: 42,
-  active_mentorships: 18
+// Dynamic Community Branding Placeholder
+const communityBranding = {
+  name: "AgentField Community",
+  logo: "⚛",
+  description: "A secure cooperative space connecting developer intelligence with infrastructure, skills, and mentors."
 };
 
-const suggestedActions = [
-  {
-    id: "act-ama",
-    action: "Schedule GPU Memory AMA Session",
-    reason: "14 unanswered GPU/CUDA questions flagged by Identity Agent in systems threads this week.",
-    impact: "Would answer query bottlenecks for 18+ Intermediate and Beginner learners.",
-    assign_to: "Sarah Jenkins",
-    status: "suggested"
-  },
-  {
-    id: "act-mentor",
-    action: "Recruit Sarah Jenkins to mentor Rahul",
-    reason: "Identity Agent detected 94% skills alignment compatibility. Rahul has CUDA Shared Memory gap; Sarah is expert.",
-    impact: "Establishes structured learning path to complete Rahul's roadmap (now at 70%).",
-    assign_to: "System Match",
-    status: "suggested"
-  },
-  {
-    id: "act-faq",
-    action: "Generate PyTorch Tensor FAQ Doc",
-    reason: "Learning Agent detected 8 beginner users repeating Tensor AutoGrad setup queries.",
-    impact: "Reduces duplicate community support requests by estimated 25%.",
-    assign_to: "Amit Sharma",
-    status: "suggested"
-  }
-];
-
-const potentialMentorsList = [
-  { name: "Sarah Jenkins", expertise: ["CUDA", "Distributed Systems"], rating: "4.9★", count: 12, status: "Active" },
-  { name: "Amit Sharma", expertise: ["PyTorch", "AI Infrastructure"], rating: "4.8★", count: 8, status: "Active" },
-  { name: "Marcus Aurelius", expertise: ["Rust", "Systems Design"], rating: "5.0★", count: 15, status: "Away" },
-  { name: "Yuki Tanaka", expertise: ["Figma", "Design Engineering"], rating: "4.7★", count: 5, status: "Active" }
-];
-
-// 4. Onboarding Parsing and Custom Profile Generation
-function generateCustomProfile(name, githubUrl, linkedinUrl) {
-  // Simple check checks
-  let cleanGithub = githubUrl.toLowerCase();
-  let skill = "Intermediate";
-  let inferredInterests = [];
-  let skills = [];
-  let goals = [];
-  let roadmap = "";
-  
-  // Rule-based inference engine (Identity Agent mockup)
-  if (cleanGithub.includes("cuda") || cleanGithub.includes("gpu") || cleanGithub.includes("kernel") || cleanGithub.includes("cpp")) {
-    inferredInterests = ["Systems Programming", "GPU Architecture", "AI Infrastructure"];
-    skills = [
-      { name: "C++", level: 3 },
-      { name: "GPU Runtimes", level: 2 }
-    ];
-    goals = ["Master CUDA Memory Optimization", "Understand System Level Kernels"];
-    roadmap = "CUDA & Systems Programming Path";
-  } else if (cleanGithub.includes("pytorch") || cleanGithub.includes("ml") || cleanGithub.includes("ai") || cleanGithub.includes("python") || cleanGithub.includes("tensor") || cleanGithub.includes("deeplearning")) {
-    inferredInterests = ["Machine Learning", "AI Infrastructure", "Python Programming"];
-    skills = [
-      { name: "Python", level: 3 },
-      { name: "Data Science", level: 2 }
-    ];
-    goals = ["Deep Learning Deployment", "PyTorch Custom Layers Architecture"];
-    roadmap = "Machine Learning Infrastructure Roadmap";
-  } else if (cleanGithub.includes("react") || cleanGithub.includes("js") || cleanGithub.includes("web") || cleanGithub.includes("html") || cleanGithub.includes("design") || cleanGithub.includes("figma")) {
-    inferredInterests = ["Frontend Dev", "Design Systems", "UI/UX Architecture"];
-    skills = [
-      { name: "HTML/CSS/JS", level: 4 },
-      { name: "React Framework", level: 3 }
-    ];
-    goals = ["Automate Design Tokens", "Build Custom Web Layouts"];
-    roadmap = "React & Frontend Design Systems";
-  } else {
-    // Default fallback
-    inferredInterests = ["Software Engineering", "Open Source Contribution", "Systems Engineering"];
-    skills = [
-      { name: "Web Technologies", level: 3 },
-      { name: "Programming Basics", level: 4 }
-    ];
-    goals = ["Build Full-Stack Apps", "Learn Advanced Algorithms"];
-    roadmap = "Full Stack Development & Orchestration";
-  }
-
-  // Create personalized custom profile
-  const customProfile = {
-    id: "custom_user",
-    name: name,
-    avatar: name.substring(0, 2).toUpperCase(),
-    role: "member",
-    skill_level: skill,
-    headline: `Welcome, ${name} 🌟`,
-    subtext: `Your personalized environment is active. Custom signals generated from GitHub [${githubUrl.split('/').pop()}] & LinkedIn.`,
-    verified_skills: skills,
-    goals: goals,
-    learning_paths: [
-      { name: roadmap, progress: 10, completed: 1, total: 10, next_milestone: "Milestone 2: Initial Setup & Environment Verification" }
-    ],
-    interests: inferredInterests,
-    recommended_people: [
-      { name: "Sarah Jenkins", role: "Principal GPU Engineer at Nvidia", match: 89, avatar: "SJ", reason: "Top system systems programmer match for your GitHub repo projects." },
-      { name: "Amit Sharma", role: "AI Infra Lead", match: 85, avatar: "AS", reason: "Matches pythonic AI and data processing components found in your repositories." }
-    ],
-    communities: {
-      show: inferredInterests,
-      hide: ["Web3 & Blockchain", "Mobile Design"].filter(x => !inferredInterests.includes(x))
-    },
-    resources: [
-      { id: "res-custom-1", title: `Introduction to ${inferredInterests[0]} Best Practices`, type: "Selected Guide", duration: "20 min", difficulty: "Intermediate", score: 92, reasoning: "Directly matches Github repos data structure signals." },
-      { id: "res-custom-2", title: "Open Source Collaboration Guidelines", type: "Article", duration: "15 min", difficulty: "Beginner", score: 85, reasoning: "Highly recommended for active GitHub developers entering CommunityOS." }
-    ],
-    events: [
-      { id: "evt-custom-1", title: `${inferredInterests[0]} Weekly Roundtable`, time: "Today, 8:00 PM (1h)", type: "Roundtable", difficulty: "Intermediate", score: 90, reasoning: "Matches your top stated interest and skill level." },
-      { id: "evt-custom-2", title: "GitHub Portfolio & Career Building Clinic", time: "Monday, 6:00 PM (1h 30m)", type: "AMA", difficulty: "Beginner", score: 80, reasoning: "Aligns with your new community signup activity." }
-    ],
-    insights: [
-      { message: "Identity Agent successfully parsed your environment profile.", type: "success" },
-      { message: `Roadmap generated: ${roadmap}. Starting with 10% progress.`, type: "roadmap" }
-    ]
-  };
-
-  return customProfile;
-}
-
-// 5. Decision logs for Explainability ("Why am I seeing this?")
-const agentDecisionLogs = {
-  // Rahul Decisions
-  "res-cuda-mem": {
-    title: "CUDA Shared Memory & Coalescing Techniques",
-    score: "96%",
-    involved: ["Identity", "Learning", "Discovery"],
-    timings: { "Identity": "1.2ms", "Learning": "2.4ms", "Discovery": "4.1ms" },
-    reasoning: [
-      "Identity Agent: Detected Intermediate skill level with verified CUDA proficiency of level 3.",
-      "Learning Agent: Identified active CUDA Optimization Roadmap with 70% completion. Next milestone requires Memory Coalescing skills (currently marked as a skill gap).",
-      "Discovery Agent: Extracted 'Systems Programming' tag. Located this high-priority article, applying a 20% roadmap alignment boost.",
-      "Temporal Engine: Applied 10% boost because GPU Memory Architectures Workshop starts tonight (led by author Sarah Jenkins)."
-    ]
-  },
-  "res-kernel-dev": {
-    title: "Linux Kernel Module Programming Guide",
-    score: "82%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.2ms", "Discovery": "3.5ms" },
-    reasoning: [
-      "Identity Agent: Read 'Linux Systems' (level 3) from verified skills.",
-      "Discovery Agent: Matched user's active goals (Kernel Development). Ranked this resource with 82% confidence because of high community bookmarks count (128)."
-    ]
-  },
-  "evt-gpu-ws": {
-    title: "GPU Memory Architectures Workshop",
-    score: "95%",
-    involved: ["Identity", "Learning", "Mentor", "Discovery"],
-    timings: { "Identity": "1.2ms", "Learning": "2.1ms", "Mentor": "3.0ms", "Discovery": "3.8ms" },
-    reasoning: [
-      "Identity Agent: Confirmed CUDA focus and intermediate systems profile.",
-      "Learning Agent: Matched CUDA Memory milestone. Aligns with CUDA roadmap objectives.",
-      "Mentor Agent: Identified event host (Sarah Jenkins) is user's top recommended mentor (94% compatibility).",
-      "Discovery Agent: Applied maximum temporal boost since workshop is tonight. Reserved capacity: 2 spots left."
-    ]
-  },
-  "evt-ama-rust": {
-    title: "Rust FFI & C++ Interoperability AMA",
-    score: "79%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.0ms", "Discovery": "2.8ms" },
-    reasoning: [
-      "Identity Agent: Scanned profile and found interest in 'Systems Programming' and 'C++' skills.",
-      "Discovery Agent: Rust FFI is highly trending in the Systems community this week. Aligns with intermediate development capability."
-    ]
-  },
-
-  // Priya Decisions
-  "res-torch-tensors": {
-    title: "PyTorch Tensors: A Visual Guide for Beginners",
-    score: "94%",
-    involved: ["Identity", "Learning", "Discovery"],
-    timings: { "Identity": "0.8ms", "Learning": "1.5ms", "Discovery": "3.0ms" },
-    reasoning: [
-      "Identity Agent: Detected Beginner ML profile with verified Python skills (level 2).",
-      "Learning Agent: Tracked PyTorch Introduction Path progress (20% complete). Next milestone: computation graphs.",
-      "Discovery Agent: Found direct keyword overlap with milestone 3. Filtered out advanced papers, highlighting this high-quality visualization."
-    ]
-  },
-  "res-numpy-linalg": {
-    title: "NumPy Matrix Operations in Practice",
-    score: "85%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "0.8ms", "Discovery": "2.2ms" },
-    reasoning: [
-      "Identity Agent: Highlighted user's Linear Algebra background (level 3) combined with Python programming.",
-      "Discovery Agent: Recommends bridging math theories with practical library operations. 94% peer rating among beginner cohorts."
-    ]
-  },
-  "evt-ml-kickoff": {
-    title: "ML Study Group Weekly Sync",
-    score: "91%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "0.8ms", "Discovery": "2.5ms" },
-    reasoning: [
-      "Identity Agent: New signup profile, benefit from peer-led environments.",
-      "Discovery Agent: High social proof signal. 4 members from your immediate signup cohort registered. Facilitates early onboarding."
-    ]
-  },
-  "evt-pytorch-live": {
-    title: "PyTorch Live Coding Session",
-    score: "88%",
-    involved: ["Learning", "Discovery"],
-    timings: { "Learning": "1.8ms", "Discovery": "2.9ms" },
-    reasoning: [
-      "Learning Agent: PyTorch Introduction Roadmap alignment. Step-by-step beginner codes.",
-      "Discovery Agent: Highly interactive event. Live Q&A fits learner profile preferences."
-    ]
-  },
-
-  // Sarah Decisions
-  "res-nccl-tuning": {
-    title: "Multi-GPU Communication: Optimizing NCCL Backends",
-    score: "98%",
-    involved: ["Identity", "Learning", "Discovery"],
-    timings: { "Identity": "1.5ms", "Learning": "2.0ms", "Discovery": "4.0ms" },
-    reasoning: [
-      "Identity Agent: Detected Expert profile in Distributed Clusters and CUDA (level 5).",
-      "Learning Agent: Matched final milestone (Multi-Node NCCL Tuning) of systems research roadmap.",
-      "Discovery Agent: Served this expert paper on communication collectives. Bypassed simple guides entirely."
-    ]
-  },
-  "res-cuda-advanced": {
-    title: "CUDA 12.4 Pipeline Registers & Asynchronous Copies",
-    score: "90%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.5ms", "Discovery": "3.1ms" },
-    reasoning: [
-      "Identity Agent: Expert in hardware systems.",
-      "Discovery Agent: Newly released CUDA documentation. Flagged as highly critical for expert engineers maintaining systems codebases."
-    ]
-  },
-
-  // Alex Decisions
-  "res-react-design": {
-    title: "React Component Archetypes for Designers",
-    score: "92%",
-    involved: ["Identity", "Learning", "Discovery"],
-    timings: { "Identity": "1.1ms", "Learning": "2.3ms", "Discovery": "3.8ms" },
-    reasoning: [
-      "Identity Agent: Intermediate designer transitioning to React coding skills.",
-      "Learning Agent: Active roadmap 'React Starter for Designers' (50% progress). Aligns with Milestone 6 (prop mapping).",
-      "Discovery Agent: High relevance score because layout codes are shown in visual representations."
-    ]
-  },
-  "res-tokens": {
-    title: "Figma Variables & CSS Custom Properties Mapping",
-    score: "89%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.1ms", "Discovery": "3.0ms" },
-    reasoning: [
-      "Identity Agent: Figma skill level 5, CSS layout level 4.",
-      "Discovery Agent: Strong goals correlation (automate design tokens). Recommended design tokens automation workflow."
-    ]
-  },
-  "evt-design-token": {
-    title: "Design Systems & Token Architecture Panel",
-    score: "94%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.1ms", "Discovery": "3.5ms" },
-    reasoning: [
-      "Identity Agent: Design systems interest verified.",
-      "Discovery Agent: Panel features industry-leading web designers. High social engagement index."
-    ]
-  },
-  "evt-ml-kickoff": {
-    title: "ML Study Group Weekly Sync",
-    score: "62%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.0ms", "Discovery": "2.0ms" },
-    reasoning: [
-      "Identity Agent: User profile has no ML objectives.",
-      "Discovery Agent: Low confidence score (62%). Showed in secondary list to offer broader cross-disciplinary learning options."
-    ]
-  },
-
-  // Custom User Fallbacks
-  "res-custom-1": {
-    title: "Introductory Environment Resource Guide",
-    score: "92%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.5ms", "Discovery": "2.5ms" },
-    reasoning: [
-      "Identity Agent: Automatically parsed interest from GitHub profile repositories configuration.",
-      "Discovery Agent: Recommended this core guide to familiarize yourself with parsed systems engineering patterns."
-    ]
-  },
-  "res-custom-2": {
-    title: "Open Source Collaboration Guidelines",
-    score: "85%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.0ms", "Discovery": "2.0ms" },
-    reasoning: [
-      "Identity Agent: Detected active developer status from GitHub URL inputs.",
-      "Discovery Agent: Standard onboarding guide for developers joining CommunityOS workspaces."
-    ]
-  },
-  "evt-custom-1": {
-    title: "Specialized Weekly Roundtable",
-    score: "90%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.5ms", "Discovery": "3.0ms" },
-    reasoning: [
-      "Identity Agent: Inferred primary software engineering sector based on GitHub structures.",
-      "Discovery Agent: High priority workshop matching your custom learning roadmap."
-    ]
-  },
-  "evt-custom-2": {
-    title: "GitHub Portfolio & Career Building Clinic",
-    score: "80%",
-    involved: ["Identity", "Discovery"],
-    timings: { "Identity": "1.0ms", "Discovery": "2.5ms" },
-    reasoning: [
-      "Identity Agent: Scanned Github profile links.",
-      "Discovery Agent: Direct guidance for maximizing Github community contribution footprints."
-    ]
-  }
-};
-
-// 6. DOM Elements Cache
+// DOM Elements Cache
 const elements = {
-  userSelect: null,
+  mainHeader: null,
   roleToggleMember: null,
   roleToggleOrganizer: null,
   
+  // Auth Containers
+  authContainer: null,
+  loginPanel: null,
+  signupPanel: null,
+  verificationPanel: null,
+  authConfigWarning: null,
+  communityAssignmentContainer: null,
+  
+  loginForm: null,
+  signupForm: null,
+  btnVerificationDone: null,
+  linkShowSignup: null,
+  linkShowLogin: null,
+
+  // Profile Creation / Onboarding
   onboardingContainer: null,
   onboardingForm: null,
   
@@ -536,7 +49,6 @@ const elements = {
   heroBody: null,
   heroPills: null,
   
-  prioritiesSection: null,
   priorityGrid: null,
   
   kpiPathsName: null,
@@ -548,16 +60,12 @@ const elements = {
   mentorSection: null,
   mentorList: null,
   
-  communitiesSection: null,
   communitiesList: null,
   
-  resourcesSection: null,
   resourcesList: null,
   
-  eventsSection: null,
   eventsList: null,
   
-  insightsSection: null,
   insightsList: null,
   
   // Organizer Dashboard Details
@@ -577,16 +85,39 @@ const elements = {
   modalOverlay: null,
   modalTitle: null,
   modalBody: null,
-  modalClose: null
+  modalClose: null,
+
+  // User Profile wrapper / Auth User Details
+  userProfileWrapper: null,
+  authUserName: null,
+  btnSignout: null,
+
+  // Community Branding elements
+  communityName: null,
+  communityLogo: null,
+  communityDesc: null
 };
 
-// 7. Initialization & Event Bindings
-document.addEventListener("DOMContentLoaded", () => {
+// Initialization & Event Bindings
+document.addEventListener("DOMContentLoaded", async () => {
   // Initialize elements cache
-  elements.userSelect = document.getElementById("user-select");
+  elements.mainHeader = document.getElementById("main-header");
   elements.roleToggleMember = document.getElementById("role-member");
   elements.roleToggleOrganizer = document.getElementById("role-organizer");
   
+  elements.authContainer = document.getElementById("auth-container");
+  elements.loginPanel = document.getElementById("login-panel");
+  elements.signupPanel = document.getElementById("signup-panel");
+  elements.verificationPanel = document.getElementById("verification-panel");
+  elements.authConfigWarning = document.getElementById("auth-config-warning");
+  elements.communityAssignmentContainer = document.getElementById("community-assignment-container");
+  
+  elements.loginForm = document.getElementById("login-form");
+  elements.signupForm = document.getElementById("signup-form");
+  elements.btnVerificationDone = document.getElementById("btn-verification-done");
+  elements.linkShowSignup = document.getElementById("link-show-signup");
+  elements.linkShowLogin = document.getElementById("link-show-login");
+
   elements.onboardingContainer = document.getElementById("onboarding-container");
   elements.onboardingForm = document.getElementById("onboarding-form");
   
@@ -597,7 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
   elements.heroBody = document.getElementById("hero-body");
   elements.heroPills = document.getElementById("hero-pills");
   
-  elements.prioritiesSection = document.getElementById("priorities-section");
   elements.priorityGrid = document.getElementById("priority-grid");
   
   elements.kpiPathsName = document.getElementById("kpi-paths-name");
@@ -609,16 +139,12 @@ document.addEventListener("DOMContentLoaded", () => {
   elements.mentorSection = document.getElementById("mentor-section");
   elements.mentorList = document.getElementById("mentor-list");
   
-  elements.communitiesSection = document.getElementById("communities-section");
   elements.communitiesList = document.getElementById("communities-list");
   
-  elements.resourcesSection = document.getElementById("resources-section");
   elements.resourcesList = document.getElementById("resources-list");
   
-  elements.eventsSection = document.getElementById("events-section");
   elements.eventsList = document.getElementById("events-list");
   
-  elements.insightsSection = document.getElementById("insights-section");
   elements.insightsList = document.getElementById("insights-list");
   
   elements.orgHealthScore = document.getElementById("org-health-score");
@@ -637,47 +163,244 @@ document.addEventListener("DOMContentLoaded", () => {
   elements.modalBody = document.getElementById("modal-body");
   elements.modalClose = document.getElementById("modal-close");
 
+  elements.userProfileWrapper = document.getElementById("user-profile-wrapper");
+  elements.authUserName = document.getElementById("auth-user-name");
+  elements.btnSignout = document.getElementById("btn-signout");
+
+  elements.communityName = document.getElementById("community-name");
+  elements.communityLogo = document.getElementById("community-logo");
+  elements.communityDesc = document.getElementById("community-desc");
+
+  // Bind community branding details
+  renderCommunityBranding();
+
   // Event bindings
-  elements.userSelect.addEventListener("change", handleUserChange);
   elements.roleToggleMember.addEventListener("click", () => switchRole("member"));
   elements.roleToggleOrganizer.addEventListener("click", () => switchRole("organizer"));
-  
-  elements.onboardingForm.addEventListener("submit", handleOnboardingSubmit);
+  elements.onboardingForm.addEventListener("submit", handleProfileSubmit);
   elements.modalClose.addEventListener("click", closeModal);
   elements.modalOverlay.addEventListener("click", (e) => {
     if (e.target === elements.modalOverlay) closeModal();
   });
+  if (elements.btnSignout) {
+    elements.btnSignout.addEventListener("click", handleSignOut);
+  }
 
-  // Load Initial Dashboard
-  loadMemberPersonalization("rahul");
+  // Auth panel links
+  elements.linkShowSignup.addEventListener("click", (e) => {
+    e.preventDefault();
+    elements.loginPanel.style.display = "none";
+    elements.signupPanel.style.display = "block";
+  });
+
+  elements.linkShowLogin.addEventListener("click", (e) => {
+    e.preventDefault();
+    elements.signupPanel.style.display = "none";
+    elements.loginPanel.style.display = "block";
+  });
+
+  elements.btnVerificationDone.addEventListener("click", () => {
+    elements.verificationPanel.style.display = "none";
+    elements.loginPanel.style.display = "block";
+  });
+
+  elements.loginForm.addEventListener("submit", handleLoginSubmit);
+  elements.signupForm.addEventListener("submit", handleSignupSubmit);
+
+  // Initialize Supabase from Backend config
+  await initSupabase();
 });
 
-// 8. Event Handlers
-function handleUserChange(e) {
-  const userId = e.target.value;
-  if (userId === "new") {
-    // Show Onboarding and hide dashboard
-    elements.onboardingContainer.style.display = "block";
-    elements.mainDashboard.style.display = "none";
-    elements.organizerDashboard.style.display = "none";
-    document.getElementById("agent-view").style.display = "none";
-  } else {
-    elements.onboardingContainer.style.display = "none";
-    if (userId === "emily") {
-      switchRole("organizer");
-    } else {
-      switchRole("member");
-      if (userId === "custom") {
-        currentUser = customUserProfile;
-        renderApp();
-      } else {
-        loadMemberPersonalization(userId);
-      }
+// Fetch config from backend and initialize Supabase Auth
+async function initSupabase() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/config`);
+    if (!res.ok) throw new Error("Failed to load backend config");
+    const json = await res.json();
+    
+    const url = json.data.supabase_url;
+    const anonKey = json.data.supabase_anon_key;
+
+    if (!url || !anonKey) {
+      console.warn("Supabase credentials not configured in backend .env");
+      if (elements.authConfigWarning) elements.authConfigWarning.style.display = "block";
+      showAuthScreen();
+      return;
     }
+
+    if (elements.authConfigWarning) elements.authConfigWarning.style.display = "none";
+
+    // Initialize Supabase Client
+    supabase = window.supabase.createClient(url, anonKey);
+
+    // Check existing session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Set up auth state change listener
+    supabase.auth.onAuthStateChange((event, newSession) => {
+      handleAuthStateChange(newSession);
+    });
+
+    // Handle initial state
+    await handleAuthStateChange(session);
+
+  } catch (error) {
+    console.error("Error initializing Supabase Auth:", error);
+    if (elements.authConfigWarning) {
+      elements.authConfigWarning.textContent = "Error: Backend server is offline. Please start the backend service.";
+      elements.authConfigWarning.style.display = "block";
+    }
+    showAuthScreen();
   }
 }
 
-async function handleOnboardingSubmit(e) {
+// Handle changes in Supabase Session
+async function handleAuthStateChange(session) {
+  if (session) {
+    currentUserId = session.user.id;
+    // Check if user profile already exists in the backend
+    await checkUserProfile(currentUserId, session.user.email);
+  } else {
+    currentUserId = null;
+    currentUserProfile = null;
+    showAuthScreen();
+  }
+}
+
+// Query backend to verify if the profile has been created
+async function checkUserProfile(userId, email) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/${userId}`);
+    if (res.status === 404) {
+      // Authenticated but profile is not created yet
+      showProfileCreation(email);
+    } else if (res.ok) {
+      // Profile exists, load dashboard
+      const json = await res.json();
+      showDashboard(json.data.username);
+      await loadMemberPersonalization(userId);
+    } else {
+      throw new Error("API error while checking profile");
+    }
+  } catch (error) {
+    console.error("Failed to check user profile:", error);
+    // Offline / error check fallback: let user create profile anyway
+    showProfileCreation(email);
+  }
+}
+
+// Show Authentication panels
+function showAuthScreen() {
+  elements.mainHeader.style.display = "none";
+  elements.mainDashboard.style.display = "none";
+  elements.organizerDashboard.style.display = "none";
+  document.getElementById("agent-view").style.display = "none";
+  elements.onboardingContainer.style.display = "none";
+  elements.communityAssignmentContainer.style.display = "none";
+  elements.userProfileWrapper.style.display = "none";
+  
+  elements.authContainer.style.display = "block";
+  elements.loginPanel.style.display = "block";
+  elements.signupPanel.style.display = "none";
+  elements.verificationPanel.style.display = "none";
+}
+
+// Show Profile Creation form
+function showProfileCreation(email) {
+  elements.authContainer.style.display = "none";
+  elements.mainDashboard.style.display = "none";
+  elements.organizerDashboard.style.display = "none";
+  document.getElementById("agent-view").style.display = "none";
+  elements.communityAssignmentContainer.style.display = "none";
+  elements.userProfileWrapper.style.display = "none";
+  elements.mainHeader.style.display = "none";
+  
+  // Show Onboarding Card as Profile Creation Form
+  elements.onboardingContainer.style.display = "block";
+  
+  // Reset profile form and set email if available
+  elements.onboardingForm.reset();
+  const cancelBtn = document.getElementById("btn-onboard-cancel");
+  if (cancelBtn) cancelBtn.style.display = "none"; // Unauthenticated profile creation cannot be bypassed
+}
+
+// Show Community Assignment Loader
+function showCommunityAssignment() {
+  elements.authContainer.style.display = "none";
+  elements.onboardingContainer.style.display = "none";
+  elements.mainDashboard.style.display = "none";
+  elements.organizerDashboard.style.display = "none";
+  document.getElementById("agent-view").style.display = "none";
+  elements.userProfileWrapper.style.display = "none";
+  elements.mainHeader.style.display = "none";
+  
+  elements.communityAssignmentContainer.style.display = "block";
+}
+
+// Transition into dashboard view
+function showDashboard(username) {
+  elements.authContainer.style.display = "none";
+  elements.onboardingContainer.style.display = "none";
+  elements.communityAssignmentContainer.style.display = "none";
+  
+  elements.mainHeader.style.display = "block";
+  elements.userProfileWrapper.style.display = "flex";
+  if (elements.authUserName) elements.authUserName.textContent = username;
+  
+  if (currentRole === "member") {
+    elements.mainDashboard.style.display = "block";
+  } else {
+    elements.organizerDashboard.style.display = "block";
+  }
+  document.getElementById("agent-view").style.display = "block";
+}
+
+// Handle Login submit
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+
+  if (!supabase) {
+    alert("Supabase authentication is offline. Check backend logs.");
+    return;
+  }
+
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  } catch (error) {
+    console.error("Login failed:", error);
+    alert(`Login failed: ${error.message}`);
+  }
+}
+
+// Handle Signup submit
+async function handleSignupSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+
+  if (!supabase) {
+    alert("Supabase authentication is offline.");
+    return;
+  }
+
+  try {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    
+    // Switch to verification panel
+    elements.signupPanel.style.display = "none";
+    elements.verificationPanel.style.display = "block";
+  } catch (error) {
+    console.error("Signup failed:", error);
+    alert(`Signup failed: ${error.message}`);
+  }
+}
+
+// Handle Profile submit (onboarding)
+async function handleProfileSubmit(e) {
   e.preventDefault();
   
   const name = document.getElementById("onboard-name").value.trim();
@@ -685,20 +408,20 @@ async function handleOnboardingSubmit(e) {
   const linkedin = document.getElementById("onboard-linkedin").value.trim();
   
   if (!name || !github || !linkedin) {
-    alert("Please fill out all fields for your personalized environment.");
+    alert("Please fill out all fields for your profile.");
     return;
   }
   
-  // Create loading state
-  elements.onboardingContainer.style.display = "none";
-  elements.mainDashboard.style.display = "block";
-  switchRole("member");
+  showCommunityAssignment();
 
   try {
-    // 1. Register user on the backend
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const body = {
+      user_id: currentUserId,
       username: name,
-      bio: `GitHub Profile: ${github}. LinkedIn Profile: ${linkedin}. Custom onboarding profile.`,
+      email: user.email,
+      bio: `GitHub Profile: ${github}. LinkedIn Profile: ${linkedin}. Authenticated account profile.`,
       tags: [github.toLowerCase().includes("cuda") ? "cuda" : "python"],
       interests: [github.toLowerCase().includes("cuda") ? "Systems Programming" : "Machine Learning"],
       goals: ["Complete personalized onboarding", "Build AI integration frameworks"],
@@ -707,60 +430,71 @@ async function handleOnboardingSubmit(e) {
       timezone: "Asia/Kolkata"
     };
 
-    const response = await fetch(`${API_BASE_URL}/users/create`, {
+    // Create user profile on backend
+    const res = await fetch(`${API_BASE_URL}/users/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
 
-    if (!response.ok) throw new Error("Failed to create user in backend");
-    const result = await response.json();
-    const newUserId = result.data.user_id;
+    if (!res.ok) throw new Error("Failed to create profile on backend");
 
-    // Add option dynamically to selection dropdown
-    let hasCustomOption = false;
-    for (let option of elements.userSelect.options) {
-      if (option.value === newUserId) {
-        hasCustomOption = true;
-        break;
-      }
-    }
+    // Run Personalization & Community Assignment pipeline
+    await loadMemberPersonalization(currentUserId);
     
-    if (!hasCustomOption) {
-      const option = document.createElement("option");
-      option.value = newUserId;
-      option.text = `${name} (Personalized)`;
-      elements.userSelect.add(option, elements.userSelect.options[elements.userSelect.options.length - 1]);
-    }
-    
-    elements.userSelect.value = newUserId;
-    
-    // 2. Trigger personalization pipeline
-    await loadMemberPersonalization(newUserId);
+    // Show Dashboard
+    showDashboard(name);
 
-  } catch (err) {
-    console.error("Onboarding failed on backend, running local fallback", err);
-    // Local fallback path
-    customUserProfile = generateCustomProfile(name, github, linkedin);
-    let hasCustomOption = false;
-    for (let option of elements.userSelect.options) {
-      if (option.value === "custom") {
-        hasCustomOption = true;
-        break;
-      }
-    }
-    if (!hasCustomOption) {
-      const option = document.createElement("option");
-      option.value = "custom";
-      option.text = `${name} (Personalized)`;
-      elements.userSelect.add(option, elements.userSelect.options[elements.userSelect.options.length - 1]);
-    }
-    elements.userSelect.value = "custom";
-    currentUser = customUserProfile;
-    renderApp();
+  } catch (error) {
+    console.error("Profile creation failed:", error);
+    alert(`Failed to create profile: ${error.message}`);
+    showProfileCreation();
   }
 }
 
+// Handle Sign Out
+async function handleSignOut() {
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+  currentUserId = null;
+  currentUserProfile = null;
+  showAuthScreen();
+}
+
+// Render dynamic community branding
+function renderCommunityBranding() {
+  if (elements.communityName) elements.communityName.textContent = communityBranding.name;
+  if (elements.communityLogo) elements.communityLogo.textContent = communityBranding.logo;
+  if (elements.communityDesc) elements.communityDesc.textContent = communityBranding.description;
+}
+
+// Card state renderer (supports loading, empty, success, error)
+function renderCardState(element, state, message = "") {
+  if (!element) return;
+  if (state === "loading") {
+    element.innerHTML = `
+      <div class="loading-state" style="padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%;">
+        <div class="spinner" style="border: 2px solid var(--color-chalk); border-top: 2px solid var(--color-signal-orange); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;"></div>
+        <span style="font-size: 11px; color: var(--color-slate);">Ingesting data...</span>
+      </div>
+    `;
+  } else if (state === "error") {
+    element.innerHTML = `
+      <div class="error-state" style="padding: 12px; color: #ef4444; font-size: 12px; font-weight: 500; text-align: center; border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: var(--radius-cards); background: rgba(239, 68, 68, 0.02); width: 100%;">
+        ${message || "Telemetry error"}
+      </div>
+    `;
+  } else if (state === "empty") {
+    element.innerHTML = `
+      <div class="empty-state" style="padding: 16px; color: var(--color-slate); font-size: 12px; text-align: center; border: 1px dashed var(--color-chalk); border-radius: var(--radius-cards); background: var(--color-fog); width: 100%;">
+        ${message || "No data points."}
+      </div>
+    `;
+  }
+}
+
+// Switch Member/Organizer views
 function switchRole(role) {
   currentRole = role;
   
@@ -778,14 +512,13 @@ function switchRole(role) {
     elements.mainDashboard.style.display = "none";
     elements.organizerDashboard.style.display = "block";
     document.getElementById("agent-view").style.display = "block";
-    // Load organizer data from backend!
     loadOrganizerData();
   }
   
   renderApp();
 }
 
-// 9. Main Render Router
+// Main Render Router
 function renderApp() {
   if (currentRole === "member") {
     renderMemberDashboard();
@@ -795,9 +528,10 @@ function renderApp() {
   renderAgentFlow();
 }
 
-// 10. Member Dashboard Renderer
+// Member Dashboard Renderer
 function renderMemberDashboard() {
-  const u = currentUser;
+  const u = currentUserProfile;
+  if (!u) return;
   
   // Hero section
   elements.heroHeadline.textContent = u.headline;
@@ -805,30 +539,39 @@ function renderMemberDashboard() {
   
   // Hero CTA Buttons
   elements.heroPills.innerHTML = `
-    <button class="btn-filled" onclick="alert('Starting learning path: ${u.learning_paths[0]?.name || 'General Core'}')">Continue Path</button>
-    <a href="${u.id === 'custom' ? 'https://github.com' : '#'}" target="_blank" class="btn-outlined">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-      GitHub Profile
-    </a>
+    <button class="btn-filled" onclick="alert('Continuing path: ${u.learning_paths[0]?.name || 'General Core'}')">Continue Path</button>
+    ${u.github_url ? `
+      <a href="${u.github_url}" target="_blank" class="btn-outlined">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        GitHub Profile
+      </a>
+    ` : ""}
   `;
 
   // Render Priority list / Action items
   elements.priorityGrid.innerHTML = "";
+  let prioritiesAdded = 0;
   
-  // Build top priorities
   if (u.learning_paths && u.learning_paths.length > 0) {
     const path = u.learning_paths[0];
-    createPriorityCard("Active learning path progress", path.name, `${path.progress}% Complete`, `Next: ${path.next_milestone}`, "Identity/Learning Agents", "res-cuda-mem");
+    createPriorityCard("Active learning path progress", path.name, `${path.progress}% Complete`, `Next: ${path.next_milestone}`, "Identity/Learning Agents", "path-progress");
+    prioritiesAdded++;
   }
   
   if (u.events && u.events.length > 0) {
     const event = u.events[0];
-    createPriorityCard("High-confidence recommended event", event.title, event.time, `Confidence Score: ${event.score}%`, "Discovery Agent", event.id);
+    createPriorityCard("High-confidence recommended event", event.title, event.time, `Compatibility Score: ${event.score}%`, "Discovery Agent", event.id);
+    prioritiesAdded++;
   }
   
   if (u.recommended_people && u.recommended_people.length > 0) {
     const mentor = u.recommended_people[0];
     createPriorityCard("Top mentor match for goals", mentor.name, mentor.role, `Compatibility Score: ${mentor.match}%`, "Mentor Agent", "mentor-match");
+    prioritiesAdded++;
+  }
+
+  if (prioritiesAdded === 0) {
+    renderCardState(elements.priorityGrid, "empty", "No Focus Items Today.");
   }
 
   // Render KPI Card Metrics
@@ -836,111 +579,130 @@ function renderMemberDashboard() {
     const path = u.learning_paths[0];
     elements.kpiPathsName.textContent = path.name;
     elements.kpiPathsProgress.textContent = `${path.progress}%`;
+    const bar = document.getElementById("kpi-paths-progress-bar");
+    if (bar) bar.style.width = `${path.progress}%`;
     elements.kpiPathsNext.textContent = path.next_milestone;
   } else {
     elements.kpiPathsName.textContent = "No active roadmaps";
     elements.kpiPathsProgress.textContent = "0%";
+    const bar = document.getElementById("kpi-paths-progress-bar");
+    if (bar) bar.style.width = "0%";
     elements.kpiPathsNext.textContent = "Complete profile to generate paths.";
   }
 
   // Verified Skills
-  elements.kpiSkillsList.innerHTML = u.verified_skills.map(s => `
-    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; border-bottom: 1px dashed var(--color-chalk); padding-bottom: 4px;">
-      <span style="font-weight: 500;">${s.name}</span>
-      <span style="color: var(--color-signal-orange); font-weight: 600;">Lvl ${s.level}</span>
-    </div>
-  `).join("");
+  if (u.verified_skills && u.verified_skills.length > 0) {
+    elements.kpiSkillsList.innerHTML = u.verified_skills.map(s => `
+      <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; border-bottom: 1px dashed var(--color-chalk); padding-bottom: 4px;">
+        <span style="font-weight: 500;">${s.name}</span>
+        <span style="color: var(--color-signal-orange); font-weight: 600;">Lvl ${s.level}</span>
+      </div>
+    `).join("");
+  } else {
+    renderCardState(elements.kpiSkillsList, "empty", "No verified skills on profile.");
+  }
 
   // Stated Interests
-  elements.kpiInterestsList.innerHTML = u.interests.map(i => `
-    <span class="card-badge orange" style="margin-right: 6px; margin-bottom: 6px; display: inline-block;">${i}</span>
-  `).join("");
+  if (u.interests && u.interests.length > 0) {
+    elements.kpiInterestsList.innerHTML = u.interests.map(i => `
+      <span class="card-badge orange" style="margin-right: 6px; margin-bottom: 6px; display: inline-block;">${i}</span>
+    `).join("");
+  } else {
+    renderCardState(elements.kpiInterestsList, "empty", "No interests configured.");
+  }
 
   // Recommended People / Mentors
   if (u.recommended_people && u.recommended_people.length > 0) {
     elements.mentorSection.style.display = "block";
-    elements.mentorList.innerHTML = u.recommended_people.map(p => `
-      <div class="mentor-item">
-        <div class="mentor-info">
-          <div class="mentor-avatar">${p.avatar}</div>
-          <div class="mentor-details">
-            <span class="mentor-name">${p.name}</span>
-            <span class="mentor-role">${p.role}</span>
-            <p style="font-size: 12px; color: var(--color-graphite); margin-top: 4px;">${p.reason}</p>
-          </div>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-          <span class="mentor-score-pill"><span class="mentor-score-label">${p.match}%</span> match</span>
-          <button class="btn-filled btn-small" onclick="alert('Connection request sent to ${p.name}')">Connect</button>
-        </div>
-      </div>
-    `).join("");
+    elements.mentorList.innerHTML = u.recommended_people.map(p => createMentorCard(p)).join("");
   } else {
-    elements.mentorSection.style.display = "none";
+    renderCardState(elements.mentorList, "empty", "No mentor matches computed yet.");
   }
 
   // Recommended Communities (show visible, hide filtered out)
   elements.communitiesList.innerHTML = "";
-  u.communities.show.forEach(c => {
-    const pill = document.createElement("span");
-    pill.className = "community-pill";
-    pill.textContent = `# ${c}`;
-    pill.onclick = () => alert(`Entering channel: #${c}`);
-    elements.communitiesList.appendChild(pill);
-  });
-  u.communities.hide.forEach(c => {
-    const pill = document.createElement("span");
-    pill.className = "community-pill hidden";
-    pill.title = "Filtered out by Discovery Agent to reduce clutter. Click to reveal.";
-    pill.textContent = `# ${c}`;
-    pill.onclick = () => {
-      if (confirm(`This channel was hidden by the Discovery Agent. Enter anyway?`)) {
-        alert(`Entering channel: #${c}`);
-      }
-    };
-    elements.communitiesList.appendChild(pill);
-  });
+  let communitiesAdded = 0;
+  if (u.communities && u.communities.show) {
+    u.communities.show.forEach(c => {
+      const pill = document.createElement("span");
+      pill.className = "community-pill";
+      pill.textContent = `# ${c}`;
+      pill.onclick = () => alert(`Entering channel: #${c}`);
+      elements.communitiesList.appendChild(pill);
+      communitiesAdded++;
+    });
+  }
+  if (u.communities && u.communities.hide) {
+    u.communities.hide.forEach(c => {
+      const pill = document.createElement("span");
+      pill.className = "community-pill hidden";
+      pill.title = "Filtered out by Discovery Agent to reduce clutter. Click to reveal.";
+      pill.textContent = `# ${c}`;
+      pill.onclick = () => {
+        if (confirm(`This channel was hidden by the Discovery Agent. Enter anyway?`)) {
+          alert(`Entering channel: #${c}`);
+        }
+      };
+      elements.communitiesList.appendChild(pill);
+      communitiesAdded++;
+    });
+  }
+
+  if (communitiesAdded === 0) {
+    renderCardState(elements.communitiesList, "empty", "No recommended channels available.");
+  }
 
   // Recommended Resources
-  elements.resourcesList.innerHTML = u.resources.map(r => `
-    <div class="card">
-      <div class="card-header-row">
-        <div>
-          <span class="card-badge">${r.type}</span>
-          <span class="card-badge orange" style="margin-left: 6px;">Score: ${r.score}%</span>
+  if (u.resources && u.resources.length > 0) {
+    elements.resourcesList.innerHTML = u.resources.map(r => `
+      <div class="card">
+        <div class="card-header-row">
+          <div>
+            <span class="card-badge">${r.type}</span>
+          </div>
+          <button class="why-btn" onclick="openExplainabilityModal('${r.id}')">Why?</button>
         </div>
-        <button class="why-btn" onclick="openExplainabilityModal('${r.id}')">Why?</button>
+        <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${r.title}</h3>
+        <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Est: ${r.duration} • Difficulty: ${r.difficulty}</p>
+        <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <p style="font-size: 11px; color: var(--color-graphite); max-width: 70%; line-height: 1.2;">${r.reasoning.substring(0, 60)}...</p>
+          <button class="btn-filled btn-small" onclick="alert('Opening resource: ${r.title}')">Open</button>
+        </div>
       </div>
-      <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${r.title}</h3>
-      <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Est: ${r.duration} • Difficulty: ${r.difficulty}</p>
-      <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
-        <p style="font-size: 11px; color: var(--color-graphite); max-width: 70%; line-height: 1.2;">${r.reasoning.substring(0, 60)}...</p>
-        <button class="btn-filled btn-small" onclick="alert('Opening resource: ${r.title}')">Open</button>
-      </div>
-    </div>
-  `).join("");
+    `).join("");
+  } else {
+    renderCardState(elements.resourcesList, "empty", "No recommended resources available.");
+  }
 
   // Upcoming Events
-  elements.eventsList.innerHTML = u.events.map(e => `
-    <div class="event-row">
-      <div class="event-info">
-        <span class="event-title">${e.title}</span>
-        <span class="event-time">${e.time} • <strong style="color: var(--color-signal-orange);">${e.score}% compatibility</strong></span>
+  if (u.events && u.events.length > 0) {
+    elements.eventsList.innerHTML = u.events.map(e => `
+      <div class="event-row">
+        <div class="event-info">
+          <span class="event-title">${e.title}</span>
+          <span class="event-time">${e.time}</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="why-btn" style="padding: 4px 10px;" onclick="openExplainabilityModal('${e.id}')">Why?</button>
+          <button class="btn-filled btn-small" onclick="alert('Registered successfully for ${e.title}')">Register</button>
+        </div>
       </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="why-btn" style="padding: 4px 10px;" onclick="openExplainabilityModal('${e.id}')">Why?</button>
-        <button class="btn-filled btn-small" onclick="alert('Registered successfully for ${e.title}')">Register</button>
-      </div>
-    </div>
-  `).join("");
+    `).join("");
+  } else {
+    renderCardState(elements.eventsList, "empty", "No upcoming events scheduled.");
+  }
 
   // Insights / Notifications
-  elements.insightsList.innerHTML = u.insights.map(i => `
-    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 8px; border-left: 3px solid var(--color-signal-orange);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-signal-orange);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-      <span style="font-size: 13px; font-weight: 500; color: var(--color-carbon);">${i.message}</span>
-    </div>
-  `).join("");
+  if (u.insights && u.insights.length > 0) {
+    elements.insightsList.innerHTML = u.insights.map(i => `
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 8px; border-left: 3px solid var(--color-signal-orange);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-signal-orange);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span style="font-size: 13px; font-weight: 500; color: var(--color-carbon);">${i.message}</span>
+      </div>
+    `).join("");
+  } else {
+    renderCardState(elements.insightsList, "empty", "No orchestration insights.");
+  }
 }
 
 // Helper to construct priority cards
@@ -962,68 +724,49 @@ function createPriorityCard(label, title, val, footerText, agentText, decisionId
   elements.priorityGrid.appendChild(card);
 }
 
-// 11. Organizer Dashboard Renderer
-function renderOrganizerDashboard() {
-  const m = communityHealthMetrics;
-  
-  // Health Metrics scores
-  elements.orgHealthScore.textContent = `${m.score}%`;
-  elements.orgNewMembers.textContent = `+${m.new_members}`;
-  elements.orgActiveMembers.textContent = m.active_members;
-  elements.orgAtRiskMembers.textContent = `${m.at_risk_members} members`;
-  elements.orgUnanswered.textContent = m.unanswered_questions;
-
-  // Trending tags
-  elements.orgTrendingTopics.innerHTML = m.trending_topics.map(t => `
-    <span class="card-badge orange" style="margin-right: 6px; margin-bottom: 6px; display: inline-block;"># ${t}</span>
-  `).join("");
-
-  // Suggested Actions List
-  elements.orgActionsList.innerHTML = suggestedActions.map(a => `
-    <div style="padding: 16px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 12px; border-left: 3px solid ${a.status === 'approved' ? '#10b981' : 'var(--color-signal-orange)'};">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <span style="font-weight: 600; font-size: 14px; color: var(--color-carbon);">${a.action}</span>
-        <span class="card-badge" style="text-transform: capitalize; background-color: ${a.status === 'approved' ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-chalk)'}; color: ${a.status === 'approved' ? '#10b981' : 'var(--color-graphite)'};">${a.status}</span>
+// Helper to render mentor cards
+function createMentorCard(mentor) {
+  const avatar = mentor.avatar || mentor.name.substring(0, 2).toUpperCase();
+  return `
+    <div class="mentor-item">
+      <div class="mentor-info">
+        <div class="mentor-avatar">${avatar}</div>
+        <div class="mentor-details">
+          <span class="mentor-name">${mentor.name}</span>
+          <span class="mentor-role">${mentor.role}</span>
+          <p style="font-size: 12px; color: var(--color-graphite); margin-top: 4px;">${mentor.reason}</p>
+        </div>
       </div>
-      <p style="font-size: 12px; color: var(--color-graphite); margin: 8px 0 4px 0;"><strong>Reason:</strong> ${a.reason}</p>
-      <p style="font-size: 12px; color: var(--color-sienna-bronze); margin-bottom: 8px;"><strong>Impact Projection:</strong> ${a.impact}</p>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-chalk); padding-top: 8px; margin-top: 4px;">
-        <span style="font-size: 11px; color: var(--color-slate);">Assignee suggestion: <strong>${a.assign_to}</strong></span>
-        ${a.status === 'suggested' ? `
-          <button class="btn-filled btn-small" onclick="approveAction('${a.id}')">Approve & Execute</button>
-        ` : `
-          <span style="font-size: 12px; color: #10b981; font-weight: 500;">✓ In Execution Pipeline</span>
-        `}
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+        <span class="mentor-score-pill"><span class="mentor-score-label">${mentor.match}%</span> match</span>
+        <button class="btn-filled btn-small" onclick="alert('Connection request sent to ${mentor.name}')">Connect</button>
       </div>
     </div>
-  `).join("");
-
-  // Mentors Pool list
-  elements.orgMentorsList.innerHTML = potentialMentorsList.map(p => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--color-chalk);">
-      <div style="display: flex; flex-direction: column;">
-        <span style="font-size: 14px; font-weight: 600; color: var(--color-carbon);">${p.name} (${p.rating})</span>
-        <span style="font-size: 11px; color: var(--color-slate);">${p.expertise.join(", ")}</span>
-      </div>
-      <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 12px; color: var(--color-graphite);">${p.count} active mentees</span>
-        <span class="card-badge" style="background-color: ${p.status === 'Active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${p.status === 'Active' ? '#10b981' : '#ef4444'};">${p.status}</span>
-      </div>
-    </div>
-  `).join("");
+  `;
 }
 
-// Action executor mockup
-window.approveAction = function(actionId) {
-  const action = suggestedActions.find(a => a.id === actionId);
-  if (action) {
-    action.status = "approved";
-    alert(`Action Approved! Identity and Discovery Agents have dispatched notification to ${action.assign_to}.`);
-    renderOrganizerDashboard();
+// Organizer Dashboard Renderer
+function renderOrganizerDashboard() {
+  // Loaded dynamically via loadOrganizerData()
+}
+
+// Action executor
+window.approveAction = async function(actionId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/organizer/actions/${actionId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!response.ok) throw new Error("Failed to complete organizer action");
+    alert(`Action Approved! In Execution Pipeline.`);
+    loadOrganizerData();
+  } catch (error) {
+    console.error("Failed to approve action:", error);
+    alert("Error completing action.");
   }
 };
 
-// 12. Agent Execution Timeline Flow Renderer
+// Agent Execution Timeline Flow Renderer
 function renderAgentFlow() {
   const steps = [
     { name: "Identity Agent", desc: "Profile understanding & verified skills detection", timing: "0.8ms - 1.5ms" },
@@ -1053,35 +796,48 @@ function renderAgentFlow() {
   `;
 }
 
-// 13. Explainability Modal ("Why am I seeing this?")
+// Explainability Modal
 window.openExplainabilityModal = function(decisionId) {
-  let log = agentDecisionLogs[decisionId];
-  
-  if (!log) {
-    // Generate custom fallbacks dynamically for custom users/mentors
-    if (decisionId === "mentor-match") {
-      log = {
-        title: `Recommended Mentors`,
-        score: `${currentUser.recommended_people[0]?.match || 90}%`,
-        involved: ["Identity", "Mentor"],
-        timings: { "Identity": "1.2ms", "Mentor": "3.5ms" },
-        reasoning: [
-          `Identity Agent: Evaluated goals: [${currentUser.goals.join(', ')}].`,
-          `Mentor Agent: Filtered for verified community mentors with overlapping tags: [${currentUser.interests.join(', ')}]. Matching score computed based on communication skills and availability.`
-        ]
-      };
+  const u = currentUserProfile;
+  if (!u) return;
+
+  let title = "Reasoning Details";
+  let reasoning = [];
+  let score = "85%";
+  let agents = ["Identity", "Discovery"];
+  let timings = { "Identity": "1.1ms", "Discovery": "2.3ms" };
+
+  if (decisionId === "path-progress") {
+    title = u.learning_paths[0]?.name || "Active Path";
+    reasoning = [
+      "Identity Agent: Verified user capability metrics.",
+      "Learning Agent: Constructed milestone sequences matching current tags and skill parameters."
+    ];
+  } else if (decisionId === "mentor-match") {
+    title = u.recommended_people[0]?.name || "Top Mentor Match";
+    reasoning = [
+      `Identity Agent: Read primary stated growth goals: [${(u.goals || []).join(", ")}].`,
+      `Mentor Agent: Queried expert profile directories for alignment. Computed compatibility match based on availability and background.`
+    ];
+  } else {
+    // Find matching resource/event
+    const resource = (u.resources || []).find(r => r.id === decisionId);
+    const event = (u.events || []).find(e => e.id === decisionId);
+    const item = resource || event;
+    if (item) {
+      title = item.title;
+      reasoning = [
+        `Identity Agent: Evaluated growth areas and interests.`,
+        `Discovery Agent: Ranked resource match based on relevance score of ${item.score || 85}%.`,
+        `Learning Agent: Recommended to support milestone progress objectives.`
+      ];
+      score = `${item.score || 85}%`;
     } else {
-      // Fallback
-      log = {
-        title: `Reasoning Context - Decision ID: ${decisionId}`,
-        score: "85%",
-        involved: ["Identity", "Discovery"],
-        timings: { "Identity": "1.0ms", "Discovery": "2.0ms" },
-        reasoning: [
-          "Identity Agent: Read stated interests from onboarded user profile preferences.",
-          "Discovery Agent: Highlighted high-engagement items in alignment with community topics."
-        ]
-      };
+      title = `Decision ${decisionId}`;
+      reasoning = [
+        "Identity Agent: Read profile criteria.",
+        "Discovery Agent: Extracted relative matching topics from active streams."
+      ];
     }
   }
 
@@ -1090,17 +846,17 @@ window.openExplainabilityModal = function(decisionId) {
   
   elements.modalBody.innerHTML = `
     <div style="margin-bottom: 20px;">
-      <h4 style="font-size: 16px; font-weight: 600; color: var(--color-carbon); margin-bottom: 4px;">${log.title}</h4>
+      <h4 style="font-size: 16px; font-weight: 600; color: var(--color-carbon); margin-bottom: 4px;">${title}</h4>
       <p style="font-size: 13px; color: var(--color-slate);">Multiple cooperative AI agents collaborated to rank this card for your viewport.</p>
     </div>
     
     <div style="margin-bottom: 24px;">
       <label class="form-label" style="font-weight: 600;">Cooperating Agents and Execution Timings</label>
       <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
-        ${log.involved.map(agent => `
+        ${agents.map(agent => `
           <div style="background-color: var(--color-fog); border: 1px solid var(--color-chalk); border-radius: var(--radius-tags); padding: 4px 12px; font-size: 12px; display: flex; justify-content: space-between; width: calc(50% - 4px);">
             <strong style="color: var(--color-carbon);">${agent} Agent</strong>
-            <span style="color: var(--color-sienna-bronze);">${log.timings[agent] || '—'}</span>
+            <span style="color: var(--color-sienna-bronze);">${timings[agent] || '—'}</span>
           </div>
         `).join("")}
       </div>
@@ -1109,60 +865,29 @@ window.openExplainabilityModal = function(decisionId) {
     <div style="margin-bottom: 24px;">
       <label class="form-label" style="font-weight: 600;">Agent Reasoning Chain Details</label>
       <div class="reasoning-list">
-        ${log.reasoning.map(step => `
-          <div class="reasoning-item">${step}</div>
+        ${reasoning.map(step => `
+          <div class="reasoning-item" style="font-size: 12px; color: var(--color-graphite); margin-bottom: 6px; padding-left: 12px; border-left: 2px solid var(--color-signal-orange);">${step}</div>
         `).join("")}
       </div>
     </div>
 
-    <div style="margin-bottom: 24px; border-top: 1px solid var(--color-chalk); padding-top: 16px;">
-      <label class="form-label" style="font-weight: 600; margin-bottom: 8px;">Fine-tune Recommendations</label>
-      <p style="font-size: 12px; color: var(--color-slate); margin-bottom: 12px;">Adjust the agent weighting coefficients below to customize recommendations for your focus.</p>
-      
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-          <span style="font-weight: 500;">Learning Roadmap Bias</span>
-          <input type="range" min="1" max="100" value="80" class="tuning-slider" style="width: 150px; accent-color: var(--color-signal-orange);" oninput="updateCoef(this.value)">
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-          <span style="font-weight: 500;">Temporal Recency Bias</span>
-          <input type="range" min="1" max="100" value="50" class="tuning-slider" style="width: 150px; accent-color: var(--color-signal-orange);">
-        </div>
-      </div>
-    </div>
-    
-    <div class="confidence-gauge">
-      <span class="confidence-title">Overall Recommendation Confidence</span>
-      <span class="confidence-value">${log.score}</span>
+    <div class="confidence-gauge" style="margin-top: 16px; padding: 12px; background: var(--color-fog); border-radius: var(--radius-cards); display: flex; justify-content: space-between; align-items: center;">
+      <span class="confidence-title" style="font-size: 12px; font-weight: 600; color: var(--color-carbon);">Overall Recommendation Confidence</span>
+      <span class="confidence-value" style="font-size: 16px; font-weight: 700; color: var(--color-signal-orange);">${score}</span>
     </div>
   `;
   
   elements.modalOverlay.classList.add("active");
 };
 
-window.updateCoef = function(val) {
-  // Mock weight adjusting
-  console.log(`Updated roadmap bias coefficient to: ${val}`);
-};
-
 function closeModal() {
   elements.modalOverlay.classList.remove("active");
 }
 
-// ─── Backend Integration Helper Functions ────────────────────────────────────
-
-function useLocalFallback(userId) {
-  console.log(`Using local fallback profile data for user: ${userId}`);
-  if (userId === "custom") {
-    currentUser = customUserProfile || hardcodedUsers["rahul"];
-  } else {
-    currentUser = hardcodedUsers[userId] || hardcodedUsers["rahul"];
-  }
-  renderAgentFlow();
-}
+// Backend Integration Helper Functions
 
 async function loadMemberPersonalization(userId) {
-  // Show loading state
+  // Show loading states
   elements.heroHeadline.textContent = "AI Orchestration Running...";
   elements.heroBody.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1173,13 +898,15 @@ async function loadMemberPersonalization(userId) {
     </div>
   `;
   elements.heroPills.innerHTML = "";
-  elements.priorityGrid.innerHTML = `
-    <div class="card" style="grid-column: span 3; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-      <div class="spinner" style="border: 4px solid var(--color-chalk); border-top: 4px solid var(--color-signal-orange); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 12px;"></div>
-      <p style="font-weight: 500; color: var(--color-carbon);">Orchestrating agent decisions & memory state...</p>
-      <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Connecting to backend on port 8000. Caching layers are engaged.</p>
-    </div>
-  `;
+  
+  renderCardState(elements.priorityGrid, "loading");
+  renderCardState(elements.kpiSkillsList, "loading");
+  renderCardState(elements.kpiInterestsList, "loading");
+  renderCardState(elements.mentorList, "loading");
+  renderCardState(elements.communitiesList, "loading");
+  renderCardState(elements.resourcesList, "loading");
+  renderCardState(elements.eventsList, "loading");
+  renderCardState(elements.insightsList, "loading");
 
   if (!document.getElementById("backend-integration-styles")) {
     const style = document.createElement("style");
@@ -1214,18 +941,30 @@ async function loadMemberPersonalization(userId) {
 
     if (result.success && result.data) {
       const adapted = adaptBackendProfileToFrontend(result.data, userId);
-      currentUser = adapted;
+      currentUserProfile = adapted;
+      
+      elements.userProfileWrapper.style.display = "flex";
+      elements.authUserName.textContent = adapted.name;
+      
+      renderApp();
       renderAgentFlowWithTimings(result.data);
     } else {
-      console.warn("API succeeded but returned failure payload. Using local fallback.");
-      useLocalFallback(userId);
+      throw new Error("API succeeded but returned failure payload");
     }
   } catch (error) {
     console.error("Failed to fetch personalization from backend:", error);
-    useLocalFallback(userId);
+    elements.heroHeadline.textContent = "Telemetry Sync Error";
+    elements.heroBody.textContent = "Unable to load environment recommendations. Please ensure the backend is running.";
+    
+    renderCardState(elements.priorityGrid, "error", "Failed to retrieve focus items.");
+    renderCardState(elements.kpiSkillsList, "error", "Skills data unavailable.");
+    renderCardState(elements.kpiInterestsList, "error", "Interests data unavailable.");
+    renderCardState(elements.mentorList, "error", "Mentors list unavailable.");
+    renderCardState(elements.communitiesList, "error", "Channels list unavailable.");
+    renderCardState(elements.resourcesList, "error", "Resource recommendations unavailable.");
+    renderCardState(elements.eventsList, "error", "Events calendar unavailable.");
+    renderCardState(elements.insightsList, "error", "Insight logs unavailable.");
   }
-
-  renderApp();
 }
 
 function renderAgentFlowWithTimings(backendData) {
@@ -1258,6 +997,15 @@ function renderAgentFlowWithTimings(backendData) {
 }
 
 async function loadOrganizerData() {
+  elements.orgHealthScore.textContent = "--%";
+  elements.orgActiveMembers.textContent = "---";
+  elements.orgAtRiskMembers.textContent = "---";
+  elements.orgNewMembers.textContent = "---";
+  
+  renderCardState(elements.orgTrendingTopics, "loading");
+  renderCardState(elements.orgActionsList, "loading");
+  renderCardState(elements.orgMentorsList, "loading");
+
   try {
     const response = await fetch(`${API_BASE_URL}/agents/community/health`, {
       method: "POST",
@@ -1272,31 +1020,69 @@ async function loadOrganizerData() {
       const h = data.health || {};
       const a = data.actions || {};
 
-      // Map to UI variables
-      communityHealthMetrics.score = Math.round((h.community_health_score || 0.8) * 100);
-      communityHealthMetrics.new_members = 142; // static scaling reference
-      communityHealthMetrics.active_members = h.total_members || 247;
-      communityHealthMetrics.at_risk_members = (h.at_risk_members || []).length;
-      communityHealthMetrics.unanswered_questions = (h.topic_gaps || []).reduce((sum, g) => sum + (g.unanswered_questions || 0), 0);
-      communityHealthMetrics.trending_topics = h.trending_topics || [];
+      const score = Math.round((h.community_health_score || 0) * 100);
+      elements.orgHealthScore.textContent = score ? `${score}%` : "0%";
+      
+      const healthDelta = document.getElementById("org-health-delta");
+      if (healthDelta) {
+        healthDelta.innerHTML = `<span class="kpi-delta neutral">${h.summary || 'Stable'}</span>`;
+      }
+      
+      elements.orgActiveMembers.textContent = h.total_members || 0;
+      elements.orgNewMembers.textContent = `+${h.active_members_7d || 0}`;
+      
+      elements.orgAtRiskMembers.textContent = `${(h.at_risk_members || []).length} members`;
+      const atRiskWrapper = document.getElementById("org-at-risk-wrapper");
+      if (atRiskWrapper) {
+        atRiskWrapper.textContent = "At risk of churning (>30d inactivity)";
+      }
 
-      // Map suggested actions
-      suggestedActions.length = 0;
-      (a.action_items || []).forEach(item => {
-        suggestedActions.push({
-          id: item.action_id || `act-${Math.random().toString(36).substr(2, 9)}`,
-          action: item.title,
-          reason: item.description,
-          impact: item.expected_impact || "Improves member retention.",
-          assign_to: item.assignee || "Organizer",
-          status: item.completed ? "approved" : "suggested"
-        });
-      });
+      // Trending tags
+      const trends = h.trending_topics || [];
+      if (trends.length > 0) {
+        elements.orgTrendingTopics.innerHTML = trends.map(t => `
+          <span class="card-badge orange" style="margin-right: 6px; margin-bottom: 6px; display: inline-block;"># ${t}</span>
+        `).join("");
+      } else {
+        renderCardState(elements.orgTrendingTopics, "empty", "No trending conversation topics.");
+      }
 
-      renderApp();
+      // Suggested Actions List
+      const actions = a.action_items || [];
+      if (actions.length > 0) {
+        elements.orgActionsList.innerHTML = actions.map(item => `
+          <div style="padding: 16px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 12px; border-left: 3px solid ${item.completed ? '#10b981' : 'var(--color-signal-orange)'};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-weight: 600; font-size: 14px; color: var(--color-carbon);">${item.title}</span>
+              <span class="card-badge" style="text-transform: capitalize; background-color: ${item.completed ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-chalk)'}; color: ${item.completed ? '#10b981' : 'var(--color-graphite)'};">${item.completed ? 'approved' : 'suggested'}</span>
+            </div>
+            <p style="font-size: 12px; color: var(--color-graphite); margin: 8px 0 4px 0;"><strong>Reason:</strong> ${item.description}</p>
+            <p style="font-size: 12px; color: var(--color-sienna-bronze); margin-bottom: 8px;"><strong>Impact Projection:</strong> ${item.expected_impact || 'Improves member retention.'}</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-chalk); padding-top: 8px; margin-top: 4px;">
+              <span style="font-size: 11px; color: var(--color-slate);">Assignee suggestion: <strong>${item.assignee || 'Organizer'}</strong></span>
+              ${!item.completed ? `
+                <button class="btn-filled btn-small" onclick="approveAction('${item.action_id}')">Approve & Execute</button>
+              ` : `
+                <span style="font-size: 12px; color: #10b981; font-weight: 500;">✓ In Execution Pipeline</span>
+              `}
+            </div>
+          </div>
+        `).join("");
+      } else {
+        renderCardState(elements.orgActionsList, "empty", "No pending actions recommended.");
+      }
+
+      // Expert Mentors Pool
+      renderCardState(elements.orgMentorsList, "empty", "No active mentors registered in community directory.");
     }
   } catch (error) {
     console.error("Failed to load organizer data from backend:", error);
+    elements.orgHealthScore.textContent = "Error";
+    elements.orgActiveMembers.textContent = "Error";
+    elements.orgAtRiskMembers.textContent = "Error";
+    renderCardState(elements.orgTrendingTopics, "error", "Failed to load community health metrics.");
+    renderCardState(elements.orgActionsList, "error", "Failed to load recommended actions.");
+    renderCardState(elements.orgMentorsList, "error", "Failed to load expert mentors directory.");
   }
 }
 
@@ -1306,14 +1092,12 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
   const learning = backendProfile.learning || {};
   const mentor = backendProfile.mentor || {};
 
-  // Map skills: detect level from proficiency
   const levelMap = { "Beginner": 2, "Intermediate": 3, "Advanced": 4, "Expert": 5 };
   const verified_skills = (identity.detected_skills || []).map(s => ({
     name: s.name,
     level: levelMap[s.proficiency] || 3
   }));
 
-  // Map learning paths
   const roadmapName = learning.roadmap_title || "Custom Pathway";
   const milestones = learning.milestones || [];
   const nextMilestone = milestones[0] ? `Week ${milestones[0].week}: ${milestones[0].title}` : "Milestone 1: Getting Started";
@@ -1327,7 +1111,6 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     }
   ];
 
-  // Map recommended people
   const recommended_people = [];
   if (mentor.primary_mentor) {
     const pm = mentor.primary_mentor;
@@ -1349,12 +1132,10 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     });
   });
 
-  // Map channels to show/hide
   const showChannels = (discovery.recommended_channels || []).map(ch => ch.name);
   const allChannels = ["Systems Programming", "GPU & Accelerators", "AI Infrastructure", "Machine Learning", "Data Science & Python", "Frontend Development", "Design Systems & UI UX", "Web3 & Blockchain", "Mobile Design", "React Frameworks", "Open Source Contribution"];
   const hideChannels = allChannels.filter(c => !showChannels.includes(c));
 
-  // Map resources
   const resources = (discovery.recommended_resources || []).map(r => ({
     id: r.resource_id || `res-${Math.random().toString(36).substr(2, 9)}`,
     title: r.title,
@@ -1365,7 +1146,6 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     reasoning: r.reason || "Highly relevant resource for your active milestone."
   }));
 
-  // Map events
   const primaryChannel = showChannels[0] || "General";
   const events = [
     {
@@ -1388,7 +1168,6 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     }
   ];
 
-  // Map insights
   const insights = [
     { message: identity.summary || "Your custom learning environment is now fully active.", type: "momentum" }
   ];
