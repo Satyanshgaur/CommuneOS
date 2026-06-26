@@ -92,7 +92,7 @@ async def _member_llm_pipeline(user_id: str, user_data: Dict) -> Dict:
     steps: Dict[str, float] = {}
 
     # ── Step 1: Identity ──────────────────────────────────────────────────────
-    logger.info(f"[{user_id}] Step 1/3 → Identity Agent")
+    logger.info(f"[{user_id}] Step 1/3 -> Identity Agent")
     t_step = time.time()
     identity_result = await IdentityAgent().run(user_id, user_data)
     steps["identity_ms"] = round((time.time() - t_step) * 1000, 1)
@@ -101,7 +101,7 @@ async def _member_llm_pipeline(user_id: str, user_data: Dict) -> Dict:
     identity_data = identity_result.get("data", {})
 
     # ── Step 2: Discovery + Learning (parallel) ────────────────────────────────
-    logger.info(f"[{user_id}] Step 2/3 → Discovery + Learning (parallel)")
+    logger.info(f"[{user_id}] Step 2/3 -> Discovery + Learning (parallel)")
     t_step = time.time()
     disc_res, learn_res = await asyncio.gather(
         DiscoveryAgent().run(user_id, user_data, identity_data),
@@ -129,7 +129,7 @@ async def _member_llm_pipeline(user_id: str, user_data: Dict) -> Dict:
     )
 
     # ── Step 3: Mentor ────────────────────────────────────────────────────────
-    logger.info(f"[{user_id}] Step 3/3 → Mentor Agent")
+    logger.info(f"[{user_id}] Step 3/3 -> Mentor Agent")
     t_step = time.time()
     mentor_res = await MentorAgent().run(
         user_id, user_data, identity_data, learn_res.get("data", {})
@@ -217,10 +217,10 @@ async def _community_llm_pipeline() -> Dict:
 
     t0 = time.time()
 
-    logger.info("[community] Step 1/2 → Health Agent")
+    logger.info("[community] Step 1/2 -> Health Agent")
     health_result = await HealthAgent().run_community()
 
-    logger.info("[community] Step 2/2 → Organizer Agent")
+    logger.info("[community] Step 2/2 -> Organizer Agent")
     organizer_result = await OrganizerAgent().run_community(health_result.get("data"))
 
     total_ms = round((time.time() - t0) * 1000, 1)
