@@ -404,8 +404,57 @@ def get_mock_organizer(health_data: Optional[Dict] = None) -> Dict[str, Any]:
     }
 
 
-# In-memory user store for development (replaces database in Phase 1)
-_user_store: Dict[str, Dict] = {}
+# In-memory user store pre-seeded with demo personas
+_user_store: Dict[str, Dict] = {
+    "rahul": {
+        "user_id": "rahul",
+        "username": "rahul",
+        "bio": "Systems programming and GPU enthusiast. Building custom CUDA kernels and optimizing LLM inference engines.",
+        "skills": {"CUDA": 4, "C++": 4, "Rust": 3, "Systems Programming": 4, "GPU Architecture": 3},
+        "tags": ["cuda", "gpu", "systems", "c++", "rust"],
+        "interests": ["gpu-computing", "systems-programming", "rust"],
+        "goals": ["Master CUDA optimization", "Understand hardware-level execution", "Contribute to open-source"],
+        "learning_style": "Hands-on projects, deep-dive guides, reading source code",
+        "skill_level": "Intermediate",
+        "activity_log": [
+            {"type": "message", "channel": "gpu-computing", "content": "Anyone dealt with shared memory bank conflicts during matrix multiplication?"},
+            {"type": "message", "channel": "rust", "content": "Hey Aman, the ownership model can be tricky — think of it as compile-time resource management."},
+        ],
+        "metrics": {"contributions_percentile": 15, "beginners_helped_this_week": 6, "is_mentor_eligible": True},
+        "created_at": "2026-06-20T10:00:00",
+    },
+    "priya": {
+        "user_id": "priya",
+        "username": "priya",
+        "bio": "Beginner AI learner from a non-CS background. Want to understand ML and train neural networks with PyTorch.",
+        "skills": {"Python": 2, "Basic Math": 1},
+        "tags": ["pytorch", "machine-learning", "beginner", "ai"],
+        "interests": ["pytorch-study-group", "machine-learning-basics"],
+        "goals": ["Build first neural network", "Learn PyTorch", "Transition into AI engineering"],
+        "learning_style": "Step-by-step tutorials, interactive notebooks, mentor guidance",
+        "skill_level": "Beginner",
+        "activity_log": [
+            {"type": "join", "timestamp": "2026-06-25T09:00:00Z"},
+            {"type": "message", "channel": "introductions", "content": "Hi everyone! I'm Priya, excited to learn AI! Where should I start with PyTorch?"},
+        ],
+        "metrics": {"contributions_percentile": 95, "beginners_helped_this_week": 0, "is_mentor_eligible": False},
+        "created_at": "2026-06-25T09:00:00",
+    },
+    "organizer": {
+        "user_id": "organizer",
+        "username": "organizer",
+        "bio": "Community operations lead for AgentField Community.",
+        "skills": {"Community Management": 5, "Analytics": 4},
+        "tags": ["organizer", "admin"],
+        "interests": ["community-ops"],
+        "goals": ["Grow community engagement", "Reduce churn", "Onboard quality mentors"],
+        "learning_style": "Data-driven",
+        "skill_level": "Expert",
+        "activity_log": [],
+        "metrics": {"contributions_percentile": 1, "beginners_helped_this_week": 0, "is_mentor_eligible": False},
+        "created_at": "2026-06-01T00:00:00",
+    },
+}
 
 
 def get_mock_user(user_id: str) -> Optional[Dict]:

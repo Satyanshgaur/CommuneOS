@@ -3,8 +3,8 @@ CommuneOS User Profile Models
 Pydantic schemas for user data validation and serialization.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, field_validator, EmailStr
+from typing import Any, Dict, List, Optional, Union
+from pydantic import BaseModel, Field, field_validator, model_validator
 import uuid
 
 
@@ -111,10 +111,24 @@ class UserCreateRequest(BaseModel):
     bio: Optional[str] = Field(None, max_length=2000)
     tags: List[str] = Field(default_factory=list)
     interests: List[str] = Field(default_factory=list)
-    goals: List[str] = Field(default_factory=list)
+    goals: Union[List[str], str] = Field(default_factory=list)
     github_url: Optional[str] = Field(None)
     linkedin_url: Optional[str] = Field(None)
     timezone: Optional[str] = Field(None)
+
+    @field_validator("goals", mode="before")
+    @classmethod
+    def coerce_goals_to_list(cls, v: Any) -> List[str]:
+        if isinstance(v, str):
+            return [g.strip() for g in v.split(",") if g.strip()]
+        return v
+
+    @field_validator("tags", "interests", mode="before")
+    @classmethod
+    def coerce_list_fields(cls, v: Any) -> List[str]:
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
 
     def to_user_profile(self, user_id: Optional[str] = None) -> UserProfile:
         """Convert creation request to full UserProfile."""
