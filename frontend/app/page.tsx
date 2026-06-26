@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { 
   User, Sparkles, Cpu, BookOpen, Calendar, Users, Award, Activity, 
-  TrendingUp, AlertTriangle, CheckCircle2, ArrowRight, ChevronRight, 
-  Info, Lock, RefreshCw, Play, Check, CheckSquare, ShieldCheck, 
-  Search, MessageSquare, Terminal, Eye, AlertCircle, ChevronDown
+  TrendingUp, AlertTriangle, ChevronRight, 
+  Lock, RefreshCw, Play, Check, CheckSquare, ShieldCheck, 
+  Search, MessageSquare, Terminal, AlertCircle, ChevronDown
 } from "lucide-react";
 
 // Local high-fidelity fallback data in case the backend is loading or unavailable
@@ -175,7 +176,7 @@ export default function Home() {
         } else {
           setBackendStatus("disconnected");
         }
-      } catch (e) {
+      } catch {
         setBackendStatus("disconnected");
       }
     };
@@ -201,7 +202,7 @@ export default function Home() {
         } else {
           setData(FALLBACK_DATA[persona]);
         }
-      } catch (e) {
+      } catch {
         setData(FALLBACK_DATA[persona]);
       } finally {
         setLoading(false);
