@@ -74,6 +74,14 @@ async def get_user(
             detail=f"User '{user_id}' not found"
         )
     
+    # Attach community_id and role if joined
+    from services.db import community_members_table
+    member_info = community_members_table.get(user_id.lower())
+    user = dict(user) # make a copy to avoid mutating cache/DB reference directly if desired
+    if member_info:
+        user["community_id"] = member_info["community_id"]
+        user["role_id"] = member_info["role_id"]
+        
     # Cache for 30 min
     cache_service.set(cache_key, user, ttl=1800)
     

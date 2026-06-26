@@ -107,12 +107,27 @@
     </div>
 
     <!-- Community Assignment Section -->
-    <div id="community-assignment-container" class="card" style="display: none; max-width: 500px; margin: 40px auto; padding: 40px; text-align: center; border-radius: var(--radius-cards);">
-      <div class="spinner" style="border: 4px solid var(--color-chalk); border-top: 4px solid var(--color-signal-orange); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto;"></div>
-      <h2 class="onboarding-title" style="margin-bottom: 8px;">Analyzing Coordinates & Assigning Community</h2>
-      <p class="onboarding-subtitle" style="margin-bottom: 24px;">Discovery Agent and Learning Agent are matching your GitHub repositories with learning pathways and community channels...</p>
-      <div style="width: 100%; height: 6px; background-color: var(--color-chalk); border-radius: 3px; overflow: hidden; position: relative;">
-        <div style="width: 50%; height: 100%; background-color: var(--color-signal-orange); position: absolute; animation: loading-bar 2s infinite ease-in-out;"></div>
+    <div id="community-assignment-container" class="card" style="display: none; max-width: 600px; margin: 40px auto; padding: 40px; border-radius: var(--radius-cards);">
+      
+      <!-- Selection View -->
+      <div id="community-selection-view">
+        <h2 class="onboarding-title" style="margin-bottom: 8px; text-align: center;">Select Your Community</h2>
+        <p class="onboarding-subtitle" style="margin-bottom: 24px; text-align: center;">Choose a community to align your learning path and channels.</p>
+        
+        <div id="community-cards-list" style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px;">
+          <!-- Rendered dynamically via app.js -->
+        </div>
+        <button id="btn-join-community" class="btn-filled" style="width: 100%; border-radius: var(--radius-buttons); cursor: pointer;" disabled>Join & Personalize</button>
+      </div>
+
+      <!-- Loading View -->
+      <div id="community-loading-view" style="display: none; text-align: center;">
+        <div class="spinner" style="border: 4px solid var(--color-chalk); border-top: 4px solid var(--color-signal-orange); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto;"></div>
+        <h2 class="onboarding-title" style="margin-bottom: 8px;">Analyzing Coordinates & Assigning Community</h2>
+        <p class="onboarding-subtitle" style="margin-bottom: 24px;">Discovery Agent and Learning Agent are matching your coordinates with learning pathways and community channels...</p>
+        <div style="width: 100%; height: 6px; background-color: var(--color-chalk); border-radius: 3px; overflow: hidden; position: relative;">
+          <div style="width: 50%; height: 100%; background-color: var(--color-signal-orange); position: absolute; animation: loading-bar 2s infinite ease-in-out;"></div>
+        </div>
       </div>
     </div>
 
@@ -263,6 +278,14 @@
         </div>
       </section>
 
+      <!-- Projects Section -->
+      <section style="margin-top: var(--spacing-40); margin-bottom: var(--spacing-40);">
+        <h2 class="section-title">Community Projects <span style="font-size: 13px; font-family: var(--font-inter); color: var(--color-slate); font-weight: normal;">Collaborative initiatives</span></h2>
+        <div class="grid-2" id="projects-list">
+          <!-- Dynamically populated projects list -->
+        </div>
+      </section>
+
       <!-- Events Calendar Section -->
       <section style="margin-bottom: var(--section-gap);">
         <h2 class="section-title">Upcoming Live Events <span style="font-size: 13px; font-family: var(--font-inter); color: var(--color-slate); font-weight: normal;">Temporally prioritized</span></h2>
@@ -378,6 +401,67 @@
       <p>© 2026 AgentField.ai • Powered by Ventriloc Design Engine. Created for Personalized Developer Environments.</p>
     </div>
   </footer>
+
+  <!-- PROFILE EDIT MODAL OVERLAY -->
+  <div id="profile-modal-overlay" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+      <button id="profile-modal-close" class="modal-close">&times;</button>
+      <h3 class="modal-title" style="margin-bottom: 16px;">Edit Identity Profile</h3>
+      <div class="modal-body">
+        <form id="profile-edit-form">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="edit-bio">Bio</label>
+            <textarea id="edit-bio" class="form-input" style="height: 60px; resize: vertical; padding: 8px; font-family: inherit; font-size: 13px;"></textarea>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="edit-experience-level">Experience Level</label>
+              <select id="edit-experience-level" class="form-input" style="padding: 8px; font-size: 13px; height: 36px;">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-availability">Availability</label>
+              <input type="text" id="edit-availability" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="e.g. 10 hours/week">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="edit-github-username">GitHub Username</label>
+              <input type="text" id="edit-github-username" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="e.g. gpuninja">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-portfolio-url">Portfolio URL</label>
+              <input type="url" id="edit-portfolio-url" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="https://...">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="edit-career-goals">Career Goals (comma-separated)</label>
+            <input type="text" id="edit-career-goals" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="e.g. Build CUDA kernel, Master PyTorch">
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="edit-preferred-tech">Preferred Technologies (comma-separated)</label>
+            <input type="text" id="edit-preferred-tech" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="e.g. Python, CUDA, Rust">
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="edit-preferred-domains">Preferred Domains (comma-separated)</label>
+            <input type="text" id="edit-preferred-domains" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="e.g. Systems, AI, MLOps">
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="edit-learning-pref">Learning Preferences (comma-separated)</label>
+            <input type="text" id="edit-learning-pref" class="form-input" style="padding: 8px; font-size: 13px;" placeholder="e.g. Hands-on coding, Video tutorials">
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+            <button type="button" class="btn-outlined" id="btn-profile-edit-cancel">Cancel</button>
+            <button type="submit" class="btn-filled">Save Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- EXPLAINABILITY MODAL OVERLAY -->
   <div id="modal-overlay" class="modal-overlay">

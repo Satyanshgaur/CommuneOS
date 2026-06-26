@@ -10,6 +10,29 @@ let currentUserId = null;
 let currentUserProfile = null;
 let currentRole = "member"; // "member" or "organizer"
 
+// Intercept all fetch requests to automatically add X-User-Id header if currentUserId is set
+const originalFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+  if (currentUserId) {
+    options.headers = options.headers || {};
+    if (options.headers instanceof Headers) {
+      if (!options.headers.has("X-User-Id")) {
+        options.headers.append("X-User-Id", currentUserId);
+      }
+    } else if (Array.isArray(options.headers)) {
+      const hasHeader = options.headers.some(([key]) => key.toLowerCase() === 'x-user-id');
+      if (!hasHeader) {
+        options.headers.push(["X-User-Id", currentUserId]);
+      }
+    } else {
+      if (!options.headers["X-User-Id"]) {
+        options.headers["X-User-Id"] = currentUserId;
+      }
+    }
+  }
+  return originalFetch(url, options);
+};
+
 // Dynamic Community Branding Placeholder
 const communityBranding = {
   name: "AgentField Community",
@@ -182,6 +205,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   elements.modalOverlay.addEventListener("click", (e) => {
     if (e.target === elements.modalOverlay) closeModal();
   });
+
+  // Sprint 2 Modal Event bindings
+  const profileOverlay = document.getElementById("profile-modal-overlay");
+  const profileClose = document.getElementById("profile-modal-close");
+  const profileCancel = document.getElementById("btn-profile-edit-cancel");
+  const profileForm = document.getElementById("profile-edit-form");
+
+  if (profileClose) profileClose.onclick = closeProfileEditModal;
+  if (profileCancel) profileCancel.onclick = closeProfileEditModal;
+  if (profileForm) profileForm.onsubmit = handleProfileEditSubmit;
+  if (profileOverlay) {
+    profileOverlay.addEventListener("click", (e) => {
+      if (e.target === profileOverlay) closeProfileEditModal();
+    });
+  }
+
   if (elements.btnSignout) {
     elements.btnSignout.addEventListener("click", handleSignOut);
   }
@@ -275,10 +314,32 @@ async function checkUserProfile(userId, email) {
       // Authenticated but profile is not created yet
       showProfileCreation(email);
     } else if (res.ok) {
-      // Profile exists, load dashboard
       const json = await res.json();
-      showDashboard(json.data.username);
-      await loadMemberPersonalization(userId);
+      const profile = json.data;
+      
+      if (!profile.community_id) {
+        // Profile exists but has not joined a community yet
+        showCommunityAssignment();
+      } else {
+        // Profile exists and has joined a community, load dashboard
+        selectedCommunityId = profile.community_id;
+        
+        // Fetch community branding from the list
+        const listRes = await fetch(`${API_BASE_URL}/community/list`);
+        if (listRes.ok) {
+          const listJson = await listRes.json();
+          const currentComm = listJson.data.communities.find(c => c.community_id === selectedCommunityId);
+          if (currentComm) {
+            communityBranding.name = currentComm.name;
+            communityBranding.logo = currentComm.logo;
+            communityBranding.description = currentComm.description;
+            renderCommunityBranding();
+          }
+        }
+        
+        showDashboard(profile.username);
+        await loadMemberPersonalization(userId);
+      }
     } else {
       throw new Error("API error while checking profile");
     }
@@ -325,7 +386,10 @@ function showProfileCreation(email) {
 }
 
 // Show Community Assignment Loader
-function showCommunityAssignment() {
+let selectedCommunityId = null;
+
+// Show Community Assignment Loader & Selection Screen
+async function showCommunityAssignment() {
   elements.authContainer.style.display = "none";
   elements.onboardingContainer.style.display = "none";
   elements.mainDashboard.style.display = "none";
@@ -335,6 +399,97 @@ function showCommunityAssignment() {
   elements.mainHeader.style.display = "none";
   
   elements.communityAssignmentContainer.style.display = "block";
+  document.getElementById("community-selection-view").style.display = "block";
+  document.getElementById("community-loading-view").style.display = "none";
+
+  const cardsList = document.getElementById("community-cards-list");
+  cardsList.innerHTML = '<p style="text-align: center; color: var(--color-slate);">Loading communities...</p>';
+
+  selectedCommunityId = null;
+  const joinBtn = document.getElementById("btn-join-community");
+  joinBtn.disabled = true;
+  joinBtn.onclick = handleJoinCommunitySubmit;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/community/list`);
+    if (!res.ok) throw new Error("Failed to load community list");
+    const result = await res.json();
+    const communities = result.data.communities;
+
+    cardsList.innerHTML = communities.map(c => `
+      <div class="community-selection-card" data-id="${c.community_id}" style="border: 1px solid var(--color-chalk); border-radius: var(--radius-cards); padding: 16px; cursor: pointer; text-align: left; transition: all 0.2s ease; background-color: var(--color-paper); margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 24px; margin-right: 12px;">${c.logo || '🌐'}</span>
+          <h3 style="margin: 0; color: var(--color-carbon); font-size: 16px;">${c.name}</h3>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: var(--color-slate); line-height: 1.4;">${c.description}</p>
+      </div>
+    `).join("");
+
+    const cards = cardsList.querySelectorAll(".community-selection-card");
+    cards.forEach(card => {
+      card.addEventListener("click", () => {
+        cards.forEach(c => {
+          c.style.borderColor = "var(--color-chalk)";
+          c.style.boxShadow = "none";
+        });
+        card.style.borderColor = "var(--color-signal-orange)";
+        card.style.boxShadow = "0 0 0 2px var(--color-signal-orange)";
+        selectedCommunityId = card.getAttribute("data-id");
+        joinBtn.disabled = false;
+      });
+    });
+  } catch (error) {
+    console.error("Error loading communities:", error);
+    cardsList.innerHTML = `<p style="text-align: center; color: red;">Error loading communities: ${error.message}</p>`;
+  }
+}
+
+// Handle joining community and triggers personalization
+async function handleJoinCommunitySubmit() {
+  if (!selectedCommunityId) return;
+
+  document.getElementById("community-selection-view").style.display = "none";
+  document.getElementById("community-loading-view").style.display = "block";
+
+  try {
+    const joinRes = await fetch(`${API_BASE_URL}/community/join`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id: currentUserId,
+        community_id: selectedCommunityId
+      })
+    });
+
+    if (!joinRes.ok) throw new Error("Failed to join community");
+
+    // Fetch and update branding
+    const listRes = await fetch(`${API_BASE_URL}/community/list`);
+    if (listRes.ok) {
+      const listJson = await listRes.json();
+      const currentComm = listJson.data.communities.find(c => c.community_id === selectedCommunityId);
+      if (currentComm) {
+        communityBranding.name = currentComm.name;
+        communityBranding.logo = currentComm.logo;
+        communityBranding.description = currentComm.description;
+        renderCommunityBranding();
+      }
+    }
+
+    // Run Personalization
+    await loadMemberPersonalization(currentUserId);
+
+    // Show Dashboard
+    const nameInput = document.getElementById("onboard-name").value.trim() || currentUserId;
+    showDashboard(nameInput);
+  } catch (error) {
+    console.error("Join/Personalization failed:", error);
+    alert(`Setup failed: ${error.message}`);
+    showCommunityAssignment();
+  }
 }
 
 // Transition into dashboard view
@@ -411,8 +566,6 @@ async function handleProfileSubmit(e) {
     alert("Please fill out all fields for your profile.");
     return;
   }
-  
-  showCommunityAssignment();
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -439,11 +592,8 @@ async function handleProfileSubmit(e) {
 
     if (!res.ok) throw new Error("Failed to create profile on backend");
 
-    // Run Personalization & Community Assignment pipeline
-    await loadMemberPersonalization(currentUserId);
-    
-    // Show Dashboard
-    showDashboard(name);
+    // Proceed to community selection
+    showCommunityAssignment();
 
   } catch (error) {
     console.error("Profile creation failed:", error);
@@ -652,45 +802,11 @@ function renderMemberDashboard() {
     renderCardState(elements.communitiesList, "empty", "No recommended channels available.");
   }
 
-  // Recommended Resources
-  if (u.resources && u.resources.length > 0) {
-    elements.resourcesList.innerHTML = u.resources.map(r => `
-      <div class="card">
-        <div class="card-header-row">
-          <div>
-            <span class="card-badge">${r.type}</span>
-          </div>
-          <button class="why-btn" onclick="openExplainabilityModal('${r.id}')">Why?</button>
-        </div>
-        <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${r.title}</h3>
-        <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Est: ${r.duration} • Difficulty: ${r.difficulty}</p>
-        <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <p style="font-size: 11px; color: var(--color-graphite); max-width: 70%; line-height: 1.2;">${r.reasoning.substring(0, 60)}...</p>
-          <button class="btn-filled btn-small" onclick="alert('Opening resource: ${r.title}')">Open</button>
-        </div>
-      </div>
-    `).join("");
-  } else {
-    renderCardState(elements.resourcesList, "empty", "No recommended resources available.");
-  }
+  // Recommended Resources, Projects, and Events loaded from DB
+  loadCommunityKnowledge();
 
-  // Upcoming Events
-  if (u.events && u.events.length > 0) {
-    elements.eventsList.innerHTML = u.events.map(e => `
-      <div class="event-row">
-        <div class="event-info">
-          <span class="event-title">${e.title}</span>
-          <span class="event-time">${e.time}</span>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="why-btn" style="padding: 4px 10px;" onclick="openExplainabilityModal('${e.id}')">Why?</button>
-          <button class="btn-filled btn-small" onclick="alert('Registered successfully for ${e.title}')">Register</button>
-        </div>
-      </div>
-    `).join("");
-  } else {
-    renderCardState(elements.eventsList, "empty", "No upcoming events scheduled.");
-  }
+  // Render Telemetry Widget (GitHub connect, resume upload)
+  renderTelemetryWidget();
 
   // Insights / Notifications
   if (u.insights && u.insights.length > 0) {
@@ -941,6 +1057,24 @@ async function loadMemberPersonalization(userId) {
 
     if (result.success && result.data) {
       const adapted = adaptBackendProfileToFrontend(result.data, userId);
+      
+      // Load current profile from database to enrich adapted fields
+      try {
+        const profileRes = await fetch(`${API_BASE_URL}/profile`);
+        if (profileRes.ok) {
+          const profileJson = await profileRes.json();
+          Object.assign(adapted, profileJson.data);
+          // Overwrite adapted name with database username
+          if (profileJson.data.username) {
+            adapted.name = profileJson.data.username;
+            adapted.avatar = profileJson.data.username.substring(0, 2).toUpperCase();
+            adapted.headline = `Welcome back, ${profileJson.data.username} 👋`;
+          }
+        }
+      } catch (profileErr) {
+        console.error("Failed to load detailed profile from DB:", profileErr);
+      }
+      
       currentUserProfile = adapted;
       
       elements.userProfileWrapper.style.display = "flex";
@@ -1199,3 +1333,252 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     insights: insights
   };
 }
+
+// ─── Sprint 2 Community Knowledge & Telemetry Ingestion ──────────────────────
+
+async function loadCommunityKnowledge() {
+  try {
+    // 1. Fetch Resources
+    const resResponse = await fetch(`${API_BASE_URL}/resources`);
+    if (resResponse.ok) {
+      const resJson = await resResponse.json();
+      renderResources(resJson.data.resources);
+    } else {
+      renderCardState(elements.resourcesList, "error", "Failed to load resources");
+    }
+
+    // 2. Fetch Projects
+    const projResponse = await fetch(`${API_BASE_URL}/projects`);
+    if (projResponse.ok) {
+      const projJson = await projResponse.json();
+      renderProjects(projJson.data.projects);
+    } else {
+      renderCardState(document.getElementById("projects-list"), "error", "Failed to load projects");
+    }
+
+    // 3. Fetch Events
+    const evtResponse = await fetch(`${API_BASE_URL}/events`);
+    if (evtResponse.ok) {
+      const evtJson = await evtResponse.json();
+      renderEvents(evtJson.data.events);
+    } else {
+      renderCardState(elements.eventsList, "error", "Failed to load events");
+    }
+  } catch (error) {
+    console.error("Error loading community knowledge:", error);
+  }
+}
+
+function renderResources(resources) {
+  if (!resources || resources.length === 0) {
+    renderCardState(elements.resourcesList, "empty", "No resources available for this community.");
+    return;
+  }
+  elements.resourcesList.innerHTML = resources.map(r => `
+    <div class="card">
+      <div class="card-header-row">
+        <div>
+          <span class="card-badge">${r.type || 'Resource'}</span>
+        </div>
+        <button class="why-btn" onclick="openExplainabilityModal('${r.resource_id}')">Why?</button>
+      </div>
+      <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${r.title}</h3>
+      <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Est: ${r.duration || '20 min'} • Difficulty: ${r.difficulty || 'Intermediate'}</p>
+      <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="font-size: 11px; color: var(--color-graphite); max-width: 70%; line-height: 1.2;">${r.reason || 'Highly recommended for your path.'}</p>
+        <button class="btn-filled btn-small" onclick="alert('Opening resource: ${r.title}')">Open</button>
+      </div>
+    </div>
+  `).map((h, i) => h).join(""); // standard conversion
+}
+
+function renderProjects(projects) {
+  const container = document.getElementById("projects-list");
+  if (!container) return;
+  if (!projects || projects.length === 0) {
+    renderCardState(container, "empty", "No community projects active.");
+    return;
+  }
+  container.innerHTML = projects.map(p => `
+    <div class="card">
+      <div class="card-header-row">
+        <span class="card-badge">Project</span>
+      </div>
+      <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${p.title}</h3>
+      <p style="font-size: 12px; color: var(--color-graphite); margin-top: 6px; line-height: 1.4;">${p.description}</p>
+      <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: flex-end;">
+        <button class="btn-filled btn-small" onclick="alert('Viewing code repository for: ${p.title}')">View Project</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderEvents(events) {
+  if (!events || events.length === 0) {
+    renderCardState(elements.eventsList, "empty", "No upcoming events scheduled.");
+    return;
+  }
+  elements.eventsList.innerHTML = events.map(e => `
+    <div class="event-row" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--color-chalk);">
+      <div class="event-info" style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+        <span class="event-title" style="font-weight: 600; font-size: 14px; color: var(--color-carbon);">${e.title}</span>
+        <span class="event-time" style="font-size: 12px; color: var(--color-slate);">${e.time}</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="why-btn" style="padding: 4px 10px;" onclick="openExplainabilityModal('${e.event_id}')">Why?</button>
+        <button class="btn-filled btn-small" onclick="alert('Registered successfully for ${e.title}')">Register</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderTelemetryWidget() {
+  const container = document.getElementById("hero-right-container");
+  if (!container || !currentUserProfile) return;
+
+  const githubUser = currentUserProfile.github_username || "";
+  const resumeName = currentUserProfile.resume_name || "";
+
+  container.innerHTML = `
+    <div class="card" style="padding: 24px; border: 1px dashed var(--color-slate); border-radius: var(--radius-cards); height: 100%; display: flex; flex-direction: column; text-align: left; background-color: transparent; width: 100%;">
+      <h4 style="font-size: 15px; font-weight: 600; color: var(--color-carbon); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+        <span>📊</span> Identity Telemetry Ingestion
+      </h4>
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; flex-grow: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-chalk); padding-bottom: 8px;">
+          <span>GitHub Connection:</span>
+          <span id="tel-github-status" style="font-weight: 600; color: ${githubUser ? 'var(--color-signal-orange)' : 'var(--color-slate)'};">${githubUser || 'Not connected'}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-chalk); padding-bottom: 8px;">
+          <span>Resume Ingest:</span>
+          <span id="tel-resume-status" style="font-weight: 600; color: ${resumeName ? 'var(--color-signal-orange)' : 'var(--color-slate)'};">${resumeName || 'Not uploaded'}</span>
+        </div>
+        
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+          <div id="quick-github-connect" style="display: flex; gap: 8px;">
+            <input type="text" id="quick-github-username" class="form-input" style="padding: 4px 8px; font-size: 11px; height: 26px; flex-grow: 1;" placeholder="GitHub User" value="${githubUser}">
+            <button id="btn-quick-github" class="btn-filled" style="padding: 4px 10px; font-size: 11px; height: 26px; border-radius: 4px; cursor: pointer; white-space: nowrap;">${githubUser ? 'Reconnect' : 'Connect'}</button>
+          </div>
+          
+          <div id="quick-resume-upload">
+            <label for="resume-file-input" class="btn-outlined" style="display: block; text-align: center; padding: 4px 8px; font-size: 11px; cursor: pointer; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${resumeName ? '📄 Replace Resume' : '📄 Upload Resume (PDF/TXT)'}
+            </label>
+            <input type="file" id="resume-file-input" style="display: none;" accept=".pdf,.txt">
+          </div>
+          
+          <button id="btn-open-profile-edit" class="btn-outlined" style="margin-top: 4px; padding: 6px; font-size: 11px; width: 100%; border-radius: 4px;">⚙️ Edit Detailed Profile</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Bind quick connect github
+  const connectBtn = document.getElementById("btn-quick-github");
+  connectBtn.onclick = async () => {
+    const usernameInput = document.getElementById("quick-github-username").value.trim();
+    if (!usernameInput) {
+      alert("Please enter a GitHub username");
+      return;
+    }
+    connectBtn.textContent = "Connecting...";
+    try {
+      const response = await fetch(`${API_BASE_URL}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ github_username: usernameInput })
+      });
+      if (!response.ok) throw new Error("Failed to connect GitHub");
+      alert("GitHub profile connected successfully! Enriching profile...");
+      await loadMemberPersonalization(currentUserId);
+    } catch (e) {
+      alert(`Error connecting GitHub: ${e.message}`);
+      connectBtn.textContent = githubUser ? 'Reconnect' : 'Connect';
+    }
+  };
+
+  // Bind file upload
+  const fileInput = document.getElementById("resume-file-input");
+  fileInput.onchange = async () => {
+    if (fileInput.files.length === 0) return;
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const label = document.querySelector("label[for='resume-file-input']");
+    label.textContent = "Parsing Resume...";
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/resume`, {
+        method: "POST",
+        body: formData
+      });
+      if (!response.ok) throw new Error("Failed to upload resume");
+      alert("Resume uploaded and processed successfully! Identity Agent updated your profile.");
+      await loadMemberPersonalization(currentUserId);
+    } catch (e) {
+      alert(`Error uploading resume: ${e.message}`);
+      label.textContent = resumeName ? '📄 Replace Resume' : '📄 Upload Resume (PDF/TXT)';
+    }
+  };
+
+  // Bind open modal
+  document.getElementById("btn-open-profile-edit").onclick = openProfileEditModal;
+}
+
+function openProfileEditModal() {
+  const u = currentUserProfile;
+  if (!u) return;
+
+  // Pre-populate fields
+  document.getElementById("edit-bio").value = u.bio || "";
+  document.getElementById("edit-experience-level").value = u.experience_level || "Intermediate";
+  document.getElementById("edit-availability").value = u.availability || "";
+  document.getElementById("edit-github-username").value = u.github_username || "";
+  document.getElementById("edit-portfolio-url").value = u.portfolio_url || "";
+  document.getElementById("edit-career-goals").value = (u.career_goals || []).join(", ");
+  document.getElementById("edit-preferred-tech").value = (u.preferred_technologies || []).join(", ");
+  document.getElementById("edit-preferred-domains").value = (u.preferred_domains || []).join(", ");
+  document.getElementById("edit-learning-pref").value = (u.learning_preferences || []).join(", ");
+
+  const overlay = document.getElementById("profile-modal-overlay");
+  overlay.classList.add("active");
+}
+
+function closeProfileEditModal() {
+  const overlay = document.getElementById("profile-modal-overlay");
+  overlay.classList.remove("active");
+}
+
+async function handleProfileEditSubmit(e) {
+  e.preventDefault();
+  
+  const payload = {
+    bio: document.getElementById("edit-bio").value.trim(),
+    experience_level: document.getElementById("edit-experience-level").value,
+    availability: document.getElementById("edit-availability").value.trim(),
+    github_username: document.getElementById("edit-github-username").value.trim(),
+    portfolio_url: document.getElementById("edit-portfolio-url").value.trim(),
+    career_goals: document.getElementById("edit-career-goals").value.split(",").map(s => s.trim()).filter(Boolean),
+    preferred_technologies: document.getElementById("edit-preferred-tech").value.split(",").map(s => s.trim()).filter(Boolean),
+    preferred_domains: document.getElementById("edit-preferred-domains").value.split(",").map(s => s.trim()).filter(Boolean),
+    learning_preferences: document.getElementById("edit-learning-pref").value.split(",").map(s => s.trim()).filter(Boolean)
+  };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/profile`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("Failed to update profile");
+    
+    closeProfileEditModal();
+    alert("Profile saved successfully! Re-running personalization...");
+    await loadMemberPersonalization(currentUserId);
+  } catch (error) {
+    alert(`Failed to save profile: ${error.message}`);
+  }
+}
+

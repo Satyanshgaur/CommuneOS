@@ -95,11 +95,11 @@ Health score calculation:
 - <0.4: Poor (<20% active, high churn, significant gaps)
 """
 
-    async def run_community(self, community_data: Optional[Dict] = None) -> Dict[str, Any]:
+    async def run_community(self, community_id: str = "comm-gpu", community_data: Optional[Dict] = None) -> Dict[str, Any]:
         """Run health analysis on community-level data (not per-user)."""
         import time
         start = time.time()
-        cache_key = "community:health_report"
+        cache_key = f"community:health_report:{community_id}"
         
         from services.cache_service import cache_service
         cached = cache_service.get(cache_key)
@@ -108,7 +108,7 @@ Health score calculation:
         
         try:
             data = community_data or SAMPLE_COMMUNITY_DATA
-            result = await self._analyze_community(data)
+            result = await self._analyze_community(community_id, data)
             is_fallback = result.pop("_is_fallback", False)
             cache_service.set(cache_key, result, ttl=self.cache_ttl)
             
@@ -117,10 +117,10 @@ Health score calculation:
             return {"agent": self.name, "success": True, "data": result, "is_fallback": is_fallback}
         except Exception as e:
             logger.error(f"Health agent failed: {e}", exc_info=True)
-            fallback = get_mock_health(community_data)
+            fallback = get_mock_health(community_id)
             return {"agent": self.name, "success": True, "data": fallback, "is_fallback": True}
 
-    async def _analyze_community(self, community_data: Dict) -> Dict[str, Any]:
+    async def _analyze_community(self, community_id: str, community_data: Dict) -> Dict[str, Any]:
         """Run LLM analysis on community data."""
         inactive_text = "\n".join([
             f"- {m['username']}: {m['days_inactive']} days inactive"
@@ -164,7 +164,7 @@ Provide a comprehensive community health analysis with specific, actionable insi
         )
 
         if is_fallback or not result_json:
-            fallback = get_mock_health(community_data)
+            fallback = get_mock_health(community_id)
             fallback["_is_fallback"] = True
             return fallback
 

@@ -36,13 +36,17 @@ COMMUNITY_PIPELINE_TIMEOUT = 30
 
 def _instant_profile(user_id: str, user_data: Dict, elapsed_ms: float = 0) -> Dict:
     """Build a complete personalization profile from mock data — no LLM."""
+    from services.db import community_members_table
+    member_info = community_members_table.get(user_id.lower())
+    community_id = member_info["community_id"] if member_info else "comm-gpu"
+
     identity = get_mock_identity(user_id, user_data)
     identity.pop("_is_fallback", None)
-    discovery = get_mock_discovery(user_id, identity)
+    discovery = get_mock_discovery(user_id, identity, community_id=community_id)
     discovery.pop("_is_fallback", None)
-    learning = get_mock_learning(user_id, identity)
+    learning = get_mock_learning(user_id, identity, community_id=community_id)
     learning.pop("_is_fallback", None)
-    mentor = get_mock_mentor(user_id, identity)
+    mentor = get_mock_mentor(user_id, identity, community_id=community_id)
     mentor.pop("_is_fallback", None)
     return {
         "user_id": user_id,
@@ -57,11 +61,11 @@ def _instant_profile(user_id: str, user_data: Dict, elapsed_ms: float = 0) -> Di
     }
 
 
-def _instant_community(elapsed_ms: float = 0) -> Dict:
+def _instant_community(community_id: str = "comm-gpu", elapsed_ms: float = 0) -> Dict:
     """Build community report from mock data — no LLM."""
-    health = get_mock_health()
+    health = get_mock_health(community_id=community_id)
     health.pop("_is_fallback", None)
-    organizer = get_mock_organizer(health)
+    organizer = get_mock_organizer(community_id=community_id)
     organizer.pop("_is_fallback", None)
     return {
         "health": health,
@@ -83,6 +87,10 @@ async def _member_llm_pipeline(user_id: str, user_data: Dict) -> Dict:
     Each agent has its own internal fallback. If LLM fails per-agent,
     that agent silently returns mock data and the pipeline continues.
     """
+    from services.db import community_members_table
+    member_info = community_members_table.get(user_id.lower())
+    community_id = member_info["community_id"] if member_info else "comm-gpu"
+
     from agents.identity_agent import IdentityAgent
     from agents.discovery_agent import DiscoveryAgent
     from agents.learning_agent import LearningAgent
@@ -113,13 +121,13 @@ async def _member_llm_pipeline(user_id: str, user_data: Dict) -> Dict:
     # Recover from any exceptions
     if isinstance(disc_res, Exception):
         logger.warning(f"[{user_id}] Discovery exception: {disc_res} — using mock")
-        disc_data = get_mock_discovery(user_id, user_data)
+        disc_data = get_mock_discovery(user_id, user_data, community_id=community_id)
         disc_data.pop("_is_fallback", None)
         disc_res = {"data": disc_data, "is_fallback": True, "success": True}
 
     if isinstance(learn_res, Exception):
         logger.warning(f"[{user_id}] Learning exception: {learn_res} — using mock")
-        learn_data = get_mock_learning(user_id, user_data)
+        learn_data = get_mock_learning(user_id, user_data, community_id=community_id)
         learn_data.pop("_is_fallback", None)
         learn_res = {"data": learn_data, "is_fallback": True, "success": True}
 
@@ -206,7 +214,7 @@ async def run_member_pipeline(user_id: str, user_data: Dict) -> Dict:
 
 # ─── Community Health Pipeline ─────────────────────────────────────────────────
 
-async def _community_llm_pipeline() -> Dict:
+async def _community_llm_pipeline(community_id: str = "comm-gpu") -> Dict:
     """
     Community health analysis:
       Step 1: Health Agent  — detect churn, gaps, trends
@@ -217,14 +225,19 @@ async def _community_llm_pipeline() -> Dict:
 
     t0 = time.time()
 
-    logger.info("[community] Step 1/2 -> Health Agent")
-    health_result = await HealthAgent().run_community()
+    logger.info(f"[community {community_id}] Step 1/2 -> Health Agent")
+    health_result = await HealthAgent().run_community(community_id=community_id)
 
-    logger.info("[community] Step 2/2 -> Organizer Agent")
-    organizer_result = await OrganizerAgent().run_community(health_result.get("data"))
+    logger.info(f"[community {community_id}] Step 2/2 -> Organizer Agent")
+    organizer_result = await OrganizerAgent().run_community(community_id=community_id, health_data=health_result.get("data"))
 
     total_ms = round((time.time() - t0) * 1000, 1)
     any_fallback = health_result.get("is_fallback") or organizer_result.get("is_fallback")
+
+    # Override results using tenant DB scoping if falling back to mock or to enforce multi-tenant parameters
+    if any_fallback:
+        result = _instant_community(community_id=community_id, elapsed_ms=total_ms)
+        return result
 
     result = {
         "health": health_result.get("data", {}),
@@ -233,35 +246,35 @@ async def _community_llm_pipeline() -> Dict:
         "fallback_used": any_fallback,
     }
 
-    logger.info(f"[community] Pipeline complete: {total_ms}ms | fallback={any_fallback}")
+    logger.info(f"[community {community_id}] Pipeline complete: {total_ms}ms | fallback={any_fallback}")
     return result
 
 
-async def run_community_pipeline() -> Dict:
+async def run_community_pipeline(community_id: str = "comm-gpu") -> Dict:
     """
     Public entry point for community health + organizer.
     Returns cached result if available.
     """
-    cache_key = cache_service.community_key("health_and_actions")
+    cache_key = cache_service.community_key(f"health_and_actions:{community_id}")
     cached = cache_service.get(cache_key)
     if cached:
-        logger.info("[community] Cache HIT")
+        logger.info(f"[community {community_id}] Cache HIT")
         return cached
 
     t0 = time.time()
     try:
         result = await asyncio.wait_for(
-            _community_llm_pipeline(),
+            _community_llm_pipeline(community_id=community_id),
             timeout=COMMUNITY_PIPELINE_TIMEOUT,
         )
     except asyncio.TimeoutError:
         elapsed = round((time.time() - t0) * 1000, 1)
-        logger.warning(f"[community] Timeout after {elapsed}ms — mock fallback")
-        result = _instant_community(elapsed_ms=elapsed)
+        logger.warning(f"[community {community_id}] Timeout after {elapsed}ms — mock fallback")
+        result = _instant_community(community_id=community_id, elapsed_ms=elapsed)
     except Exception as e:
         elapsed = round((time.time() - t0) * 1000, 1)
-        logger.error(f"[community] Error: {e} — mock fallback", exc_info=True)
-        result = _instant_community(elapsed_ms=elapsed)
+        logger.error(f"[community {community_id}] Error: {e} — mock fallback", exc_info=True)
+        result = _instant_community(community_id=community_id, elapsed_ms=elapsed)
 
     cache_service.set(cache_key, result, ttl=1800)
     return result

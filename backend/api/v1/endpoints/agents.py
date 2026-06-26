@@ -8,7 +8,7 @@ import asyncio
 import time
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 
 from api.v1.dependencies import get_request_id, validate_user_id_param
 from services import (
@@ -160,22 +160,24 @@ async def refresh_personalization(
 
 
 @router.post("/community/health")
-async def run_community_health(request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+async def run_community_health(
+    request: Request,
+    request_id: str = Depends(get_request_id)
+) -> Dict[str, Any]:
     """
-    Run community health + organizer pipeline.
-    Executes: Health Agent → Organizer Agent
-    Hard timeout: 30 seconds.
+    Run community health + organizer pipeline scoped by community_id.
     """
+    community_id = request.state.community_id
     try:
-        combined = await run_community_pipeline()
+        combined = await run_community_pipeline(community_id)
         return success_response(data=combined, request_id=request_id)
     except Exception as e:
         logger.error(f"Community health pipeline failed: {e}", exc_info=True)
         # As fallback, return mock health/organizer directly
         from services.mock_data import get_mock_health, get_mock_organizer
         combined = {
-            "health": get_mock_health(),
-            "actions": get_mock_organizer(),
+            "health": get_mock_health(community_id),
+            "actions": get_mock_organizer(community_id),
             "fallback_used": True,
         }
         return success_response(data=combined, request_id=request_id, message="Community health complete (fallback)")

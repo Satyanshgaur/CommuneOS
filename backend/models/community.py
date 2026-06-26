@@ -62,3 +62,75 @@ class CommunityProfile(BaseModel):
     top_gaps: List[str] = Field(default_factory=list)
     pending_actions: int = Field(default=0)
     generated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+
+
+class CommunityJoinRequest(BaseModel):
+    """Payload to assign a member to a community."""
+    user_id: str
+    community_id: str
+    role_id: Optional[str] = "role-member"
+
+
+class Channel(BaseModel):
+    channel_id: str
+    community_id: str
+    name: str
+
+
+class Resource(BaseModel):
+    resource_id: str
+    community_id: str
+    title: str
+    type: str  # e.g., Article, Video, Guide
+    duration: str
+    difficulty: str
+    relevance_score: Optional[float] = None
+    reason: Optional[str] = None
+
+
+class Project(BaseModel):
+    project_id: str
+    community_id: str
+    title: str
+    description: str
+
+
+class Event(BaseModel):
+    event_id: str
+    community_id: str
+    title: str
+    time: str
+    type: str
+    difficulty: str
+    score: Optional[int] = None
+    reason: Optional[str] = None
+
+
+class Mentor(BaseModel):
+    mentor_id: str
+    community_id: str
+    name: str
+    role: str
+    expertise_areas: List[str]
+    compatibility_score: Optional[float] = None
+    match_reason: Optional[str] = None
+
+
+class Milestone(BaseModel):
+    week: int
+    title: str
+    objectives: List[str]
+    resources: List[str]
+    estimated_hours: float
+
+
+class LearningTrack(BaseModel):
+    track_id: str
+    community_id: str
+    roadmap_title: str
+    total_weeks: int
+    daily_commitment_minutes: int
+    estimated_completion_date: str
+    milestones: List[Milestone]
+
+

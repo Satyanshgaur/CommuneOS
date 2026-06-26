@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.errors import register_error_handlers
-from api.v1.endpoints import agents, community, health, users
+from api.v1.endpoints import agents, community, health, users, profile
 from config import settings
 from utils.logger import get_logger, setup_logging
 
@@ -50,6 +50,58 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Service"] = "CommuneOS-Backend"
     return response
 
+
+# ─── Tenant Resolution Middleware ──────────────────────────────────────────────
+@app.middleware("http")
+async def tenant_middleware(request: Request, call_next):
+    """
+    Resolve the multi-tenant context (User -> Community -> Role/Permissions).
+    Requires X-User-Id in request header (or query/path parameters).
+    """
+    path = request.url.path
+    if path == "/" or path == "/health" or path.endswith("/config") or path.endswith("/community/list") or path.endswith("/community/list/") or path.endswith("/community/join") or path.endswith("/community/join/") or path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
+        return await call_next(request)
+        
+    user_id = request.headers.get("X-User-Id")
+    if not user_id:
+        user_id = request.query_params.get("user_id")
+        
+    if not user_id:
+        import re
+        match = re.search(r'/(?:users|agents/personalize|agents/refresh|discovery|learning)/([a-zA-Z0-9_\-]+)', path)
+        if match:
+            user_id = match.group(1)
+            
+    if path.endswith("/users/create") or path.endswith("/users/create/"):
+        return await call_next(request)
+
+    if not user_id:
+        return JSONResponse(
+            status_code=401,
+            content={"success": False, "message": "Missing user identification ID header (X-User-Id)", "code": "UNAUTHENTICATED"}
+        )
+
+    from services.db import community_members_table, roles_table
+    member_info = community_members_table.get(user_id.lower())
+
+    if not member_info:
+        return JSONResponse(
+            status_code=403,
+            content={"success": False, "message": "User has not joined any community. Access denied.", "code": "NO_COMMUNITY"}
+        )
+
+    community_id = member_info["community_id"]
+    role_id = member_info["role_id"]
+    role_info = roles_table.get(role_id, {})
+
+    request.state.user_id = user_id
+    request.state.community_id = community_id
+    request.state.role = role_info.get("name", "Member")
+    request.state.permissions = role_info.get("permissions", [])
+
+    return await call_next(request)
+
+
 # ─── Register Error Handlers ───────────────────────────────────────────────────
 register_error_handlers(app)
 
@@ -59,6 +111,7 @@ API_PREFIX = "/api/v1"
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(agents.router, prefix=API_PREFIX)
 app.include_router(community.router, prefix=API_PREFIX)
+app.include_router(profile.router, prefix=API_PREFIX)
 app.include_router(health.router)  # /health, /metrics — no prefix
 
 # ─── Startup / Shutdown Events ─────────────────────────────────────────────────

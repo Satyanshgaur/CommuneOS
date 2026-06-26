@@ -71,11 +71,11 @@ Priority definitions:
 Always address at-risk member situations as CRITICAL priority.
 """
 
-    async def run_community(self, health_data: Optional[Dict] = None) -> Dict[str, Any]:
+    async def run_community(self, community_id: str = "comm-gpu", health_data: Optional[Dict] = None) -> Dict[str, Any]:
         """Run organizer analysis based on health metrics."""
         import time
         start = time.time()
-        cache_key = "community:organizer_plan"
+        cache_key = f"community:organizer_plan:{community_id}"
         
         from services.cache_service import cache_service
         cached = cache_service.get(cache_key)
@@ -83,7 +83,7 @@ Always address at-risk member situations as CRITICAL priority.
             return {"agent": self.name, "success": True, "data": cached, "is_fallback": False, "from_cache": True}
         
         try:
-            result = await self._generate_actions(health_data or {})
+            result = await self._generate_actions(community_id, health_data or {})
             is_fallback = result.pop("_is_fallback", False)
             cache_service.set(cache_key, result, ttl=self.cache_ttl)
             
@@ -92,10 +92,10 @@ Always address at-risk member situations as CRITICAL priority.
             return {"agent": self.name, "success": True, "data": result, "is_fallback": is_fallback}
         except Exception as e:
             logger.error(f"Organizer agent failed: {e}", exc_info=True)
-            fallback = get_mock_organizer(health_data)
+            fallback = get_mock_organizer(community_id)
             return {"agent": self.name, "success": True, "data": fallback, "is_fallback": True}
 
-    async def _generate_actions(self, health_data: Dict) -> Dict[str, Any]:
+    async def _generate_actions(self, community_id: str, health_data: Dict) -> Dict[str, Any]:
         """Generate action plan from health metrics."""
         at_risk = health_data.get("at_risk_members", [])
         gaps = health_data.get("topic_gaps", [])
@@ -141,7 +141,7 @@ Include 3-5 action items and 2-3 event suggestions."""
         )
 
         if is_fallback or not result_json:
-            fallback = get_mock_organizer(health_data)
+            fallback = get_mock_organizer(community_id)
             fallback["_is_fallback"] = True
             return fallback
 

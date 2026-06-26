@@ -52,6 +52,17 @@ class UserProfile(BaseModel):
     skill_level: Optional[str] = Field(None, description="Overall: Beginner/Intermediate/Expert")
     learning_style: Optional[str] = Field(None, description="visual/auditory/kinesthetic/reading")
 
+    # Extended Sprint 2 Fields
+    experience_level: Optional[str] = Field(None, description="Experience level, e.g. Junior, Mid, Senior")
+    resume_name: Optional[str] = Field(None, description="Filename of uploaded resume")
+    github_username: Optional[str] = Field(None, description="GitHub username")
+    portfolio_url: Optional[str] = Field(None, description="Portfolio website URL")
+    career_goals: List[str] = Field(default_factory=list, description="Career goals")
+    preferred_technologies: List[str] = Field(default_factory=list, description="Preferred technologies")
+    preferred_domains: List[str] = Field(default_factory=list, description="Preferred domains")
+    learning_preferences: List[str] = Field(default_factory=list, description="Learning preferences/style")
+    availability: Optional[str] = Field(None, description="Availability description, e.g. 10 hours/week")
+
     # ─── Context ──────────────────────────────────────────────────────────────
     role: str = Field(default="member", description="member or organizer")
     timezone: Optional[str] = Field(None, description="e.g. 'Asia/Kolkata'")
@@ -116,6 +127,17 @@ class UserCreateRequest(BaseModel):
     linkedin_url: Optional[str] = Field(None)
     timezone: Optional[str] = Field(None)
 
+    # Extended Sprint 2 Fields
+    experience_level: Optional[str] = Field(None)
+    resume_name: Optional[str] = Field(None)
+    github_username: Optional[str] = Field(None)
+    portfolio_url: Optional[str] = Field(None)
+    career_goals: List[str] = Field(default_factory=list)
+    preferred_technologies: List[str] = Field(default_factory=list)
+    preferred_domains: List[str] = Field(default_factory=list)
+    learning_preferences: List[str] = Field(default_factory=list)
+    availability: Optional[str] = Field(None)
+
     def to_user_profile(self, user_id: Optional[str] = None) -> UserProfile:
         """Convert creation request to full UserProfile."""
         uid = user_id or str(uuid.uuid4())[:8]
@@ -130,6 +152,15 @@ class UserCreateRequest(BaseModel):
             github_url=self.github_url,
             linkedin_url=self.linkedin_url,
             timezone=self.timezone,
+            experience_level=self.experience_level,
+            resume_name=self.resume_name,
+            github_username=self.github_username,
+            portfolio_url=self.portfolio_url,
+            career_goals=self.career_goals,
+            preferred_technologies=self.preferred_technologies,
+            preferred_domains=self.preferred_domains,
+            learning_preferences=self.learning_preferences,
+            availability=self.availability,
         )
 
 
