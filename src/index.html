@@ -17,9 +17,10 @@
       </a>
       <nav>
         <ul class="nav-links">
-          <li><a href="#" class="active">Dashboard</a></li>
-          <li><a href="#agent-view">Agent Engine</a></li>
-          <li><a href="#communities-section">Channels</a></li>
+          <li><a href="#" class="active" id="nav-dashboard-link">Dashboard</a></li>
+          <li><a href="#" id="nav-documents-link">Documents</a></li>
+          <li><a href="#agent-view" id="nav-agent-link">Agent Engine</a></li>
+          <li><a href="#communities-section" id="nav-channels-link">Channels</a></li>
         </ul>
       </nav>
       <div class="header-right">
@@ -221,6 +222,17 @@
                 <span id="kpi-paths-progress" style="font-size: 14px; font-weight: bold; color: var(--color-carbon);">70%</span>
               </div>
               <p id="kpi-paths-next" style="font-size: 12px; color: var(--color-graphite); margin-top: 8px;">Next: Milestone 8: CUDA Shared Memory Coalescing</p>
+              
+              <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr; gap: 12px; border-top: 1px dashed var(--color-chalk); padding-top: 8px;">
+                <div>
+                  <span style="font-size: 10px; color: var(--color-slate); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 4px;">Weekly Milestones</span>
+                  <div id="kpi-paths-milestones-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+                <div>
+                  <span style="font-size: 10px; color: var(--color-slate); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 4px;">Daily Action Items</span>
+                  <div id="kpi-paths-checklist-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+              </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; border-top: 1px solid var(--color-chalk); padding-top: 16px;">
@@ -296,6 +308,90 @@
         </div>
       </section>
 
+    </div>
+
+    <!-- COMMUNITY DOCUMENTS SECTION -->
+    <div id="documents-dashboard" style="display: none;">
+      <!-- Hero/Header Section -->
+      <section class="hero-section" style="margin-bottom: var(--spacing-40);">
+        <div class="hero-left">
+          <h1 class="hero-headline">Community Documents</h1>
+          <p class="hero-body">Browse, search, and upload files to your community resource library.</p>
+        </div>
+      </section>
+
+      <!-- Search & Upload Action Row -->
+      <div class="grid-2-1" style="margin-bottom: var(--spacing-32);">
+        
+        <!-- Left: Search and Filters -->
+        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+          <h3 class="card-title">Search Documents</h3>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <input type="text" id="doc-search-input" class="form-input" style="flex: 1; min-width: 200px;" placeholder="Search by title...">
+            <select id="doc-category-filter" class="form-input" style="width: auto; min-width: 150px; background-color: var(--color-fog);">
+              <option value="">All Categories</option>
+              <option value="Guide">Guide</option>
+              <option value="Documentation">Documentation</option>
+              <option value="Tutorial">Tutorial</option>
+              <option value="Research Paper">Research Paper</option>
+              <option value="Other">Other</option>
+            </select>
+            <button class="btn-filled" id="btn-doc-search" style="padding: 0 24px;">Search</button>
+          </div>
+        </div>
+
+        <!-- Right: Upload Document Trigger Card -->
+        <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed var(--color-slate); background-color: transparent;">
+          <button class="btn-filled" id="btn-show-upload-form" onclick="toggleUploadForm(true);" style="width: 100%;">📤 Upload New Document</button>
+        </div>
+
+      </div>
+
+      <!-- Upload Form Modal/Overlay Card (Hidden by default) -->
+      <div class="card" id="doc-upload-card" style="display: none; padding: 24px; margin-bottom: var(--spacing-32); border-color: var(--color-signal-orange);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 class="card-title" style="margin: 0; color: var(--color-signal-orange);">Upload New Document</h3>
+          <button class="btn-outlined" onclick="toggleUploadForm(false);" style="padding: 4px 12px; font-size: 12px;">Close</button>
+        </div>
+        <form id="doc-upload-form">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="doc-title">Document Title</label>
+            <input type="text" id="doc-title" class="form-input" placeholder="e.g. CUDA Memory Coalescing Techniques" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="doc-desc">Description</label>
+            <textarea id="doc-desc" class="form-input" style="height: 60px; font-family: var(--font-inter);" placeholder="Brief summary of what this document covers..."></textarea>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label" for="doc-category">Category</label>
+              <select id="doc-category" class="form-input" required>
+                <option value="Guide">Guide</option>
+                <option value="Documentation">Documentation</option>
+                <option value="Tutorial">Tutorial</option>
+                <option value="Research Paper">Research Paper</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="doc-file">Select File (PDF, DOCX, PPTX, TXT - max 5MB)</label>
+              <input type="file" id="doc-file" class="form-input" accept=".pdf,.docx,.pptx,.txt" required style="padding: 4px;">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" class="btn-outlined" onclick="toggleUploadForm(false);">Cancel</button>
+            <button type="submit" class="btn-filled">Upload Document</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Documents Grid List -->
+      <section style="margin-bottom: var(--section-gap);">
+        <h2 class="section-title">Document Library</h2>
+        <div class="grid-2" id="documents-list-container">
+          <!-- Documents populated dynamically -->
+        </div>
+      </section>
     </div>
 
     <!-- ORGANIZER DASHBOARD SECTION -->
@@ -477,6 +573,6 @@
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Main JavaScript File -->
-  <script src="app.js"></script>
+  <script src="app.js?v=2.0.1"></script>
 </body>
 </html>

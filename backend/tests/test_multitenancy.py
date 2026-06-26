@@ -74,8 +74,10 @@ def test_tenant_metrics_gpu():
     metrics_resp = client.get("/api/v1/community/metrics", headers={"X-User-Id": "gpu_user"})
     assert metrics_resp.status_code == 200
     metrics = metrics_resp.json()["data"]
-    # health score is 0.82 for comm-gpu (based on mock_data.py)
-    assert metrics["community_health_score"] == 0.82
+    assert metrics["total_members"] == 1
+    assert metrics["total_mentors"] == 1
+    assert metrics["total_projects"] == 1
+    assert metrics["total_events"] == 1
     
     # Get channels (scoped to comm-gpu)
     channels_resp = client.get("/api/v1/discovery/gpu_user/channels", headers={"X-User-Id": "gpu_user"})
@@ -103,8 +105,10 @@ def test_tenant_metrics_ml():
     metrics_resp = client.get("/api/v1/community/metrics", headers={"X-User-Id": "ml_user"})
     assert metrics_resp.status_code == 200
     metrics = metrics_resp.json()["data"]
-    # health score is 0.74 for comm-ml
-    assert metrics["community_health_score"] == 0.74
+    assert metrics["total_members"] == 1
+    assert metrics["total_mentors"] == 1
+    assert metrics["total_projects"] == 1
+    assert metrics["total_events"] == 1
     
     # Get channels (scoped to comm-ml)
     channels_resp = client.get("/api/v1/discovery/ml_user/channels", headers={"X-User-Id": "ml_user"})

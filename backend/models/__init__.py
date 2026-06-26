@@ -6,6 +6,7 @@ from models.agent_response import (
     MentorAgentOutput, HealthAgentOutput, OrganizerAgentOutput
 )
 from models.community import CommunityMetrics, LearningProgress, ProgressUpdate
+from models.document import DocumentMetadata
 
 __all__ = [
     "UserProfile", "UserCreateRequest", "MentalModel",
@@ -13,4 +14,5 @@ __all__ = [
     "IdentityAgentOutput", "DiscoveryAgentOutput", "LearningAgentOutput",
     "MentorAgentOutput", "HealthAgentOutput", "OrganizerAgentOutput",
     "CommunityMetrics", "LearningProgress", "ProgressUpdate",
+    "DocumentMetadata",
 ]

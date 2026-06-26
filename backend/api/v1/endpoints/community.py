@@ -71,23 +71,213 @@ async def list_communities(request_id: str = Depends(get_request_id)) -> Dict[st
 
 @router.get("/community/metrics")
 async def get_community_metrics(request: Request, request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
-    """Get overall community health metrics filtered by community_id."""
+    """Get community metrics filtered by community_id using database records."""
     community_id = request.state.community_id
-    cache_key = cache_service.community_key(f"metrics:{community_id}")
-    cached = cache_service.get(cache_key)
-    if cached:
-        return success_response(data=cached, request_id=request_id)
-    
-    health_data = get_mock_health(community_id)
+    from services.db import (
+        community_members_table, users_table, mentors_table,
+        projects_table, events_table
+    )
+    from datetime import datetime, timedelta
+
+    # 1. Get member user_ids in this community
+    member_uids = [uid for uid, m in community_members_table.items() if m.get("community_id") == community_id]
+    total_members = len(member_uids)
+
+    # 2. Calculate active and new members (within last 7 days)
+    now = datetime.utcnow()
+    active_members = 0
+    new_members = 0
+    for uid in member_uids:
+        user_profile = users_table.get(uid.lower())
+        if not user_profile:
+            continue
+
+        # Active check
+        last_active = user_profile.get("last_active")
+        if last_active:
+            if isinstance(last_active, str):
+                try:
+                    last_active_dt = datetime.fromisoformat(last_active.replace("Z", "+00:00")).replace(tzinfo=None)
+                except ValueError:
+                    last_active_dt = now
+            elif isinstance(last_active, datetime):
+                last_active_dt = last_active.replace(tzinfo=None)
+            else:
+                last_active_dt = now
+
+            if now - last_active_dt < timedelta(days=7):
+                active_members += 1
+        else:
+            active_members += 1  # Default to active if no metadata
+
+        # New members check
+        created_at = user_profile.get("created_at")
+        if created_at:
+            if isinstance(created_at, str):
+                try:
+                    created_at_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00")).replace(tzinfo=None)
+                except ValueError:
+                    created_at_dt = now
+            elif isinstance(created_at, datetime):
+                created_at_dt = created_at.replace(tzinfo=None)
+            else:
+                created_at_dt = now
+
+            if now - created_at_dt < timedelta(days=7):
+                new_members += 1
+
+    # 3. Total Mentors
+    total_mentors = sum(1 for m in mentors_table if m.get("community_id") == community_id)
+
+    # 4. Total Projects
+    total_projects = sum(1 for p in projects_table if p.get("community_id") == community_id)
+
+    # 5. Total Events
+    total_events = sum(1 for e in events_table if e.get("community_id") == community_id)
+
     metrics = {
-        "community_health_score": health_data["community_health_score"],
-        "total_members": health_data["total_members"],
-        "active_members_7d": health_data["active_members_7d"],
-        "trending_topics": health_data["trending_topics"],
-        "engagement_trend": health_data["engagement_trend"],
+        "total_members": total_members,
+        "active_members": active_members,
+        "new_members": new_members,
+        "total_mentors": total_mentors,
+        "total_projects": total_projects,
+        "total_events": total_events
     }
-    cache_service.set(cache_key, metrics, ttl=1800)
     return success_response(data=metrics, request_id=request_id)
+
+
+@router.get("/community/health")
+async def get_community_health(request: Request, request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get community health metrics filtered by community_id using deterministic logic."""
+    community_id = request.state.community_id
+    from services.db import (
+        community_members_table, users_table, mentor_requests_table
+    )
+    from datetime import datetime, timedelta
+
+    member_uids = [uid for uid, m in community_members_table.items() if m.get("community_id") == community_id]
+    total = len(member_uids)
+    now = datetime.utcnow()
+
+    # 1. Members inactive for 14+ days
+    inactive_14d_members = []
+    for uid in member_uids:
+        user_profile = users_table.get(uid.lower())
+        if not user_profile:
+            continue
+
+        last_active = user_profile.get("last_active")
+        if last_active:
+            if isinstance(last_active, str):
+                try:
+                    last_active_dt = datetime.fromisoformat(last_active.replace("Z", "+00:00")).replace(tzinfo=None)
+                except ValueError:
+                    last_active_dt = now
+            elif isinstance(last_active, datetime):
+                last_active_dt = last_active.replace(tzinfo=None)
+            else:
+                last_active_dt = now
+
+            days_inactive = (now - last_active_dt).days
+            if days_inactive >= 14:
+                inactive_14d_members.append({
+                    "user_id": uid,
+                    "username": user_profile.get("username", uid),
+                    "days_inactive": days_inactive,
+                    "last_seen": last_active_dt.strftime("%Y-%m-%d")
+                })
+        else:
+            created_at = user_profile.get("created_at")
+            if created_at:
+                if isinstance(created_at, str):
+                    try:
+                        created_at_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00")).replace(tzinfo=None)
+                    except ValueError:
+                        created_at_dt = now
+                elif isinstance(created_at, datetime):
+                    created_at_dt = created_at.replace(tzinfo=None)
+                else:
+                    created_at_dt = now
+
+                days_inactive = (now - created_at_dt).days
+                if days_inactive >= 14:
+                    inactive_14d_members.append({
+                        "user_id": uid,
+                        "username": user_profile.get("username", uid),
+                        "days_inactive": days_inactive,
+                        "last_seen": created_at_dt.strftime("%Y-%m-%d")
+                    })
+
+    # 2. Members without completed profiles
+    incomplete_profiles = []
+    for uid in member_uids:
+        user_profile = users_table.get(uid.lower())
+        if not user_profile:
+            continue
+
+        bio = user_profile.get("bio")
+        skills = user_profile.get("skills")
+        if not bio or not skills:
+            incomplete_profiles.append({
+                "user_id": uid,
+                "username": user_profile.get("username", uid),
+                "missing_fields": [f for f, v in [("bio", bio), ("skills", skills)] if not v]
+            })
+
+    # 3. Members without assigned mentors (no approved mentor request)
+    approved_user_ids = {r["user_id"].lower() for r in mentor_requests_table if r.get("status") == "approved"}
+    members_without_mentor = []
+    for uid in member_uids:
+        if uid.lower() not in approved_user_ids:
+            user_profile = users_table.get(uid.lower())
+            members_without_mentor.append({
+                "user_id": uid,
+                "username": user_profile.get("username", uid) if user_profile else uid
+            })
+
+    # 4. Deterministic community health score (0.0 to 1.0)
+    if total > 0:
+        inactive_ratio = len(inactive_14d_members) / total
+        incomplete_ratio = len(incomplete_profiles) / total
+        no_mentor_ratio = len(members_without_mentor) / total
+
+        health_score = 1.0 - (0.4 * inactive_ratio) - (0.3 * incomplete_ratio) - (0.3 * no_mentor_ratio)
+        health_score = max(0.0, min(1.0, round(health_score, 2)))
+    else:
+        health_score = 1.0
+
+    # 5. Dynamic trending topics from tags/interests
+    tag_counts = {}
+    for uid in member_uids:
+        user_profile = users_table.get(uid.lower())
+        if user_profile:
+            for tag in user_profile.get("tags", []):
+                tag_lower = tag.lower()
+                tag_counts[tag_lower] = tag_counts.get(tag_lower, 0) + 1
+            for interest in user_profile.get("interests", []):
+                int_lower = interest.lower()
+                tag_counts[int_lower] = tag_counts.get(int_lower, 0) + 1
+
+    sorted_tags = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)
+    trending_topics = [t[0] for t in sorted_tags[:5]]
+
+    if not trending_topics:
+        trending_topics = ["CUDA memory", "Shared registers", "GPU kernels"] if community_id == "comm-gpu" else ["PyTorch tensors", "NumPy matrices", "AutoGrad graphs"]
+
+    # 6. Unanswered support queries count (pending mentor requests)
+    unanswered_queries = sum(1 for r in mentor_requests_table if r.get("status") == "pending" and r.get("user_id", "").lower() in member_uids)
+
+    health_data = {
+        "community_health_score": health_score,
+        "total_members": total,
+        "inactive_14d_members": inactive_14d_members,
+        "incomplete_profiles": incomplete_profiles,
+        "members_without_mentor": members_without_mentor,
+        "trending_topics": trending_topics,
+        "unanswered_queries": unanswered_queries,
+        "summary": "Community health score is calculated deterministically from active engagement and onboarding completion."
+    }
+    return success_response(data=health_data, request_id=request_id)
 
 
 @router.get("/community/members/at-risk")

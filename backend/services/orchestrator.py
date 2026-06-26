@@ -278,3 +278,166 @@ async def run_community_pipeline(community_id: str = "comm-gpu") -> Dict:
 
     cache_service.set(cache_key, result, ttl=1800)
     return result
+
+
+# ─── Sprint 3 Pipeline ─────────────────────────────────────────────────────────
+
+def get_user_state_hash(user_id: str, community_id: str) -> str:
+    """Generate a hash based on all inputs that affect Sprint 3 recommendations."""
+    import hashlib
+    import json
+    from services.db import users_table, resumes_table, identities_table, get_resources_by_community
+    
+    user_id_lower = user_id.lower()
+    user_profile = users_table.get(user_id_lower, {})
+    resume_profile = resumes_table.get(user_id_lower, {})
+    identity_profile = identities_table.get(user_id_lower, {})
+    resources = get_resources_by_community(community_id)
+    
+    state = {
+        "profile": {
+            "updated_at": user_profile.get("updated_at"),
+            "github_username": user_profile.get("github_username"),
+            "resume_name": user_profile.get("resume_name"),
+            "skills": user_profile.get("skills"),
+            "interests": user_profile.get("interests"),
+            "goals": user_profile.get("goals"),
+            "career_goals": user_profile.get("career_goals"),
+        },
+        "resume": resume_profile,
+        "identity": identity_profile,
+        "resources_count": len(resources),
+        "resources_titles": [r["title"] for r in resources]
+    }
+    
+    state_str = json.dumps(state, sort_keys=True, default=str)
+    return hashlib.sha256(state_str.encode("utf-8")).hexdigest()
+
+
+async def run_sprint3_pipeline(user_id: str, force_refresh: bool = False) -> Dict[str, Any]:
+    """
+    Sprint 3 personalized discovery, roadmap, and mentor matching pipeline.
+    Runs Discovery & Learning in parallel, followed by Mentor Matching.
+    Saves outputs in backend database tables.
+    """
+    from services.db import (
+        users_table,
+        identities_table,
+        community_members_table,
+        recommendations_table,
+        learning_roadmaps_table,
+        mentor_matches_table,
+        pipeline_hashes
+    )
+    from agents.discovery_agent import DiscoveryAgent
+    from agents.learning_agent import LearningAgent
+    from agents.mentor_agent import MentorAgent
+    from agents.identity_agent import IdentityAgent
+    
+    user_id_lower = user_id.lower()
+    user_data = users_table.get(user_id_lower)
+    if not user_data:
+        logger.error(f"User {user_id} not found in database.")
+        return {}
+        
+    member_info = community_members_table.get(user_id_lower)
+    community_id = member_info["community_id"] if member_info else "comm-gpu"
+    
+    # 1. Ensure identity profile exists. If not, generate it statelessly.
+    identity_data = identities_table.get(user_id_lower)
+    if not identity_data:
+        logger.info(f"Identity profile not found for {user_id}. Running Identity Agent first.")
+        try:
+            identity_data = await IdentityAgent().run_stateless(user_id)
+        except Exception as e:
+            logger.error(f"Identity generation failed in pipeline for {user_id}: {e}")
+            identity_data = IdentityAgent()._get_fallback(user_id, user_data)
+            identities_table[user_id_lower] = identity_data
+            
+    # 2. Check if state changed.
+    current_hash = get_user_state_hash(user_id, community_id)
+    stored_hash = pipeline_hashes.get(user_id_lower)
+    
+    # Check if we can skip regeneration
+    if (
+        not force_refresh
+        and stored_hash == current_hash
+        and user_id_lower in recommendations_table
+        and user_id_lower in learning_roadmaps_table
+        and user_id_lower in mentor_matches_table
+    ):
+        logger.info(f"Sprint 3 pipeline skip for {user_id}: No changes detected and data exists.")
+        return {
+            "recommendations": recommendations_table[user_id_lower],
+            "learning_roadmap": learning_roadmaps_table[user_id_lower],
+            "mentor_matches": mentor_matches_table[user_id_lower]
+        }
+        
+    logger.info(f"Running Sprint 3 pipeline for user {user_id} (force_refresh={force_refresh}).")
+    
+    # 3. Run Discovery and Learning Agents in parallel
+    try:
+        discovery_task = DiscoveryAgent().run_sprint3(user_id, user_data, identity_data, community_id)
+        learning_task = LearningAgent().run_sprint3(user_id, user_data, identity_data, community_id)
+        
+        discovery_res, learning_res = await asyncio.gather(discovery_task, learning_task)
+    except Exception as e:
+        logger.error(f"Error during parallel Discovery/Learning agent runs: {e}")
+        # Fallbacks
+        from agents.discovery_agent import DiscoveryAgent as DA
+        from agents.learning_agent import LearningAgent as LA
+        from services.db import get_channels_by_community, get_resources_by_community, get_events_by_community, get_projects_by_community, learning_tracks_table
+        
+        channels = get_channels_by_community(community_id)
+        resources = get_resources_by_community(community_id)
+        events = get_events_by_community(community_id)
+        projects = get_projects_by_community(community_id)
+        track = learning_tracks_table.get(community_id)
+        learning_tracks = [track] if track else []
+        
+        discovery_res = DA()._get_sprint3_fallback(user_data, channels, resources, events, projects, learning_tracks)
+        learning_res = LA()._get_sprint3_fallback(user_id, user_data, track)
+        
+    # 4. Run Mentor Matching Agent (needs learning_roadmap output)
+    try:
+        mentor_res = await MentorAgent().run_sprint3(user_id, user_data, identity_data, learning_res, community_id)
+    except Exception as e:
+        logger.error(f"Error during Mentor agent run: {e}")
+        from agents.mentor_agent import MentorAgent as MA
+        from services.db import get_mentors_by_community
+        mentors = get_mentors_by_community(community_id)
+        mentor_res = MA()._get_sprint3_fallback(user_data, mentors)
+        
+    # 5. Save results to database
+    # Preserve user completion progress if roadmap already exists
+    if user_id_lower in learning_roadmaps_table:
+        old_roadmap = learning_roadmaps_table[user_id_lower]
+        completed_weeks = {m["week"] for m in old_roadmap.get("milestones", []) if m.get("completed")}
+        completed_tasks = {t["task_id"] for t in old_roadmap.get("daily_checklist", []) if t.get("completed")}
+        
+        for m in learning_res.get("milestones", []):
+            if m["week"] in completed_weeks:
+                m["completed"] = True
+                
+        for t in learning_res.get("daily_checklist", []):
+            if t["task_id"] in completed_tasks:
+                t["completed"] = True
+                
+        # Recalculate progress percent
+        total_milestones = len(learning_res.get("milestones", []))
+        completed_count = sum(1 for m in learning_res.get("milestones", []) if m.get("completed"))
+        learning_res["progress_percent"] = (completed_count / total_milestones * 100) if total_milestones > 0 else 0.0
+
+    recommendations_table[user_id_lower] = discovery_res
+    learning_roadmaps_table[user_id_lower] = learning_res
+    mentor_matches_table[user_id_lower] = mentor_res
+    
+    # Store state hash
+    pipeline_hashes[user_id_lower] = current_hash
+    
+    logger.info(f"Sprint 3 pipeline completed successfully for user {user_id}.")
+    return {
+        "recommendations": discovery_res,
+        "learning_roadmap": learning_res,
+        "mentor_matches": mentor_res
+    }

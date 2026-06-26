@@ -4,7 +4,7 @@ Includes profile CRUD, resume upload, identity agent, and community scoped data.
 """
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, BackgroundTasks
 
 from api.v1.dependencies import get_request_id
 from utils.formatters import success_response, error_response
@@ -43,6 +43,7 @@ async def get_profile(request: Request, request_id: str = Depends(get_request_id
 async def update_profile(
     request: Request,
     update_data: Dict[str, Any],
+    background_tasks: BackgroundTasks,
     request_id: str = Depends(get_request_id)
 ) -> Dict[str, Any]:
     """Update the current authenticated user's profile and trigger LLM identity enrichment if GitHub changes."""
@@ -98,12 +99,9 @@ async def update_profile(
     cache_service.clear_prefix(f"user:{user_id}")
     cache_service.clear_prefix(f"agent:")
     
-    # Trigger IdentityAgent run to update identities_table
-    from agents.identity_agent import IdentityAgent
-    try:
-        await IdentityAgent().run_stateless(user_id)
-    except Exception as e:
-        logger.error(f"Failed to run IdentityAgent on profile update: {e}")
+    # Trigger Sprint 3 pipeline in background
+    from services.orchestrator import run_sprint3_pipeline
+    background_tasks.add_task(run_sprint3_pipeline, user_id)
         
     return success_response(
         data={"user_id": user_id, "updated": True},
@@ -116,6 +114,7 @@ async def update_profile(
 @router.post("/resume")
 async def upload_resume(
     request: Request,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     request_id: str = Depends(get_request_id)
 ) -> Dict[str, Any]:
@@ -158,6 +157,10 @@ async def upload_resume(
     from services.cache_service import cache_service
     cache_service.clear_prefix(f"user:{user_id}")
     cache_service.clear_prefix(f"agent:")
+    
+    # Trigger Sprint 3 pipeline in background
+    from services.orchestrator import run_sprint3_pipeline
+    background_tasks.add_task(run_sprint3_pipeline, user_id)
     
     return success_response(
         data={
@@ -236,3 +239,184 @@ async def get_learning_tracks(request: Request, request_id: str = Depends(get_re
     track = learning_tracks_table.get(community_id)
     tracks = [track] if track else []
     return success_response(data={"learning_tracks": tracks, "count": len(tracks)}, request_id=request_id)
+
+
+# ─── GET /recommendations ─────────────────────────────────────────────────────
+@router.get("/recommendations")
+async def get_recommendations(request: Request, request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get personalized recommendations scoped by community_id and user."""
+    user_id = request.state.user_id
+    from services.db import recommendations_table
+    from services.orchestrator import run_sprint3_pipeline
+    
+    recs = recommendations_table.get(user_id.lower())
+    if not recs:
+        # Run pipeline synchronously to initialize if not present
+        res = await run_sprint3_pipeline(user_id)
+        recs = res.get("recommendations", {})
+        
+    return success_response(data=recs, request_id=request_id)
+
+
+# ─── POST /recommendations/refresh ────────────────────────────────────────────
+@router.post("/recommendations/refresh")
+async def refresh_recommendations(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    request_id: str = Depends(get_request_id)
+) -> Dict[str, Any]:
+    """Manually trigger background refresh of personalization pipeline."""
+    user_id = request.state.user_id
+    from services.orchestrator import run_sprint3_pipeline
+    
+    background_tasks.add_task(run_sprint3_pipeline, user_id, force_refresh=True)
+    return success_response(
+        data={"status": "processing", "message": "Personalization pipeline manual refresh triggered in background."},
+        request_id=request_id
+    )
+
+
+# ─── GET /learning-roadmap ────────────────────────────────────────────────────
+@router.get("/learning-roadmap")
+async def get_learning_roadmap(request: Request, request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get personalized learning roadmap."""
+    user_id = request.state.user_id
+    from services.db import learning_roadmaps_table
+    from services.orchestrator import run_sprint3_pipeline
+    
+    roadmap = learning_roadmaps_table.get(user_id.lower())
+    if not roadmap:
+        # Run pipeline synchronously to initialize if not present
+        res = await run_sprint3_pipeline(user_id)
+        roadmap = res.get("learning_roadmap", {})
+        
+    return success_response(data=roadmap, request_id=request_id)
+
+
+# ─── POST /learning/progress ──────────────────────────────────────────────────
+@router.post("/learning/progress")
+async def update_learning_progress(
+    request: Request,
+    payload: Dict[str, Any],
+    request_id: str = Depends(get_request_id)
+) -> Dict[str, Any]:
+    """Mark roadmap milestones or checklist tasks complete/incomplete."""
+    user_id = request.state.user_id
+    from services.db import learning_roadmaps_table
+    
+    roadmap = learning_roadmaps_table.get(user_id.lower())
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="Learning roadmap not found. Please personalize first.")
+        
+    milestone_week = payload.get("week")
+    task_id = payload.get("task_id")
+    completed = payload.get("completed", True)
+    
+    updated = False
+    
+    if milestone_week is not None:
+        for m in roadmap.get("milestones", []):
+            if m.get("week") == milestone_week:
+                m["completed"] = completed
+                updated = True
+                
+    if task_id is not None:
+        for t in roadmap.get("daily_checklist", []):
+            if t.get("task_id") == task_id:
+                t["completed"] = completed
+                updated = True
+                
+    # Recalculate progress percent
+    milestones = roadmap.get("milestones", [])
+    total_milestones = len(milestones)
+    completed_milestones = sum(1 for m in milestones if m.get("completed", False))
+    
+    progress_percent = (completed_milestones / total_milestones * 100) if total_milestones > 0 else 0.0
+    roadmap["progress_percent"] = round(progress_percent, 1)
+    
+    learning_roadmaps_table[user_id.lower()] = roadmap
+    
+    return success_response(
+        data={
+            "success": True, 
+            "updated": updated, 
+            "progress_percent": roadmap["progress_percent"],
+            "roadmap": roadmap
+        },
+        request_id=request_id,
+        message="Learning progress updated successfully"
+    )
+
+
+# ─── GET /mentors ─────────────────────────────────────────────────────────────
+@router.get("/mentors")
+async def get_mentors(request: Request, request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get personalized mentor matches."""
+    user_id = request.state.user_id
+    from services.db import mentor_matches_table
+    from services.orchestrator import run_sprint3_pipeline
+    
+    matches = mentor_matches_table.get(user_id.lower())
+    if not matches:
+        res = await run_sprint3_pipeline(user_id)
+        matches = res.get("mentor_matches", {})
+        
+    return success_response(data=matches, request_id=request_id)
+
+
+# ─── POST /mentor/request ─────────────────────────────────────────────────────
+@router.post("/mentor/request")
+async def request_mentor(
+    request: Request,
+    payload: Dict[str, Any],
+    request_id: str = Depends(get_request_id)
+) -> Dict[str, Any]:
+    """Submit a mentor guidance request."""
+    user_id = request.state.user_id
+    mentor_id = payload.get("mentor_id")
+    if not mentor_id:
+        raise HTTPException(status_code=400, detail="Missing mentor_id in request payload.")
+        
+    from services.db import mentor_requests_table, get_mentors_by_community
+    community_id = request.state.community_id
+    
+    # Verify mentor belongs to the user's community
+    community_mentors = get_mentors_by_community(community_id)
+    mentor_exists = any(m["mentor_id"] == mentor_id for m in community_mentors)
+    if not mentor_exists:
+        raise HTTPException(status_code=400, detail="Mentor not found in your community catalog.")
+        
+    # Check if a request already exists
+    for r in mentor_requests_table:
+        if r["user_id"].lower() == user_id.lower() and r["mentor_id"] == mentor_id:
+            return success_response(
+                data=r, 
+                request_id=request_id, 
+                message="Mentor request already pending."
+            )
+            
+    import uuid
+    new_request = {
+        "request_id": f"req-{uuid.uuid4().hex[:8]}",
+        "user_id": user_id,
+        "mentor_id": mentor_id,
+        "status": "pending",
+        "requested_at": datetime.utcnow().isoformat()
+    }
+    mentor_requests_table.append(new_request)
+    
+    return success_response(
+        data=new_request, 
+        request_id=request_id, 
+        message="Mentor request submitted successfully."
+    )
+
+
+# ─── GET /mentor/requests ─────────────────────────────────────────────────────
+@router.get("/mentor/requests")
+async def get_mentor_requests(request: Request, request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get all mentor requests submitted by the user."""
+    user_id = request.state.user_id
+    from services.db import mentor_requests_table
+    user_requests = [r for r in mentor_requests_table if r["user_id"].lower() == user_id.lower()]
+    return success_response(data={"requests": user_requests}, request_id=request_id)

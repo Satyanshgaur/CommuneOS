@@ -169,3 +169,119 @@ Select the PRIMARY best match and 1-2 backup options. Be specific about compatib
 
     def _get_fallback(self, user_id: str, user_data: Dict, *args, **kwargs) -> Dict[str, Any]:
         return get_mock_mentor(user_id, user_data)
+
+    async def run_sprint3(
+        self, user_id: str, user_data: Dict, identity_data: Optional[Dict], learning_roadmap: Dict, community_id: str
+    ) -> Dict[str, Any]:
+        """
+        Sprint 3 personalized mentor matching.
+        Matches with mentors from db.py mentors_table scoped by community_id.
+        """
+        from services.db import get_mentors_by_community
+        mentors = get_mentors_by_community(community_id)
+        
+        # Build mentors catalog
+        mentors_catalog = "\n".join([
+            f"- ID: {m['mentor_id']}, Name: {m['name']}, Role: {m['role']}, Expertise: {', '.join(m['expertise_areas'])}"
+            for m in mentors
+        ])
+
+        system_prompt = """You are the Mentor Matching Agent for CommuneOS.
+Your job is to match a community member with the best mentor from their community.
+
+You MUST return ONLY valid JSON in this exact structure:
+{
+  "primary_mentor": {
+    "mentor_id": "mentor-id",
+    "name": "Mentor Name",
+    "role": "Mentor Role",
+    "compatibility_score": 0.0-1.0,
+    "matching_skills": ["skill1", "skill2"],
+    "shared_interests": ["interest1"],
+    "match_reason": "Detailed explanation of why this match is ideal"
+  },
+  "backup_mentors": [
+    {
+      "mentor_id": "mentor-id",
+      "name": "Mentor Name",
+      "role": "Mentor Role",
+      "compatibility_score": 0.0-1.0,
+      "matching_skills": ["skill1"],
+      "shared_interests": [],
+      "match_reason": "Detailed explanation of why they are a good secondary option"
+    }
+  ],
+  "suggested_meeting_schedule": "e.g., Weekly sync on Saturdays",
+  "introduction_template": "Intro template text..."
+}
+
+Rules:
+- Select only from the provided community mentors.
+- Primary and backup mentors must exist in the provided list.
+- Calculate compatibility_score dynamically based on skills, timezone, goals. Score must be between 0.0 and 1.0.
+"""
+
+        prompt = f"""Match a mentor for this member:
+
+Member: {user_data.get('username', 'Unknown')}
+Skills: {identity_data.get('inferred_skills', {}) if identity_data else user_data.get('skills', {})}
+Goals: {user_data.get('goals', [])}
+Interests: {identity_data.get('interests', []) if identity_data else user_data.get('interests', [])}
+Learning Roadmap: {learning_roadmap.get('roadmap_title')}
+
+Available Mentors in this Community:
+{mentors_catalog}
+"""
+
+        result_json, is_fallback = await llm_service.complete_json(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=settings.LLM_TEMPERATURE_DISCOVERY,
+            max_tokens=settings.LLM_MAX_TOKENS_COMPLEX,
+        )
+
+        if is_fallback or not result_json:
+            result_json = self._get_sprint3_fallback(user_data, mentors)
+
+        return result_json
+
+    def _get_sprint3_fallback(self, user_data: Dict, mentors: List) -> Dict[str, Any]:
+        if not mentors:
+            return {
+                "primary_mentor": None,
+                "backup_mentors": [],
+                "suggested_meeting_schedule": "None",
+                "introduction_template": "No mentors available in this community."
+            }
+            
+        primary = mentors[0]
+        backups = mentors[1:]
+        
+        primary_match = {
+            "mentor_id": primary["mentor_id"],
+            "name": primary["name"],
+            "role": primary["role"],
+            "compatibility_score": primary.get("compatibility_score", 0.95),
+            "matching_skills": primary.get("expertise_areas", [])[:2],
+            "shared_interests": user_data.get("interests", [])[:1],
+            "match_reason": primary.get("match_reason") or "Aligned with your learning roadmaps and active objectives."
+        }
+        
+        backup_matches = []
+        for bm in backups:
+            backup_matches.append({
+                "mentor_id": bm["mentor_id"],
+                "name": bm["name"],
+                "role": bm["role"],
+                "compatibility_score": bm.get("compatibility_score", 0.85),
+                "matching_skills": bm.get("expertise_areas", [])[:2],
+                "shared_interests": user_data.get("interests", [])[:1],
+                "match_reason": bm.get("match_reason") or "Good secondary fit for your domain interests."
+            })
+            
+        return {
+            "primary_mentor": primary_match,
+            "backup_mentors": backup_matches,
+            "suggested_meeting_schedule": "Weekly syncs on Weekends",
+            "introduction_template": f"Hi {primary['name']}, I am looking forward to learning from you on my developer path!"
+        }

@@ -198,3 +198,17 @@ def get_mentors_by_community(community_id: str):
 
 def get_actions_by_community(community_id: str):
     return [a for a in actions_table if a["community_id"] == community_id]
+
+
+# ─── Sprint 3 Tables ───────────────────────────────────────────────────────────
+recommendations_table = {}     # user_id -> Recommendations Dict
+learning_roadmaps_table = {}   # user_id -> Learning Roadmap Dict
+mentor_matches_table = {}      # user_id -> Mentor Matches Dict
+mentor_requests_table = []     # List of Mentor Requests: {request_id, user_id, mentor_id, status, requested_at}
+pipeline_hashes = {}           # user_id -> hash of user profile & resources state
+
+# ─── Sprint 5 Documents ───────────────────────────────────────────────────────
+documents_table = {}           # doc_id -> Document Metadata Dict
+documents_storage = {}         # doc_id -> bytes (file content)
+
+

@@ -48,6 +48,19 @@ async def create_user(
     )
 
 
+@router.get("/config")
+async def get_config(request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
+    """Get dynamic configurations (e.g. Supabase credentials)."""
+    from config import settings
+    return success_response(
+        data={
+            "supabase_url": settings.SUPABASE_URL,
+            "supabase_anon_key": settings.SUPABASE_ANON_KEY
+        },
+        request_id=request_id
+    )
+
+
 @router.get("/{user_id}")
 async def get_user(
     user_id: str = Depends(validate_user_id_param),
@@ -158,14 +171,3 @@ async def list_users(request_id: str = Depends(get_request_id)) -> Dict[str, Any
     )
 
 
-@router.get("/config")
-async def get_config(request_id: str = Depends(get_request_id)) -> Dict[str, Any]:
-    """Get dynamic configurations (e.g. Supabase credentials)."""
-    from config import settings
-    return success_response(
-        data={
-            "supabase_url": settings.SUPABASE_URL,
-            "supabase_anon_key": settings.SUPABASE_ANON_KEY
-        },
-        request_id=request_id
-    )

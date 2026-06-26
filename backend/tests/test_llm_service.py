@@ -16,12 +16,15 @@ from services.cache_service import cache_service
 
 @pytest.fixture(autouse=True)
 def configure_key():
-    """Ensure API key is configured for tests so we don't trigger immediate fallback."""
+    """Ensure API key is configured and max_retries is 0 for tests."""
     original_key = llm_service.api_key
+    original_retries = llm_service.max_retries
     llm_service.api_key = "test-key-123"
+    llm_service.max_retries = 0
     cache_service.clear_prefix("")
     yield
     llm_service.api_key = original_key
+    llm_service.max_retries = original_retries
     cache_service.clear_prefix("")
 
 

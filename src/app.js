@@ -3,16 +3,18 @@
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
 // Supabase Instance
-let supabase = null;
+let supabaseClient = null;
 
 // State Variables
 let currentUserId = null;
 let currentUserProfile = null;
 let currentRole = "member"; // "member" or "organizer"
+let currentUserRequests = [];
 
 // Intercept all fetch requests to automatically add X-User-Id header if currentUserId is set
-const originalFetch = window.fetch;
-window.fetch = function(url, options = {}) {
+const originalFetch = window.fetch.bind(window);
+window.fetch = function(url, options) {
+  options = options || {};
   if (currentUserId) {
     options.headers = options.headers || {};
     if (options.headers instanceof Headers) {
@@ -77,6 +79,8 @@ const elements = {
   kpiPathsName: null,
   kpiPathsProgress: null,
   kpiPathsNext: null,
+  kpiPathsMilestonesList: null,
+  kpiPathsChecklistList: null,
   kpiSkillsList: null,
   kpiInterestsList: null,
   
@@ -118,7 +122,18 @@ const elements = {
   // Community Branding elements
   communityName: null,
   communityLogo: null,
-  communityDesc: null
+  communityDesc: null,
+
+  // Documents elements
+  navDashboardLink: null,
+  navDocumentsLink: null,
+  documentsDashboard: null,
+  docSearchInput: null,
+  docCategoryFilter: null,
+  btnDocSearch: null,
+  docUploadForm: null,
+  docUploadCard: null,
+  documentsListContainer: null
 };
 
 // Initialization & Event Bindings
@@ -156,6 +171,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   elements.kpiPathsName = document.getElementById("kpi-paths-name");
   elements.kpiPathsProgress = document.getElementById("kpi-paths-progress");
   elements.kpiPathsNext = document.getElementById("kpi-paths-next");
+  elements.kpiPathsMilestonesList = document.getElementById("kpi-paths-milestones-list");
+  elements.kpiPathsChecklistList = document.getElementById("kpi-paths-checklist-list");
   elements.kpiSkillsList = document.getElementById("kpi-skills-list");
   elements.kpiInterestsList = document.getElementById("kpi-interests-list");
   
@@ -194,6 +211,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   elements.communityLogo = document.getElementById("community-logo");
   elements.communityDesc = document.getElementById("community-desc");
 
+  elements.navDashboardLink = document.getElementById("nav-dashboard-link");
+  elements.navDocumentsLink = document.getElementById("nav-documents-link");
+  elements.documentsDashboard = document.getElementById("documents-dashboard");
+  elements.docSearchInput = document.getElementById("doc-search-input");
+  elements.docCategoryFilter = document.getElementById("doc-category-filter");
+  elements.btnDocSearch = document.getElementById("btn-doc-search");
+  elements.docUploadForm = document.getElementById("doc-upload-form");
+  elements.docUploadCard = document.getElementById("doc-upload-card");
+  elements.documentsListContainer = document.getElementById("documents-list-container");
+
   // Bind community branding details
   renderCommunityBranding();
 
@@ -205,6 +232,40 @@ document.addEventListener("DOMContentLoaded", async () => {
   elements.modalOverlay.addEventListener("click", (e) => {
     if (e.target === elements.modalOverlay) closeModal();
   });
+
+  if (elements.navDashboardLink) {
+    elements.navDashboardLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchToTab("dashboard");
+    });
+  }
+  if (elements.navDocumentsLink) {
+    elements.navDocumentsLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchToTab("documents");
+    });
+  }
+  if (elements.btnDocSearch) {
+    elements.btnDocSearch.addEventListener("click", () => {
+      loadDocuments();
+    });
+  }
+  if (elements.docUploadForm) {
+    elements.docUploadForm.addEventListener("submit", handleDocumentUpload);
+  }
+
+  const navAgentLink = document.getElementById("nav-agent-link");
+  if (navAgentLink) {
+    navAgentLink.addEventListener("click", () => {
+      switchToTab("dashboard");
+    });
+  }
+  const navChannelsLink = document.getElementById("nav-channels-link");
+  if (navChannelsLink) {
+    navChannelsLink.addEventListener("click", () => {
+      switchToTab("dashboard");
+    });
+  }
 
   // Sprint 2 Modal Event bindings
   const profileOverlay = document.getElementById("profile-modal-overlay");
@@ -262,7 +323,10 @@ async function initSupabase() {
 
     if (!url || !anonKey) {
       console.warn("Supabase credentials not configured in backend .env");
-      if (elements.authConfigWarning) elements.authConfigWarning.style.display = "block";
+      if (elements.authConfigWarning) {
+        elements.authConfigWarning.innerHTML = `<strong>Warning:</strong> Supabase environment variables are missing in your backend <code>.env</code> file. Please set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>.`;
+        elements.authConfigWarning.style.display = "block";
+      }
       showAuthScreen();
       return;
     }
@@ -270,13 +334,16 @@ async function initSupabase() {
     if (elements.authConfigWarning) elements.authConfigWarning.style.display = "none";
 
     // Initialize Supabase Client
-    supabase = window.supabase.createClient(url, anonKey);
+    if (typeof window.supabase === 'undefined' || !window.supabase) {
+      throw new Error("Supabase CDN script failed to load. Please check your internet connection.");
+    }
+    supabaseClient = window.supabase.createClient(url, anonKey);
 
     // Check existing session
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     
     // Set up auth state change listener
-    supabase.auth.onAuthStateChange((event, newSession) => {
+    supabaseClient.auth.onAuthStateChange((event, newSession) => {
       handleAuthStateChange(newSession);
     });
 
@@ -286,7 +353,11 @@ async function initSupabase() {
   } catch (error) {
     console.error("Error initializing Supabase Auth:", error);
     if (elements.authConfigWarning) {
-      elements.authConfigWarning.textContent = "Error: Backend server is offline. Please start the backend service.";
+      if (error.message && (error.message.includes("fetch") || error.message.includes("network"))) {
+        elements.authConfigWarning.textContent = "Error: Backend server is offline. Please start the backend service.";
+      } else {
+        elements.authConfigWarning.textContent = `Error: ${error.message}`;
+      }
       elements.authConfigWarning.style.display = "block";
     }
     showAuthScreen();
@@ -516,13 +587,13 @@ async function handleLoginSubmit(e) {
   const email = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
 
-  if (!supabase) {
+  if (!supabaseClient) {
     alert("Supabase authentication is offline. Check backend logs.");
     return;
   }
 
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw error;
   } catch (error) {
     console.error("Login failed:", error);
@@ -536,13 +607,13 @@ async function handleSignupSubmit(e) {
   const email = document.getElementById("signup-email").value.trim();
   const password = document.getElementById("signup-password").value;
 
-  if (!supabase) {
+  if (!supabaseClient) {
     alert("Supabase authentication is offline.");
     return;
   }
 
   try {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabaseClient.auth.signUp({ email, password });
     if (error) throw error;
     
     // Switch to verification panel
@@ -568,7 +639,7 @@ async function handleProfileSubmit(e) {
   }
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     
     const body = {
       user_id: currentUserId,
@@ -604,8 +675,8 @@ async function handleProfileSubmit(e) {
 
 // Handle Sign Out
 async function handleSignOut() {
-  if (supabase) {
-    await supabase.auth.signOut();
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
   }
   currentUserId = null;
   currentUserProfile = null;
@@ -728,16 +799,46 @@ function renderMemberDashboard() {
   if (u.learning_paths && u.learning_paths.length > 0) {
     const path = u.learning_paths[0];
     elements.kpiPathsName.textContent = path.name;
-    elements.kpiPathsProgress.textContent = `${path.progress}%`;
+    const progressVal = u.learning_progress !== undefined ? u.learning_progress : path.progress;
+    elements.kpiPathsProgress.textContent = `${progressVal}%`;
     const bar = document.getElementById("kpi-paths-progress-bar");
-    if (bar) bar.style.width = `${path.progress}%`;
-    elements.kpiPathsNext.textContent = path.next_milestone;
+    if (bar) bar.style.width = `${progressVal}%`;
+    const nextM = u.milestones ? u.milestones.find(m => !m.completed) : null;
+    elements.kpiPathsNext.textContent = nextM ? `Next: Week ${nextM.week}: ${nextM.title}` : "All milestones completed! 🎉";
   } else {
     elements.kpiPathsName.textContent = "No active roadmaps";
     elements.kpiPathsProgress.textContent = "0%";
     const bar = document.getElementById("kpi-paths-progress-bar");
     if (bar) bar.style.width = "0%";
     elements.kpiPathsNext.textContent = "Complete profile to generate paths.";
+  }
+
+  // Render Milestones Checklist
+  if (u.milestones && u.milestones.length > 0) {
+    elements.kpiPathsMilestonesList.innerHTML = u.milestones.map(m => `
+      <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--color-carbon); cursor: pointer; user-select: none; margin-bottom: 4px;">
+        <input type="checkbox" ${m.completed ? 'checked' : ''} onchange="toggleMilestone(${m.week}, this.checked)" style="margin-top: 2px;">
+        <span style="${m.completed ? 'text-decoration: line-through; color: var(--color-slate);' : ''}">
+          <strong>W${m.week}</strong>: ${m.title} <span style="color: var(--color-slate); font-size: 11px;">(${m.estimated_hours}h)</span>
+        </span>
+      </label>
+    `).join("");
+  } else {
+    elements.kpiPathsMilestonesList.innerHTML = `<span style="font-size: 11px; color: var(--color-slate);">No milestones generated.</span>`;
+  }
+
+  // Render Daily Action Checklist
+  if (u.daily_checklist && u.daily_checklist.length > 0) {
+    elements.kpiPathsChecklistList.innerHTML = u.daily_checklist.map(t => `
+      <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--color-carbon); cursor: pointer; user-select: none; margin-bottom: 4px;">
+        <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleChecklistTask('${t.task_id}', this.checked)" style="margin-top: 2px;">
+        <span style="${t.completed ? 'text-decoration: line-through; color: var(--color-slate);' : ''}">
+          ${t.task} <span style="color: var(--color-signal-orange); font-size: 10px;">[${t.type}]</span>
+        </span>
+      </label>
+    `).join("");
+  } else {
+    elements.kpiPathsChecklistList.innerHTML = `<span style="font-size: 11px; color: var(--color-slate);">No checklist items today.</span>`;
   }
 
   // Verified Skills
@@ -767,6 +868,70 @@ function renderMemberDashboard() {
     elements.mentorList.innerHTML = u.recommended_people.map(p => createMentorCard(p)).join("");
   } else {
     renderCardState(elements.mentorList, "empty", "No mentor matches computed yet.");
+  }
+
+  // Render Personalized Resources
+  if (u.resources && u.resources.length > 0) {
+    elements.resourcesList.innerHTML = u.resources.map(r => `
+      <div class="card">
+        <div class="card-header-row">
+          <div>
+            <span class="card-badge">${r.type || 'Resource'}</span>
+          </div>
+          <button class="why-btn" onclick="openExplainabilityModal('${r.id}')">Why?</button>
+        </div>
+        <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${r.title}</h3>
+        <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">Est: ${r.duration || '25 min'} • Difficulty: ${r.difficulty || 'Intermediate'}</p>
+        <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <p style="font-size: 11px; color: var(--color-graphite); max-width: 70%; line-height: 1.2;">${r.reasoning || 'Highly recommended for your path.'}</p>
+          <button class="btn-filled btn-small" onclick="alert('Opening resource: ${r.title}')">Open</button>
+        </div>
+      </div>
+    `).join("");
+  } else {
+    renderCardState(elements.resourcesList, "empty", "No personalized resources available.");
+  }
+
+  // Render Personalized Projects
+  const projectsList = document.getElementById("projects-list");
+  if (projectsList) {
+    if (u.projects && u.projects.length > 0) {
+      projectsList.innerHTML = u.projects.map(p => `
+        <div class="card">
+          <div class="card-header-row">
+            <span class="card-badge">Project</span>
+            <button class="why-btn" onclick="openExplainabilityModal('${p.id}')">Why?</button>
+          </div>
+          <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${p.title}</h3>
+          <p style="font-size: 12px; color: var(--color-graphite); margin-top: 6px; line-height: 1.4;">${p.description}</p>
+          <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: flex-end;">
+            <button class="btn-filled btn-small" onclick="alert('Joining project: ${p.title}')">Join Project</button>
+          </div>
+        </div>
+      `).join("");
+    } else {
+      renderCardState(projectsList, "empty", "No personalized projects active.");
+    }
+  }
+
+  // Render Personalized Events (including study groups)
+  if (u.events && u.events.length > 0) {
+    elements.eventsList.innerHTML = u.events.map(e => `
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-badge">${e.type || 'Event'}</span>
+          <button class="why-btn" onclick="openExplainabilityModal('${e.id}')">Why?</button>
+        </div>
+        <h3 class="card-title" style="margin-top: 6px; font-size: 15px;">${e.title}</h3>
+        <p style="font-size: 12px; color: var(--color-slate); margin-top: 4px;">${e.time || 'Tonight, 7:00 PM'}</p>
+        <div style="margin-top: auto; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <p style="font-size: 11px; color: var(--color-graphite); max-width: 70%; line-height: 1.2;">${e.reasoning || 'Boost your understanding.'}</p>
+          <button class="btn-filled btn-small" onclick="alert('Registered for event: ${e.title}')">RSVP</button>
+        </div>
+      </div>
+    `).join("");
+  } else {
+    renderCardState(elements.eventsList, "empty", "No events calendar available.");
   }
 
   // Recommended Communities (show visible, hide filtered out)
@@ -801,9 +966,6 @@ function renderMemberDashboard() {
   if (communitiesAdded === 0) {
     renderCardState(elements.communitiesList, "empty", "No recommended channels available.");
   }
-
-  // Recommended Resources, Projects, and Events loaded from DB
-  loadCommunityKnowledge();
 
   // Render Telemetry Widget (GitHub connect, resume upload)
   renderTelemetryWidget();
@@ -843,6 +1005,15 @@ function createPriorityCard(label, title, val, footerText, agentText, decisionId
 // Helper to render mentor cards
 function createMentorCard(mentor) {
   const avatar = mentor.avatar || mentor.name.substring(0, 2).toUpperCase();
+  const request = currentUserRequests.find(r => r.mentor_id === mentor.id);
+  let btnHtml = "";
+  if (request) {
+    const statusText = request.status.charAt(0).toUpperCase() + request.status.slice(1);
+    btnHtml = `<button class="btn-outlined btn-small" disabled style="opacity: 0.7; cursor: not-allowed; border-color: var(--color-slate); color: var(--color-slate);">${statusText}</button>`;
+  } else {
+    btnHtml = `<button class="btn-filled btn-small" onclick="requestMentorConnection('${mentor.id}', '${mentor.name}')">Connect</button>`;
+  }
+  
   return `
     <div class="mentor-item">
       <div class="mentor-info">
@@ -855,10 +1026,60 @@ function createMentorCard(mentor) {
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
         <span class="mentor-score-pill"><span class="mentor-score-label">${mentor.match}%</span> match</span>
-        <button class="btn-filled btn-small" onclick="alert('Connection request sent to ${mentor.name}')">Connect</button>
+        ${btnHtml}
       </div>
     </div>
   `;
+}
+
+async function toggleMilestone(week, completed) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/learning/progress`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ week: week, completed: completed })
+    });
+    if (response.ok) {
+      await loadMemberPersonalization(currentUserId);
+    }
+  } catch (error) {
+    console.error("Error toggling milestone completion:", error);
+  }
+}
+
+async function toggleChecklistTask(taskId, completed) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/learning/progress`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task_id: taskId, completed: completed })
+    });
+    if (response.ok) {
+      await loadMemberPersonalization(currentUserId);
+    }
+  } catch (error) {
+    console.error("Error toggling checklist task completion:", error);
+  }
+}
+
+async function requestMentorConnection(mentorId, mentorName) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/mentor/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mentor_id: mentorId })
+    });
+    if (response.ok) {
+      const resJson = await response.json();
+      alert(`Connection request sent to ${mentorName}! Status: ${resJson.data.status}`);
+      await loadMemberPersonalization(currentUserId);
+    } else {
+      const err = await response.json();
+      alert(`Error requesting mentor: ${err.message || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error("Error requesting mentor connection:", error);
+  }
 }
 
 // Organizer Dashboard Renderer
@@ -936,16 +1157,17 @@ window.openExplainabilityModal = function(decisionId) {
       `Mentor Agent: Queried expert profile directories for alignment. Computed compatibility match based on availability and background.`
     ];
   } else {
-    // Find matching resource/event
+    // Find matching resource/event/project
     const resource = (u.resources || []).find(r => r.id === decisionId);
     const event = (u.events || []).find(e => e.id === decisionId);
-    const item = resource || event;
+    const project = (u.projects || []).find(p => p.id === decisionId);
+    const item = resource || event || project;
     if (item) {
       title = item.title;
       reasoning = [
         `Identity Agent: Evaluated growth areas and interests.`,
-        `Discovery Agent: Ranked resource match based on relevance score of ${item.score || 85}%.`,
-        `Learning Agent: Recommended to support milestone progress objectives.`
+        `Discovery Agent: MATCH REASON -> "${item.reasoning || 'Highly matched for your profile goals'}"`,
+        `Learning Agent: Aligned with active community discovery streams.`
       ];
       score = `${item.score || 85}%`;
     } else {
@@ -1004,10 +1226,10 @@ function closeModal() {
 
 async function loadMemberPersonalization(userId) {
   // Show loading states
-  elements.heroHeadline.textContent = "AI Orchestration Running...";
+  elements.heroHeadline.textContent = "AI Personalization Syncing...";
   elements.heroBody.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 8px;">
-      <p>Please wait while the Agent Orchestrator runs: <strong>Identity Agent</strong> → (<strong>Discovery Agent</strong> + <strong>Learning Agent</strong>) → <strong>Mentor Agent</strong>...</p>
+      <p>Loading personalized community workspace...</p>
       <div style="width: 100%; height: 6px; background-color: var(--color-chalk); border-radius: 3px; overflow: hidden; position: relative;">
         <div style="width: 50%; height: 100%; background-color: var(--color-signal-orange); position: absolute; animation: loading-bar 2s infinite ease-in-out;"></div>
       </div>
@@ -1042,49 +1264,88 @@ async function loadMemberPersonalization(userId) {
 
   try {
     const start = Date.now();
-    const response = await fetch(`${API_BASE_URL}/agents/personalize/${userId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" }
-    });
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    const elapsed = Date.now() - start;
-    console.log(`Backend pipeline took ${elapsed}ms:`, result);
-
-    if (result.success && result.data) {
-      const adapted = adaptBackendProfileToFrontend(result.data, userId);
-      
-      // Load current profile from database to enrich adapted fields
-      try {
-        const profileRes = await fetch(`${API_BASE_URL}/profile`);
-        if (profileRes.ok) {
-          const profileJson = await profileRes.json();
-          Object.assign(adapted, profileJson.data);
-          // Overwrite adapted name with database username
-          if (profileJson.data.username) {
-            adapted.name = profileJson.data.username;
-            adapted.avatar = profileJson.data.username.substring(0, 2).toUpperCase();
-            adapted.headline = `Welcome back, ${profileJson.data.username} 👋`;
-          }
-        }
-      } catch (profileErr) {
-        console.error("Failed to load detailed profile from DB:", profileErr);
+    // Fetch profile details
+    let profileData = null;
+    try {
+      const profileRes = await fetch(`${API_BASE_URL}/profile`);
+      if (profileRes.ok) {
+        const profileJson = await profileRes.json();
+        profileData = profileJson.data;
       }
-      
-      currentUserProfile = adapted;
-      
-      elements.userProfileWrapper.style.display = "flex";
-      elements.authUserName.textContent = adapted.name;
-      
-      renderApp();
-      renderAgentFlowWithTimings(result.data);
-    } else {
-      throw new Error("API succeeded but returned failure payload");
+    } catch (profileErr) {
+      console.error("Failed to load detailed profile from DB:", profileErr);
     }
+
+    // Parallel fetch from database endpoints
+    const [recsRes, roadmapRes, mentorsRes, requestsRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/recommendations`),
+      fetch(`${API_BASE_URL}/learning-roadmap`),
+      fetch(`${API_BASE_URL}/mentors`),
+      fetch(`${API_BASE_URL}/mentor/requests`)
+    ]);
+
+    if (!recsRes.ok || !roadmapRes.ok || !mentorsRes.ok) {
+      throw new Error("One or more personalization API requests failed.");
+    }
+
+    const recsJson = await recsRes.json();
+    const roadmapJson = await roadmapRes.json();
+    const mentorsJson = await mentorsRes.json();
+    
+    let requestsJson = { data: { requests: [] } };
+    try {
+      if (requestsRes && requestsRes.ok) {
+        requestsJson = await requestsRes.json();
+      }
+    } catch (e) {
+      console.error("Failed to load mentor requests:", e);
+    }
+    
+    currentUserRequests = requestsJson.data.requests || [];
+
+    const elapsed = Date.now() - start;
+    console.log(`Backend personalization endpoints fetched in ${elapsed}ms:`, { recsJson, roadmapJson, mentorsJson });
+
+    // Format the backendProfile structure for adapter compatibility
+    const backendProfile = {
+      user_id: userId,
+      username: profileData?.username,
+      identity: {
+        detected_skills: (profileData?.skills ? Object.entries(profileData.skills).map(([name, level]) => {
+          const profLevel = level >= 5 ? "Expert" : level >= 4 ? "Advanced" : level >= 3 ? "Intermediate" : "Beginner";
+          return { name, proficiency: profLevel, confidence: 0.9, source: "stated" };
+        }) : []),
+        expertise_areas: profileData?.preferred_domains || [],
+        growth_areas: profileData?.goals || [],
+        learning_preference: profileData?.learning_style || "visual",
+        overall_confidence: 0.9,
+        summary: profileData?.bio || "Personalized learning dashboard"
+      },
+      discovery: recsJson.data || {},
+      learning: roadmapJson.data || {},
+      mentor: mentorsJson.data || {},
+      pipeline_time_ms: elapsed,
+      fallback_used: recsJson.data?._is_fallback || false,
+    };
+
+    const adapted = adaptBackendProfileToFrontend(backendProfile, userId);
+    if (profileData) {
+      Object.assign(adapted, profileData);
+      if (profileData.username) {
+        adapted.name = profileData.username;
+        adapted.avatar = profileData.username.substring(0, 2).toUpperCase();
+        adapted.headline = `Welcome back, ${profileData.username} 👋`;
+      }
+    }
+
+    currentUserProfile = adapted;
+    
+    elements.userProfileWrapper.style.display = "flex";
+    elements.authUserName.textContent = adapted.name;
+    
+    renderApp();
+    renderAgentFlowWithTimings(backendProfile);
   } catch (error) {
     console.error("Failed to fetch personalization from backend:", error);
     elements.heroHeadline.textContent = "Telemetry Sync Error";
@@ -1141,74 +1402,113 @@ async function loadOrganizerData() {
   renderCardState(elements.orgMentorsList, "loading");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/agents/community/health`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!response.ok) throw new Error("Failed to load community health metrics");
-    const result = await response.json();
-    console.log("Community health report loaded:", result);
+    const [metricsRes, healthRes, actionsRes, mentorsRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/community/metrics`),
+      fetch(`${API_BASE_URL}/community/health`),
+      fetch(`${API_BASE_URL}/organizer/actions`),
+      fetch(`${API_BASE_URL}/mentors`)
+    ]);
 
-    if (result.success && result.data) {
-      const data = result.data;
-      const h = data.health || {};
-      const a = data.actions || {};
+    if (!metricsRes.ok || !healthRes.ok || !actionsRes.ok) {
+      throw new Error("Failed to load community metrics and health");
+    }
 
-      const score = Math.round((h.community_health_score || 0) * 100);
-      elements.orgHealthScore.textContent = score ? `${score}%` : "0%";
-      
-      const healthDelta = document.getElementById("org-health-delta");
-      if (healthDelta) {
-        healthDelta.innerHTML = `<span class="kpi-delta neutral">${h.summary || 'Stable'}</span>`;
-      }
-      
-      elements.orgActiveMembers.textContent = h.total_members || 0;
-      elements.orgNewMembers.textContent = `+${h.active_members_7d || 0}`;
-      
-      elements.orgAtRiskMembers.textContent = `${(h.at_risk_members || []).length} members`;
-      const atRiskWrapper = document.getElementById("org-at-risk-wrapper");
-      if (atRiskWrapper) {
-        atRiskWrapper.textContent = "At risk of churning (>30d inactivity)";
-      }
+    const metricsJson = await metricsRes.json();
+    const healthJson = await healthRes.json();
+    const actionsJson = await actionsRes.json();
+    const mentorsJson = mentorsRes.ok ? await mentorsRes.json() : { data: {} };
 
-      // Trending tags
-      const trends = h.trending_topics || [];
-      if (trends.length > 0) {
-        elements.orgTrendingTopics.innerHTML = trends.map(t => `
-          <span class="card-badge orange" style="margin-right: 6px; margin-bottom: 6px; display: inline-block;"># ${t}</span>
-        `).join("");
-      } else {
-        renderCardState(elements.orgTrendingTopics, "empty", "No trending conversation topics.");
-      }
+    console.log("Community metrics loaded:", metricsJson);
+    console.log("Community health report loaded:", healthJson);
+    console.log("Community actions loaded:", actionsJson);
 
-      // Suggested Actions List
-      const actions = a.action_items || [];
-      if (actions.length > 0) {
-        elements.orgActionsList.innerHTML = actions.map(item => `
-          <div style="padding: 16px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 12px; border-left: 3px solid ${item.completed ? '#10b981' : 'var(--color-signal-orange)'};">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <span style="font-weight: 600; font-size: 14px; color: var(--color-carbon);">${item.title}</span>
-              <span class="card-badge" style="text-transform: capitalize; background-color: ${item.completed ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-chalk)'}; color: ${item.completed ? '#10b981' : 'var(--color-graphite)'};">${item.completed ? 'approved' : 'suggested'}</span>
-            </div>
-            <p style="font-size: 12px; color: var(--color-graphite); margin: 8px 0 4px 0;"><strong>Reason:</strong> ${item.description}</p>
-            <p style="font-size: 12px; color: var(--color-sienna-bronze); margin-bottom: 8px;"><strong>Impact Projection:</strong> ${item.expected_impact || 'Improves member retention.'}</p>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-chalk); padding-top: 8px; margin-top: 4px;">
-              <span style="font-size: 11px; color: var(--color-slate);">Assignee suggestion: <strong>${item.assignee || 'Organizer'}</strong></span>
-              ${!item.completed ? `
-                <button class="btn-filled btn-small" onclick="approveAction('${item.action_id}')">Approve & Execute</button>
-              ` : `
-                <span style="font-size: 12px; color: #10b981; font-weight: 500;">✓ In Execution Pipeline</span>
-              `}
-            </div>
+    const mData = metricsJson.data || {};
+    const hData = healthJson.data || {};
+    const aData = actionsJson.data || {};
+
+    const score = Math.round((hData.community_health_score || 0) * 100);
+    elements.orgHealthScore.textContent = score ? `${score}%` : "0%";
+    
+    const healthDelta = document.getElementById("org-health-delta");
+    if (healthDelta) {
+      healthDelta.innerHTML = `<span class="kpi-delta neutral">${hData.summary || 'Stable'}</span>`;
+    }
+    
+    elements.orgActiveMembers.textContent = mData.active_members !== undefined ? mData.active_members : 0;
+    elements.orgNewMembers.textContent = `+${mData.new_members || 0}`;
+    
+    // Intervention Flags count = sum of all flagged issues
+    const totalFlags = (hData.inactive_14d_members || []).length + (hData.incomplete_profiles || []).length + (hData.members_without_mentor || []).length;
+    elements.orgAtRiskMembers.textContent = `${totalFlags} flags`;
+    
+    const atRiskWrapper = document.getElementById("org-at-risk-wrapper");
+    if (atRiskWrapper) {
+      atRiskWrapper.textContent = `${(hData.inactive_14d_members || []).length} inactive, ${(hData.incomplete_profiles || []).length} incomplete, ${(hData.members_without_mentor || []).length} no mentor`;
+    }
+
+    // Unanswered support queries count
+    const unansweredEl = document.getElementById("org-unanswered");
+    if (unansweredEl) {
+      unansweredEl.textContent = hData.unanswered_queries !== undefined ? hData.unanswered_queries : 0;
+    }
+
+    // Trending topics
+    const trends = hData.trending_topics || [];
+    if (trends.length > 0) {
+      elements.orgTrendingTopics.innerHTML = trends.map(t => `
+        <span class="card-badge orange" style="margin-right: 6px; margin-bottom: 6px; display: inline-block;"># ${t}</span>
+      `).join("");
+    } else {
+      renderCardState(elements.orgTrendingTopics, "empty", "No trending conversation topics.");
+    }
+
+    // Suggested Actions List
+    const actions = aData.action_items || [];
+    if (actions.length > 0) {
+      elements.orgActionsList.innerHTML = actions.map(item => `
+        <div style="padding: 16px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 12px; border-left: 3px solid ${item.completed ? '#10b981' : 'var(--color-signal-orange)'};">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <span style="font-weight: 600; font-size: 14px; color: var(--color-carbon);">${item.title}</span>
+            <span class="card-badge" style="text-transform: capitalize; background-color: ${item.completed ? 'rgba(16, 185, 129, 0.1)' : 'var(--color-chalk)'}; color: ${item.completed ? '#10b981' : 'var(--color-graphite)'};">${item.completed ? 'approved' : 'suggested'}</span>
           </div>
-        `).join("");
-      } else {
-        renderCardState(elements.orgActionsList, "empty", "No pending actions recommended.");
-      }
+          <p style="font-size: 12px; color: var(--color-graphite); margin: 8px 0 4px 0;"><strong>Reason:</strong> ${item.description}</p>
+          <p style="font-size: 12px; color: var(--color-sienna-bronze); margin-bottom: 8px;"><strong>Impact Projection:</strong> ${item.expected_impact || 'Improves member retention.'}</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-chalk); padding-top: 8px; margin-top: 4px;">
+            <span style="font-size: 11px; color: var(--color-slate);">Assignee suggestion: <strong>${item.assignee || 'Organizer'}</strong></span>
+            ${!item.completed ? `
+              <button class="btn-filled btn-small" onclick="approveAction('${item.action_id}')">Approve & Execute</button>
+            ` : `
+              <span style="font-size: 12px; color: #10b981; font-weight: 500;">✓ In Execution Pipeline</span>
+            `}
+          </div>
+        </div>
+      `).join("");
+    } else {
+      renderCardState(elements.orgActionsList, "empty", "No pending actions recommended.");
+    }
 
-      // Expert Mentors Pool
+    // Expert Mentors Pool
+    const mentorsList = mentorsJson.data?.backup_mentors || [];
+    if (mentorsJson.data?.primary_mentor) {
+      mentorsList.unshift(mentorsJson.data.primary_mentor);
+    }
+    
+    if (mentorsList.length > 0) {
+      elements.orgMentorsList.innerHTML = mentorsList.map(m => `
+        <div style="padding: 12px; background-color: var(--color-fog); border-radius: var(--radius-cards); margin-bottom: 8px; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--color-chalk); color: var(--color-carbon); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+            ${(m.name || "M").split(" ").map(n => n[0]).join("").toUpperCase()}
+          </div>
+          <div>
+            <div style="font-weight: 600; font-size: 13px; color: var(--color-carbon);">${m.name}</div>
+            <div style="font-size: 11px; color: var(--color-slate);">${m.role || "Expert Mentor"}</div>
+          </div>
+        </div>
+      `).join("");
+    } else {
       renderCardState(elements.orgMentorsList, "empty", "No active mentors registered in community directory.");
     }
+
   } catch (error) {
     console.error("Failed to load organizer data from backend:", error);
     elements.orgHealthScore.textContent = "Error";
@@ -1234,12 +1534,12 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
 
   const roadmapName = learning.roadmap_title || "Custom Pathway";
   const milestones = learning.milestones || [];
-  const nextMilestone = milestones[0] ? `Week ${milestones[0].week}: ${milestones[0].title}` : "Milestone 1: Getting Started";
+  const nextMilestone = milestones.find(m => !m.completed) ? `Week ${milestones.find(m => !m.completed).week}: ${milestones.find(m => !m.completed).title}` : "All milestones completed! 🎉";
   const learning_paths = [
     {
       name: roadmapName,
-      progress: 25,
-      completed: 1,
+      progress: Math.round(learning.progress_percent || 0),
+      completed: milestones.filter(m => m.completed).length,
       total: milestones.length || 4,
       next_milestone: nextMilestone
     }
@@ -1249,6 +1549,7 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
   if (mentor.primary_mentor) {
     const pm = mentor.primary_mentor;
     recommended_people.push({
+      id: pm.mentor_id,
       name: pm.name,
       role: pm.role || "Expert Mentor",
       match: Math.round((pm.compatibility_score || 0.9) * 100),
@@ -1258,6 +1559,7 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
   }
   (mentor.backup_mentors || []).forEach(bm => {
     recommended_people.push({
+      id: bm.mentor_id,
       name: bm.name,
       role: bm.role || "Backup Mentor",
       match: Math.round((bm.compatibility_score || 0.8) * 100),
@@ -1266,41 +1568,47 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     });
   });
 
-  const showChannels = (discovery.recommended_channels || []).map(ch => ch.name);
+  const showChannels = (discovery.channels || []).map(ch => ch.title);
   const allChannels = ["Systems Programming", "GPU & Accelerators", "AI Infrastructure", "Machine Learning", "Data Science & Python", "Frontend Development", "Design Systems & UI UX", "Web3 & Blockchain", "Mobile Design", "React Frameworks", "Open Source Contribution"];
   const hideChannels = allChannels.filter(c => !showChannels.includes(c));
 
-  const resources = (discovery.recommended_resources || []).map(r => ({
+  const resources = (discovery.resources || []).map(r => ({
     id: r.resource_id || `res-${Math.random().toString(36).substr(2, 9)}`,
     title: r.title,
     type: r.type || "Article",
-    duration: r.duration || "20 min",
+    duration: r.duration || "25 min",
     difficulty: r.difficulty || "Intermediate",
     score: Math.round((r.relevance_score || 0.85) * 100),
-    reasoning: r.reason || "Highly relevant resource for your active milestone."
+    reasoning: r.reason || r.description || "Highly relevant resource for your active milestone."
   }));
 
-  const primaryChannel = showChannels[0] || "General";
-  const events = [
-    {
-      id: `evt-1`,
-      title: `${primaryChannel} Deep Dive Session`,
-      time: "Tonight, 7:00 PM (1h 30m)",
-      type: "Workshop",
-      difficulty: "Intermediate",
-      score: 95,
-      reasoning: `Highly relevant for your ${roadmapName} goals. Led by community mentors.`
-    },
-    {
-      id: `evt-2`,
-      title: "Rust FFI & Python Interop Panel",
-      time: "Tomorrow, 5:30 PM (1h)",
-      type: "AMA",
-      difficulty: "Advanced",
-      score: 82,
-      reasoning: "Great complement to low level programming and MLOps paths."
-    }
-  ];
+  const projects = (discovery.projects || []).map((p, idx) => ({
+    id: p.project_id || `proj-${idx}`,
+    title: p.title,
+    description: p.description,
+    score: Math.round((p.relevance_score || 0.85) * 100),
+    reasoning: p.reason || p.description || "Matches your profile core goals."
+  }));
+
+  const eventsList = (discovery.events || []).map((e, idx) => ({
+    id: e.event_id || `evt-${idx}`,
+    title: e.title,
+    time: e.time || "Tonight, 7:00 PM (1h 30m)",
+    type: e.type || "Workshop",
+    score: Math.round((e.relevance_score || 0.85) * 100),
+    reasoning: e.reason || e.description || "Boost your understanding of community domains."
+  }));
+
+  const studyGroups = (discovery.study_groups || []).map((sg, idx) => ({
+    id: sg.study_group_id || `sg-${idx}`,
+    title: sg.title,
+    time: "Weekly Sync (Flexible)",
+    type: "Study Group",
+    score: Math.round((sg.relevance_score || 0.8) * 100),
+    reasoning: sg.reason || sg.description || "Collaborate with peers on active tracks."
+  }));
+
+  const events = [...eventsList, ...studyGroups];
 
   const insights = [
     { message: identity.summary || "Your custom learning environment is now fully active.", type: "momentum" }
@@ -1322,6 +1630,9 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
     verified_skills: verified_skills,
     goals: identity.growth_areas || [],
     learning_paths: learning_paths,
+    learning_progress: Math.round(learning.progress_percent || 0),
+    milestones: milestones,
+    daily_checklist: learning.daily_checklist || [],
     interests: identity.expertise_areas || [],
     recommended_people: recommended_people,
     communities: {
@@ -1329,6 +1640,7 @@ function adaptBackendProfileToFrontend(backendProfile, user_id) {
       hide: hideChannels.slice(0, 4)
     },
     resources: resources,
+    projects: projects,
     events: events,
     insights: insights
   };
@@ -1581,4 +1893,216 @@ async function handleProfileEditSubmit(e) {
     alert(`Failed to save profile: ${error.message}`);
   }
 }
+
+// ─── Sprint 5 Documents Library Helper Functions ──────────────────────────────
+
+function switchToTab(tab) {
+  if (!elements.documentsDashboard) return;
+
+  if (tab === "documents") {
+    // Hide dashboard sections
+    if (elements.mainDashboard) elements.mainDashboard.style.display = "none";
+    if (elements.organizerDashboard) elements.organizerDashboard.style.display = "none";
+    const agentView = document.getElementById("agent-view");
+    if (agentView) agentView.style.display = "none";
+
+    // Show documents section
+    elements.documentsDashboard.style.display = "block";
+
+    // Update active nav class
+    if (elements.navDashboardLink) elements.navDashboardLink.classList.remove("active");
+    if (elements.navDocumentsLink) elements.navDocumentsLink.classList.add("active");
+
+    // Load documents
+    loadDocuments();
+  } else {
+    // Hide documents section
+    elements.documentsDashboard.style.display = "none";
+
+    // Show dashboard sections based on role
+    if (currentRole === "member") {
+      if (elements.mainDashboard) elements.mainDashboard.style.display = "block";
+      if (elements.organizerDashboard) elements.organizerDashboard.style.display = "none";
+    } else {
+      if (elements.mainDashboard) elements.mainDashboard.style.display = "none";
+      if (elements.organizerDashboard) elements.organizerDashboard.style.display = "block";
+    }
+    const agentView = document.getElementById("agent-view");
+    if (agentView) agentView.style.display = "block";
+
+    // Update active nav class
+    if (elements.navDashboardLink) elements.navDashboardLink.classList.add("active");
+    if (elements.navDocumentsLink) elements.navDocumentsLink.classList.remove("active");
+  }
+}
+
+window.toggleUploadForm = function(show) {
+  const card = document.getElementById("doc-upload-card");
+  if (card) card.style.display = show ? "block" : "none";
+};
+
+async function handleDocumentUpload(e) {
+  e.preventDefault();
+  const title = document.getElementById("doc-title").value.trim();
+  const desc = document.getElementById("doc-desc").value.trim();
+  const category = document.getElementById("doc-category").value;
+  const fileInput = document.getElementById("doc-file");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select a file to upload.");
+    return;
+  }
+
+  // Size limit validation (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert("File size exceeds 5MB limit.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("description", desc);
+  formData.append("category", category);
+  formData.append("file", file);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/documents`, {
+      method: "POST",
+      body: formData
+    });
+    
+    const json = await res.json();
+    if (res.ok && json.success) {
+      alert("Document uploaded successfully!");
+      if (elements.docUploadForm) elements.docUploadForm.reset();
+      toggleUploadForm(false);
+      await loadDocuments();
+    } else {
+      alert(`Upload failed: ${json.detail || json.message || "Unknown error"}`);
+    }
+  } catch (error) {
+    console.error("Error uploading document:", error);
+    alert("An error occurred during document upload.");
+  }
+}
+
+async function loadDocuments() {
+  const searchInput = document.getElementById("doc-search-input");
+  const catFilter = document.getElementById("doc-category-filter");
+  const searchQuery = searchInput ? searchInput.value.trim() : "";
+  const categoryFilter = catFilter ? catFilter.value : "";
+
+  let url = `${API_BASE_URL}/documents`;
+  const params = [];
+  if (searchQuery) params.push(`search=${encodeURIComponent(searchQuery)}`);
+  if (categoryFilter) params.push(`category=${encodeURIComponent(categoryFilter)}`);
+  if (params.length > 0) url += `?${params.join("&")}`;
+
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (res.ok && json.success) {
+      renderDocuments(json.data.documents);
+    } else {
+      console.error("Failed to load documents:", json.message);
+    }
+  } catch (error) {
+    console.error("Error loading documents:", error);
+  }
+}
+
+function renderDocuments(documents) {
+  const container = elements.documentsListContainer;
+  if (!container) return;
+
+  if (!documents || documents.length === 0) {
+    container.innerHTML = `
+      <div class="card" style="grid-column: span 2; padding: 32px; text-align: center; border: 1px dashed var(--color-slate); background: transparent;">
+        <p style="color: var(--color-slate); margin: 0;">No documents found in your community library.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = documents.map(doc => {
+    let icon = "📄";
+    if (doc.file_type === "pdf") icon = "📕";
+    else if (doc.file_type === "docx") icon = "📘";
+    else if (doc.file_type === "pptx") icon = "📙";
+
+    const sizeKB = (doc.file_size / 1024).toFixed(1);
+    const sizeStr = sizeKB > 1000 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
+    const dateStr = new Date(doc.upload_date).toLocaleDateString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+
+    return `
+      <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <span style="font-size: 28px;">${icon}</span>
+            <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; background-color: var(--color-fog); padding: 4px 8px; border-radius: 4px; color: var(--color-slate);">${doc.category}</span>
+          </div>
+          <h4 style="font-size: 16px; font-weight: bold; margin: 0 0 8px 0; color: var(--color-carbon);">${doc.title}</h4>
+          <p style="font-size: 13px; color: var(--color-graphite); margin: 0 0 16px 0; min-height: 38px;">${doc.description || "No description provided."}</p>
+        </div>
+        <div style="border-top: 1px solid var(--color-chalk); padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--color-slate);">
+          <div>
+            <span>By ${doc.uploaded_by}</span> &bull; 
+            <span>${dateStr}</span> &bull; 
+            <span>${sizeStr}</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-outlined" style="padding: 4px 10px; font-size: 11px;" onclick="downloadDocument('${doc.document_id}', '${doc.title}', '${doc.file_type}');">📥 Download</button>
+            <button class="btn-outlined" style="padding: 4px 10px; font-size: 11px; border-color: #ff4d4d; color: #ff4d4d;" onclick="deleteDocument('${doc.document_id}');">🗑️ Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+window.downloadDocument = async function(id, title, ext) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/documents/${id}`);
+    if (!res.ok) {
+      alert("Failed to download document.");
+      return;
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const filename = title.toLowerCase().endsWith(`.${ext}`) ? title : `${title}.${ext}`;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error downloading document:", error);
+    alert("An error occurred during download.");
+  }
+};
+
+window.deleteDocument = async function(id) {
+  if (!confirm("Are you sure you want to delete this document?")) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/documents/${id}`, {
+      method: "DELETE"
+    });
+    const json = await res.json();
+    if (res.ok && json.success) {
+      alert("Document deleted successfully!");
+      await loadDocuments();
+    } else {
+      alert(`Delete failed: ${json.detail || json.message || "Unknown error"}`);
+    }
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    alert("An error occurred during deletion.");
+  }
+};
 

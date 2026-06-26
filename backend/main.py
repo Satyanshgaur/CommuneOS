@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.errors import register_error_handlers
-from api.v1.endpoints import agents, community, health, users, profile
+from api.v1.endpoints import agents, community, health, users, profile, documents
 from config import settings
 from utils.logger import get_logger, setup_logging
 
@@ -59,7 +59,7 @@ async def tenant_middleware(request: Request, call_next):
     Requires X-User-Id in request header (or query/path parameters).
     """
     path = request.url.path
-    if path == "/" or path == "/health" or path.endswith("/config") or path.endswith("/community/list") or path.endswith("/community/list/") or path.endswith("/community/join") or path.endswith("/community/join/") or path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
+    if request.method == "OPTIONS" or path == "/" or path == "/health" or path.endswith("/config") or path.endswith("/community/list") or path.endswith("/community/list/") or path.endswith("/community/join") or path.endswith("/community/join/") or path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
         return await call_next(request)
         
     user_id = request.headers.get("X-User-Id")
@@ -112,6 +112,7 @@ app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(agents.router, prefix=API_PREFIX)
 app.include_router(community.router, prefix=API_PREFIX)
 app.include_router(profile.router, prefix=API_PREFIX)
+app.include_router(documents.router, prefix=API_PREFIX)
 app.include_router(health.router)  # /health, /metrics — no prefix
 
 # ─── Startup / Shutdown Events ─────────────────────────────────────────────────
