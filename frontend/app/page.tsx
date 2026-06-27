@@ -8,7 +8,25 @@ import {
   Lock, RefreshCw, Play, Check, CheckSquare, ShieldCheck,
   Search, MessageSquare, Terminal, AlertCircle, ChevronDown, LogOut, Mail
 } from "lucide-react";
-import { getSupabaseClient } from "../lib/supabase";
+// Local token auth — no Supabase
+const API = "http://localhost:8000";
+
+const COMMUNITIES = [
+  { id: "ai-builders", name: "AI Builders", icon: "🤖", description: "LLMs, agents, embeddings", members: 284, channels: ["general", "papers", "gpu-computing", "rust", "introductions"], events: [{ name: "RAG Workshop", date: "Jul 2, 7:00 PM" }, { name: "LLM Benchmarking Sprint", date: "Jul 5, 6:00 PM" }] },
+  { id: "systems-hft", name: "Systems & HFT", icon: "⚡", description: "Low-latency, quant, C++", members: 147, channels: ["hft-strategies", "cpp-deep-dive", "market-microstructure", "job-board"], events: [{ name: "C++ Concurrency Deep Dive", date: "Jul 3, 8:00 PM" }, { name: "Mock Trading Simulation", date: "Jul 7, 5:30 PM" }] },
+  { id: "web-dev-guild", name: "Web Dev Guild", icon: "🌐", description: "React, Next.js, full-stack", members: 521, channels: ["nextjs", "design-systems", "backend", "freelance", "portfolio-review"], events: [{ name: "Portfolio Review Session", date: "Jun 29, 7:30 PM" }, { name: "Next.js 15 Deep Dive", date: "Jul 4, 6:00 PM" }] },
+  { id: "oss-collective", name: "OSS Collective", icon: "🔧", description: "First PRs, maintainership", members: 398, channels: ["good-first-issues", "contributions", "announcements", "hacktoberfest"], events: [{ name: "PR Review Clinic", date: "Jun 30, 6:00 PM" }, { name: "CNCF Contribution Day", date: "Jul 6, 10:00 AM" }] },
+  { id: "cloud-devops", name: "Cloud & DevOps", icon: "☁️", description: "AWS, Terraform, Kubernetes, SRE", members: 312, channels: ["aws-tips", "terraform", "kubernetes", "incident-response", "certifications"], events: [{ name: "AWS Solutions Architect AMA", date: "Jul 1, 6:00 PM" }, { name: "Terraform Workshop", date: "Jul 8, 7:00 PM" }] },
+  { id: "data-science-hub", name: "Data Science Hub", icon: "📊", description: "Analytics, ML, visualization", members: 445, channels: ["kaggle-comp", "sql-help", "pandas-tips", "job-board", "papers"], events: [{ name: "Kaggle Competition Kickoff", date: "Jun 30, 5:00 PM" }, { name: "Data Viz Showcase", date: "Jul 5, 7:30 PM" }] },
+  { id: "cybersecurity", name: "Cybersecurity", icon: "🔐", description: "Pentesting, CTFs, secure design", members: 198, channels: ["ctf-writeups", "owasp", "bug-bounty", "blue-team", "resources"], events: [{ name: "CTF Night", date: "Jul 3, 9:00 PM" }, { name: "OWASP Top 10 Walkthrough", date: "Jul 6, 6:00 PM" }] },
+  { id: "mobile-builders", name: "Mobile Builders", icon: "📱", description: "React Native, Flutter, iOS, Android", members: 267, channels: ["react-native", "flutter", "app-store-tips", "ui-showcase", "releases"], events: [{ name: "App Critique Session", date: "Jul 2, 6:30 PM" }, { name: "Flutter 3 Deep Dive", date: "Jul 7, 7:00 PM" }] },
+];
+
+const MENTORS_DATA = [
+  { name: "Sarah Chen", role: "Senior GPU Engineer, NVIDIA", avatar: "S", topics: ["CUDA", "GPU Memory", "Parallel Computing"], avail: { Mon: ["10:00 AM", "2:00 PM"], Tue: [], Wed: ["11:00 AM", "4:00 PM"], Thu: ["10:00 AM"], Fri: ["3:00 PM"] } },
+  { name: "Elena Vasquez", role: "ML Researcher, DeepMind", avatar: "E", topics: ["PyTorch", "Neural Networks", "Math-to-Code"], avail: { Mon: [], Tue: ["9:00 AM", "1:00 PM"], Wed: [], Thu: ["2:00 PM", "5:00 PM"], Fri: ["10:00 AM", "11:00 AM"] } },
+  { name: "Marcus Webb", role: "Principal SWE, Cloudflare", avatar: "M", topics: ["Rust", "Distributed Systems", "Networking"], avail: { Mon: ["3:00 PM", "4:00 PM"], Tue: ["10:00 AM"], Wed: ["2:00 PM"], Thu: [], Fri: ["1:00 PM", "3:00 PM"] } },
+];
 
 // Local high-fidelity fallback data in case the backend is loading or unavailable
 const FALLBACK_DATA = {
@@ -41,9 +59,9 @@ const FALLBACK_DATA = {
       ]
     },
     resources: [
-      { id: "cuda-optimization", name: "CUDA Optimization Guide", url: "#", description: "Official handbook for optimizing CUDA grid layouts, memory coalescing, and instruction throughput." },
-      { id: "gpu-performance", name: "GPU Performance Handbook", url: "#", description: "An exhaustive resource on memory hierarchies, instruction latencies, and profiling micro-architectures." },
-      { id: "rust-ownership", name: "Rust Ownership Cheatsheet", url: "#", description: "A quick visual reference for understanding owners, references, borrowing, and lifetime mechanics." }
+      { id: "cuda-optimization", name: "CUDA Optimization Guide", url: "https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/", type: "Article", description: "Official handbook for optimizing CUDA grid layouts, memory coalescing, and instruction throughput." },
+      { id: "gpu-performance", name: "GPU Performance Handbook", url: "https://docs.nvidia.com/cuda/cuda-c-programming-guide/", type: "Guide", description: "An exhaustive resource on memory hierarchies, instruction latencies, and profiling micro-architectures." },
+      { id: "rust-ownership", name: "Rust Ownership Cheatsheet", url: "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html", type: "Article", description: "A quick visual reference for understanding owners, references, borrowing, and lifetime mechanics." }
     ],
     events: [
       { id: "gpu-ama", name: "GPU AMA with Sarah", time: "Friday at 5:00 PM UTC", description: "Open Q&A session with Sarah (Senior CUDA Engineer) on hardware profiling, tensor cores, and kernel debugging." },
@@ -91,9 +109,9 @@ const FALLBACK_DATA = {
       ]
     },
     resources: [
-      { id: "intro-pytorch", name: "Intro to PyTorch Notebooks", url: "#", description: "Hands-on Jupyter notebooks detailing Tensors, Datasets, autograd, and training loops step-by-step." },
-      { id: "nn-from-scratch", name: "Neural Networks from Scratch (Python)", url: "#", description: "Build, feedforward, backpropagate, and train fully connected neural nets in raw Python without external libraries." },
-      { id: "deep-learning-ch5", name: "Deep Learning Book Chapter 5", url: "#", description: "A mathematical deep dive into machine learning foundations: loss functions, capacity, bias-variance trade-offs." }
+      { id: "intro-pytorch", name: "Intro to PyTorch Notebooks", url: "https://pytorch.org/tutorials/beginner/basics/intro.html", type: "Tutorial", description: "Hands-on Jupyter notebooks detailing Tensors, Datasets, autograd, and training loops step-by-step." },
+      { id: "nn-from-scratch", name: "Neural Networks from Scratch (Python)", url: "https://www.youtube.com/watch?v=VMj-3S1tku0", type: "Video", description: "Build, feedforward, backpropagate, and train fully connected neural nets in raw Python without external libraries." },
+      { id: "deep-learning-ch5", name: "Deep Learning Book Chapter 5", url: "https://www.deeplearningbook.org/contents/ml.html", type: "Article", description: "A mathematical deep dive into machine learning foundations: loss functions, capacity, bias-variance trade-offs." }
     ],
     events: [
       { id: "pytorch-basics-101", name: "PyTorch 101: Build Your First Neural Network", time: "Thursday at 4:00 PM UTC", description: "Hands-on session for beginners. We'll build an MNIST digit classifier from scratch using PyTorch nn.Module." },
@@ -151,424 +169,127 @@ const FALLBACK_DATA = {
 };
 
 export default function Home() {
-  const [screen, setScreen] = useState<"auth" | "onboarding" | "landing" | "demo" | "auth-console">("auth");
+  const [screen, setScreen] = useState<"auth" | "onboarding" | "landing" | "demo">("auth");
   const [authMode, setAuthMode] = useState<"login" | "signup" | "verify">("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
 
   // Onboarding form state
-  const [onboardingName, setOnboardingName] = useState("");
   const [onboardingBio, setOnboardingBio] = useState("");
+  const [onboardingSkills, setOnboardingSkills] = useState("");
+  const [onboardingGoals, setOnboardingGoals] = useState("");
   const [onboardingRole, setOnboardingRole] = useState("");
   const [onboardingSkillLevel, setOnboardingSkillLevel] = useState("Intermediate");
-  const [onboardingInterests, setOnboardingInterests] = useState("");
-  const [onboardingCareerGoal, setOnboardingCareerGoal] = useState("");
   const [onboardingResume, setOnboardingResume] = useState<File | null>(null);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState("");
 
   const [persona, setPersona] = useState<string>("rahul");
   const [data, setData] = useState<any>(null);
+  const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
+  const [activeNav, setActiveNav] = useState<string>("overview");
   const [loading, setLoading] = useState<boolean>(false);
   const [backendStatus, setBackendStatus] = useState<"connected" | "disconnected" | "checking">("checking");
 
   // Explainability drawer state
   const [showAllExplainability, setShowAllExplainability] = useState<boolean>(false);
-  
-  // Auth console states
-  const [authToken, setAuthToken] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [communitiesList, setCommunitiesList] = useState<any[]>([]);
-  const [myCommunitiesList, setMyCommunitiesList] = useState<any[]>([]);
-  
-  // Login / Register inputs
-  const [loginId, setLoginId] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  
-  const [registerId, setRegisterId] = useState("");
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerFullName, setRegisterFullName] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  
-  // Create community inputs
-  const [newCommId, setNewCommId] = useState("");
-  const [newCommName, setNewCommName] = useState("");
-  const [newCommCategory, setNewCommCategory] = useState("Tech");
-  const [newCommDescription, setNewCommDescription] = useState("");
-  
-  // Edit profile inputs
-  const [editFullName, setEditFullName] = useState("");
-  const [editBio, setEditBio] = useState("");
-  const [editSkills, setEditSkills] = useState("");
-  const [editLevel, setEditLevel] = useState("Beginner");
-  const [editGoals, setEditGoals] = useState("");
-  const [editStyle, setEditStyle] = useState("");
-  
-  const [tokenCopied, setTokenCopied] = useState(false);
 
-  // Helper: Copy Token
-  const handleCopyToken = () => {
-    if (authToken) {
-      navigator.clipboard.writeText(authToken);
-      setTokenCopied(true);
-      setTimeout(() => setTokenCopied(false), 2000);
-    }
-  };
-
-  // Helper: Logout
-  const handleConsoleLogout = () => {
-    localStorage.removeItem("communityos_token");
-    setAuthToken(null);
-    setCurrentUser(null);
-    setScreen("landing");
-  };
-
-  // Helper: Fetch Communities
-  const fetchCommunities = async (token: string) => {
-    try {
-      const resAll = await fetch("http://localhost:8000/api/communities");
-      if (resAll.ok) {
-        const json = await resAll.json();
-        setCommunitiesList(json);
-      }
-      const resMy = await fetch("http://localhost:8000/api/communities/my", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (resMy.ok) {
-        const json = await resMy.json();
-        setMyCommunitiesList(json);
-      }
-    } catch (e) {
-      console.error("Error fetching communities:", e);
-    }
-  };
-
-  // Helper: Fetch Current User
-  const fetchCurrentUser = async (token: string) => {
-    try {
-      const res = await fetch("http://localhost:8000/api/auth/me", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setCurrentUser(json);
-        setEditFullName(json.full_name || "");
-        setEditBio(json.bio || "");
-        setEditSkills(json.tags ? json.tags.join(", ") : "");
-        setEditLevel(json.skill_level || "Beginner");
-        setEditGoals(json.goals ? json.goals.join(", ") : "");
-        setEditStyle(json.learning_style || "");
-      }
-    } catch (e) {
-      console.error("Error fetching current user:", e);
-    }
-  };
-
-  // Helper: Login
-  const handleConsoleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthSuccess(null);
-    setAuthLoading(true);
-    try {
-      const res = await fetch("http://localhost:8000/api/auth/login-json", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: loginId, password: loginPassword })
-      });
-      const json = await res.json();
-      if (res.ok) {
-        setAuthToken(json.access_token);
-        localStorage.setItem("communityos_token", json.access_token);
-        await fetchCurrentUser(json.access_token);
-        await fetchCommunities(json.access_token);
-        setAuthSuccess("Logged in successfully!");
-      } else {
-        setAuthError(json.detail || "Login failed.");
-      }
-    } catch {
-      setAuthError("Could not connect to the authentication server.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  // Helper: Register
-  const handleConsoleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthSuccess(null);
-    setAuthLoading(true);
-    try {
-      const res = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: registerId,
-          email: registerEmail,
-          full_name: registerFullName,
-          password: registerPassword
-        })
-      });
-      const json = await res.json();
-      if (res.ok) {
-        setAuthSuccess("Registration successful! You can now log in.");
-      } else {
-        setAuthError(json.detail || "Registration failed.");
-      }
-    } catch {
-      setAuthError("Could not connect to the registration server.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  // Helper: Update Profile
-  const handleConsoleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authToken || !currentUser) return;
-    setAuthError(null);
-    setAuthSuccess(null);
-    setAuthLoading(true);
-    try {
-      const tags = editSkills.split(",").map(s => s.trim()).filter(Boolean);
-      const goals = editGoals.split(",").map(g => g.trim()).filter(Boolean);
-      const res = await fetch("http://localhost:8000/api/auth/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          full_name: editFullName,
-          bio: editBio,
-          tags: tags,
-          skill_level: editLevel,
-          goals: goals,
-          learning_style: editStyle
-        })
-      });
-      const updatedProfile = await res.json();
-      if (res.ok) {
-        setCurrentUser(updatedProfile);
-        setAuthSuccess("Profile updated successfully!");
-      } else {
-        setAuthError(updatedProfile.detail || "Failed to update profile.");
-      }
-    } catch {
-      setAuthError("Could not connect to the profile server.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleCreateCommunity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authToken) return;
-    setAuthError(null);
-    setAuthSuccess(null);
-    if (!newCommId || !newCommName) {
-      setAuthError("Please fill in slug and name fields.");
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      const res = await fetch("http://localhost:8000/api/communities", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          id: newCommId,
-          name: newCommName,
-          category: newCommCategory,
-          description: newCommDescription
-        })
-      });
-      const resJson = await res.json();
-      if (res.ok) {
-        setAuthSuccess(`Community "${newCommName}" created successfully!`);
-        setNewCommId("");
-        setNewCommName("");
-        setNewCommDescription("");
-        await fetchCommunities(authToken);
-      } else {
-        setAuthError(resJson.detail || "Failed to create community.");
-      }
-    } catch {
-      setAuthError("Could not connect to the community server.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleJoinCommunity = async (commId: string) => {
-    if (!authToken) return;
-    setAuthError(null);
-    setAuthSuccess(null);
-    setAuthLoading(true);
-    try {
-      const res = await fetch(`http://localhost:8000/api/communities/${commId}/join`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${authToken}`
-        }
-      });
-      const resJson = await res.json();
-      if (res.ok) {
-        setAuthSuccess("Joined community successfully!");
-        await fetchCommunities(authToken);
-      } else {
-        setAuthError(resJson.detail || "Failed to join community.");
-      }
-    } catch {
-      setAuthError("Could not connect to the community server.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-  
   // Simulation states
   const [executedActions, setExecutedActions] = useState<Record<string, boolean>>({});
   const [executingActionId, setExecutingActionId] = useState<string | null>(null);
   const [welcomedMembers, setWelcomedMembers] = useState<Record<string, boolean>>({});
   const [invitedMentors, setInvitedMentors] = useState<Record<string, boolean>>({});
+  const [activeCommunity, setActiveCommunity] = useState("ai-builders");
+  const [bookingSlot, setBookingSlot] = useState<{ mentor: string; day: string; time: string } | null>(null);
   const [reengagedMembers, setReengagedMembers] = useState<Record<string, boolean>>({});
 
-  // On mount: check existing Supabase session
+  // On mount: check existing local token session
   useEffect(() => {
-    const routeAfterAuth = async (userId: string, email: string | null) => {
-      setUserEmail(email);
-      setSupabaseUserId(userId);
-      try {
-        const res = await fetch(`http://localhost:8000/api/v1/users/${userId}`);
-        if (res.ok) {
-          setPersona(userId);
-          setScreen("demo");
-        } else {
-          setScreen("onboarding");
-        }
-      } catch {
-        setScreen("onboarding");
-      }
-    };
-
     const init = async () => {
-      const savedToken = localStorage.getItem("communityos_token");
-      if (savedToken) {
+      const token = localStorage.getItem("communityos_token");
+      if (token) {
         try {
-          const res = await fetch("http://localhost:8000/api/auth/me", {
-            headers: { "Authorization": `Bearer ${savedToken}` }
+          const meRes = await fetch(`${API}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
           });
-          if (res.ok) {
-            const json = await res.json();
-            setUserEmail(json.email);
-            setSupabaseUserId(json.user_id);
-            setPersona(json.user_id);
-            if (json.bio && json.current_role) {
-              setScreen("demo");
-            } else {
-              setScreen("onboarding");
-            }
+          if (meRes.ok) {
+            const profile = await meRes.json();
+            const userId = profile.user_id;
+            setUserEmail(profile.email || userId);
+            setSupabaseUserId(userId);
+            const uRes = await fetch(`${API}/api/v1/users/${userId}`);
+            if (uRes.ok) { setPersona(userId); setScreen("demo"); }
+            else setScreen("onboarding");
           } else {
             localStorage.removeItem("communityos_token");
-            setScreen("auth");
           }
-        } catch {
-          setScreen("auth");
-        }
-      } else {
-        setScreen("auth");
+        } catch { /* backend offline — stay on auth */ }
       }
       setSessionChecked(true);
     };
     init();
   }, []);
 
-  // Auth handlers
+  // Auth handlers — local token API
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     setAuthLoading(true);
-    setAuthSuccess(null);
     try {
-      const userId = authEmail.includes("@") ? authEmail.split("@")[0] : authEmail;
-      const res = await fetch("http://localhost:8000/api/auth/login-json", {
+      const res = await fetch(`${API}/api/auth/login-json`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, password: authPassword }),
+        body: JSON.stringify({ user_id: authEmail.trim(), password: authPassword }),
       });
       const json = await res.json();
-      if (res.ok) {
-        setSupabaseUserId(userId);
-        setUserEmail(authEmail.includes("@") ? authEmail : `${userId}@communeos.ai`);
-        localStorage.setItem("communityos_token", json.access_token);
-        
-        // Fetch profile to route correctly
-        const profRes = await fetch("http://localhost:8000/api/auth/me", {
-          headers: { "Authorization": `Bearer ${json.access_token}` }
-        });
-        if (profRes.ok) {
-          const profJson = await profRes.json();
-          setPersona(profJson.user_id);
-          if (profJson.bio && profJson.current_role) {
-            setScreen("demo");
-          } else {
-            setScreen("onboarding");
-          }
-        } else {
-          setScreen("onboarding");
-        }
-      } else {
-        setAuthError(json.detail || "Invalid login credentials.");
-      }
-    } catch {
-      setAuthError("Failed to reach auth backend.");
-    } finally {
-      setAuthLoading(false);
-    }
+      if (!res.ok) { setAuthError(json.detail || "Login failed"); setAuthLoading(false); return; }
+      localStorage.setItem("communityos_token", json.access_token);
+      const meRes = await fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${json.access_token}` } });
+      const profile = await meRes.json();
+      const userId = profile.user_id;
+      setUserEmail(profile.email || userId);
+      setSupabaseUserId(userId);
+      const uRes = await fetch(`${API}/api/v1/users/${userId}`);
+      if (uRes.ok) { setPersona(userId); setScreen("demo"); }
+      else setScreen("onboarding");
+    } catch { setAuthError("Backend offline — is the server running?"); }
+    setAuthLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     setAuthLoading(true);
-    setAuthSuccess(null);
     try {
-      const userId = authEmail.includes("@") ? authEmail.split("@")[0] : authEmail;
-      const email = authEmail.includes("@") ? authEmail : `${userId}@communeos.ai`;
-      const res = await fetch("http://localhost:8000/api/auth/register", {
+      const userId = authEmail.includes("@") ? authEmail.split("@")[0] : authEmail.trim();
+      const res = await fetch(`${API}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          email: email,
-          password: authPassword,
-          full_name: userId,
-        }),
+        body: JSON.stringify({ user_id: userId, email: authEmail, password: authPassword, full_name: userId }),
       });
       const json = await res.json();
-      if (res.ok) {
-        setAuthSuccess("Registration successful! You can now log in.");
-        setAuthMode("login");
-      } else {
-        setAuthError(json.detail || "Registration failed.");
-      }
-    } catch {
-      setAuthError("Failed to reach auth backend.");
-    } finally {
-      setAuthLoading(false);
-    }
+      if (!res.ok) { setAuthError(json.detail || "Registration failed"); setAuthLoading(false); return; }
+      // Auto-login after register
+      const loginRes = await fetch(`${API}/api/auth/login-json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, password: authPassword }),
+      });
+      const loginJson = await loginRes.json();
+      localStorage.setItem("communityos_token", loginJson.access_token);
+      setUserEmail(authEmail);
+      setSupabaseUserId(userId);
+      setScreen("onboarding");
+    } catch { setAuthError("Backend offline — is the server running?"); }
+    setAuthLoading(false);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     localStorage.removeItem("communityos_token");
     setUserEmail(null);
     setSupabaseUserId(null);
@@ -585,20 +306,20 @@ export default function Home() {
       return;
     }
     try {
-      const formData = new FormData();
-      formData.append("username", onboardingName || (userEmail ?? supabaseUserId).split("@")[0]);
-      formData.append("bio", onboardingBio);
-      formData.append("current_role", onboardingRole);
-      formData.append("skill_level", onboardingSkillLevel);
-      formData.append("interests", onboardingInterests);
-      formData.append("goals", onboardingCareerGoal);
-      if (onboardingResume) {
-        formData.append("resume", onboardingResume);
-      }
-
-      const res = await fetch(`http://localhost:8000/api/v1/users/${supabaseUserId}/onboard`, {
+      const username = (userEmail ?? supabaseUserId).split("@")[0];
+      const form = new FormData();
+      form.append("username", username);
+      form.append("bio", onboardingBio);
+      form.append("current_role", onboardingRole || "Student");
+      form.append("skill_level", onboardingSkillLevel);
+      form.append("interests", onboardingSkills);
+      form.append("goals", onboardingGoals);
+      if (onboardingResume) form.append("resume", onboardingResume);
+      const token = localStorage.getItem("communityos_token") || "";
+      const res = await fetch(`${API}/api/v1/users/${supabaseUserId}/onboard`, {
         method: "POST",
-        body: formData,
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
       });
       if (!res.ok) throw new Error("Backend error");
       setPersona(supabaseUserId);
@@ -614,7 +335,7 @@ export default function Home() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const res = await fetch("http://localhost:8000/");
+        const res = await fetch(`${API}/`);
         if (res.ok) { setBackendStatus("connected"); }
         else { setBackendStatus("disconnected"); }
       } catch { setBackendStatus("disconnected"); }
@@ -625,13 +346,13 @@ export default function Home() {
   // Fetch data on persona/screen change
   useEffect(() => {
     if (screen !== "demo") return;
-    
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        let endpoint = `http://localhost:8000/api/members/${persona}`;
+        let endpoint = `${API}/api/members/${persona}`;
         if (persona === "organizer") {
-          endpoint = "http://localhost:8000/api/organizer";
+          endpoint = `${API}/api/organizer`;
         }
         
         const res = await fetch(endpoint);
@@ -675,7 +396,7 @@ export default function Home() {
       <div className="min-h-screen bg-mist flex flex-col items-center justify-center px-4">
         <div className="flex items-center gap-2 mb-10">
           <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon flex items-center">
-            ventriloc
+            CommuneOS
             <svg className="w-6 h-6 text-signal-orange ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M3 17C9 17 15 13 21 5" />
             </svg>
@@ -684,36 +405,24 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-sm bg-white border border-slate/20 rounded-2xl p-8 shadow-[0_2px_16px_rgba(32,32,32,0.06)]">
-          {authMode === "verify" ? (
-            <div className="text-center">
-              <div className="w-12 h-12 bg-signal-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-5 h-5 text-signal-orange" />
-              </div>
-              <h2 className="text-xl font-semibold text-carbon mb-2">Check your email</h2>
-              <p className="text-sm text-graphite mb-6">We sent a verification link to <strong>{authEmail}</strong>. Click it to activate your account, then log in.</p>
-              <button onClick={() => setAuthMode("login")} className="w-full py-2.5 rounded-full bg-carbon text-white text-sm font-medium hover:bg-graphite transition-colors">
-                Back to Login
-              </button>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-xl font-semibold text-carbon mb-1">
-                {authMode === "login" ? "Welcome back" : "Create account"}
-              </h2>
-              <p className="text-sm text-graphite mb-6">
-                {authMode === "login" ? "Sign in to access your agent-powered space." : "Join CommuneOS to get your personalised community profile."}
-              </p>
+          <>
+            <h2 className="text-xl font-semibold text-carbon mb-1">
+              {authMode === "login" ? "Welcome back" : "Create account"}
+            </h2>
+            <p className="text-sm text-graphite mb-6">
+              {authMode === "login" ? "Sign in to access your agent-powered space." : "Join CommuneOS to get your personalised community profile."}
+            </p>
 
-              <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-carbon mb-1.5">Email</label>
-                  <input
-                    type="email" required value={authEmail}
-                    onChange={e => setAuthEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-sm text-carbon placeholder:text-slate focus:outline-none focus:border-signal-orange transition-colors"
-                  />
-                </div>
+            <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-medium text-carbon mb-1.5">{authMode === "login" ? "Username" : "Email"}</label>
+                <input
+                  type={authMode === "login" ? "text" : "email"} required value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  placeholder={authMode === "login" ? "your username" : "you@example.com"}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-sm text-carbon placeholder:text-slate focus:outline-none focus:border-signal-orange transition-colors"
+                />
+              </div>
                 <div>
                   <label className="block text-xs font-medium text-carbon mb-1.5">Password</label>
                   <input
@@ -743,8 +452,7 @@ export default function Home() {
                   <>Already have an account? <button onClick={() => { setAuthMode("login"); setAuthError(""); }} className="text-signal-orange font-medium hover:underline">Sign in</button></>
                 )}
               </p>
-            </>
-          )}
+          </>
         </div>
       </div>
     );
@@ -756,7 +464,7 @@ export default function Home() {
       <div className="min-h-screen bg-mist flex flex-col items-center justify-center px-4">
         <div className="flex items-center gap-2 mb-10">
           <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon flex items-center">
-            ventriloc
+            CommuneOS
             <svg className="w-6 h-6 text-signal-orange ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M3 17C9 17 15 13 21 5" />
             </svg>
@@ -773,93 +481,75 @@ export default function Home() {
 
           <form onSubmit={handleOnboarding} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Name</label>
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Current Role</label>
               <input
-                required
                 type="text"
-                value={onboardingName}
-                onChange={e => setOnboardingName(e.target.value)}
-                placeholder="Rahul"
-                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+                required
+                value={onboardingRole}
+                onChange={e => setOnboardingRole(e.target.value)}
+                placeholder="Student, Software Engineer, Researcher..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
               />
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Current Role</label>
-                <input
-                  required
-                  type="text"
-                  value={onboardingRole}
-                  onChange={e => setOnboardingRole(e.target.value)}
-                  placeholder="Student"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Skill Level</label>
-                <select
-                  required
-                  value={onboardingSkillLevel}
-                  onChange={e => setOnboardingSkillLevel(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
-                >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Expert">Expert</option>
-                </select>
-              </div>
-            </div>
-
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Interests <span className="text-slate font-normal normal-case">(comma separated)</span></label>
-              <input
-                required
-                type="text"
-                value={onboardingInterests}
-                onChange={e => setOnboardingInterests(e.target.value)}
-                placeholder="GPU Programming, Linux"
-                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
-              />
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Skill Level</label>
+              <select
+                value={onboardingSkillLevel}
+                onChange={e => setOnboardingSkillLevel(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              >
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+              </select>
             </div>
-
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Career Goal</label>
-              <input
-                required
-                type="text"
-                value={onboardingCareerGoal}
-                onChange={e => setOnboardingCareerGoal(e.target.value)}
-                placeholder="Become an AI Systems Engineer"
-                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Short Bio</label>
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Bio</label>
               <textarea
                 required
                 rows={3}
                 value={onboardingBio}
                 onChange={e => setOnboardingBio(e.target.value)}
-                placeholder="I love Linux and GPU programming."
-                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30 resize-none"
+                placeholder="What are you building or learning? Your background, interests..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30 resize-none"
               />
             </div>
-
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Upload Resume <span className="text-slate font-normal normal-case">(PDF)</span></label>
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Skills <span className="text-slate font-normal normal-case">(comma separated)</span></label>
               <input
-                type="file"
-                accept=".pdf"
-                onChange={e => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    setOnboardingResume(e.target.files[0]);
-                  }
-                }}
-                className="w-full px-3 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-signal-orange file:text-white hover:file:bg-sienna-bronze"
+                type="text"
+                value={onboardingSkills}
+                onChange={e => setOnboardingSkills(e.target.value)}
+                placeholder="Python, C++, Machine Learning..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Goals <span className="text-slate font-normal normal-case">(comma separated)</span></label>
+              <input
+                type="text"
+                value={onboardingGoals}
+                onChange={e => setOnboardingGoals(e.target.value)}
+                placeholder="Get an internship, learn systems programming..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">
+                Resume <span className="text-slate font-normal normal-case">(PDF — optional, powers AI personalisation)</span>
+              </label>
+              <label className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl border border-dashed border-slate/40 bg-fog cursor-pointer hover:border-signal-orange/50 transition-colors">
+                <span className="text-signal-orange text-sm">
+                  {onboardingResume ? "✓ " + onboardingResume.name : "Upload PDF"}
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={e => setOnboardingResume(e.target.files?.[0] ?? null)}
+                />
+              </label>
             </div>
 
             {onboardingError && (
@@ -871,7 +561,12 @@ export default function Home() {
               disabled={onboardingLoading}
               className="w-full py-2.5 rounded-full bg-signal-orange text-white text-sm font-semibold hover:bg-sienna-bronze transition-colors disabled:opacity-60"
             >
-              {onboardingLoading ? "Setting up..." : "Build my profile"}
+              {onboardingLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  {onboardingResume ? "Parsing resume..." : "Setting up..."}
+                </span>
+              ) : "Build my profile"}
             </button>
           </form>
         </div>
@@ -884,13 +579,17 @@ export default function Home() {
 
       {/* HEADER / FLOATING NAV BAR */}
       <header className="w-full py-6 px-6 md:px-12 flex justify-between items-center max-w-[1200px] mx-auto z-40">
-        {/* LOGO MARK: communeos with trailing orange swoosh */}
+
+        {/* LOGO MARK */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setScreen("landing")}>
           <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon relative flex items-center">
-            communeos
+            CommuneOS
             <svg className="w-6 h-6 text-signal-orange ml-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M3 17C9 17 15 13 21 5" />
             </svg>
+          </span>
+          <span className="text-[10px] bg-carbon text-white px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold">
+            {(data?.name || userEmail?.split("@")[0] || "YOU").toUpperCase()}
           </span>
         </div>
 
@@ -908,12 +607,6 @@ export default function Home() {
           >
             Interactive Demo
           </button>
-          <button 
-            onClick={() => setScreen("auth-console")} 
-            className={`px-3 py-1 text-sm font-medium transition-all rounded-full ${screen === "auth-console" ? "text-signal-orange" : "text-carbon hover:text-graphite"}`}
-          >
-            Auth Console
-          </button>
           <span className="w-px h-4 bg-slate/20 mx-2" />
           <div className="flex items-center gap-1.5 text-xs text-graphite">
             <span className={`w-2 h-2 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} />
@@ -924,11 +617,11 @@ export default function Home() {
         {/* USER + CTA */}
         <div className="flex items-center gap-4">
           {userEmail && (
-            <div className="flex items-center gap-1.5 md:gap-2 text-xs text-graphite">
+            <div className="hidden md:flex items-center gap-2 text-xs text-graphite">
               <div className="w-6 h-6 rounded-full bg-signal-orange/10 flex items-center justify-center">
                 <User className="w-3.5 h-3.5 text-signal-orange" />
               </div>
-              <span className="max-w-[80px] md:max-w-[140px] truncate font-medium">{userEmail.split("@")[0]}</span>
+              <span className="max-w-[140px] truncate">{userEmail}</span>
               <button onClick={handleLogout} title="Sign out" className="p-1 rounded-full hover:bg-chalk transition-colors">
                 <LogOut className="w-3.5 h-3.5 text-graphite" />
               </button>
@@ -964,7 +657,10 @@ export default function Home() {
               
               {/* Left Column: Headline & Action Buttons */}
               <div className="md:col-span-6 flex flex-col items-start text-left">
-
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sienna-bronze/10 border border-sienna-bronze/20 text-sienna-bronze text-[11px] font-semibold uppercase tracking-wider mb-6">
+                  <Sparkles className="w-3.5 h-3.5" /> Hackathon Track 2 Project
+                </div>
+                
                 {/* HERO HEADLINE: Compressed Monument style (PolySans, tight line-height) */}
                 <h1 className="font-polysans font-normal text-[52px] md:text-[66px] leading-[0.91] tracking-[-1.32px] text-carbon">
                   Traditional <br />
@@ -979,18 +675,12 @@ export default function Home() {
                 </p>
                 
                 {/* CTA CLUSTER: Carbon-filled & outlined pill buttons */}
-                <div className="flex flex-row flex-wrap gap-4 mt-8 w-full sm:w-auto">
+                <div className="flex flex-row gap-4 mt-8 w-full sm:w-auto">
                   <button 
                     onClick={() => setScreen("demo")}
                     className="px-6 py-3 rounded-full bg-carbon text-white font-medium text-[15px] hover:bg-graphite active:scale-95 transition-all shadow-[0_1px_3px_rgba(32,32,32,0.04)] flex items-center justify-center gap-2"
                   >
                     Interactive Demo <Play className="w-4 h-4 fill-white" />
-                  </button>
-                  <button 
-                    onClick={() => setScreen("auth-console")}
-                    className="px-6 py-3 rounded-full bg-[#ffffff] border border-carbon text-carbon font-medium text-[15px] hover:bg-fog active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse hover:animate-none"
-                  >
-                    Auth Console <Lock className="w-4 h-4" />
                   </button>
                   <a 
                     href="#agents-info"
@@ -1340,54 +1030,62 @@ export default function Home() {
                 
                 {/* 200px WIDTH LEFT SIDEBAR */}
                 <aside className="w-full md:w-[220px] shrink-0 bg-fog border-r border-chalk p-6 flex flex-col gap-8">
-                  
+
+                  {/* Community Switcher */}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-3">Community</span>
+                    <div className="space-y-1">
+                      {COMMUNITIES.map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => setActiveCommunity(c.id)}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-[6px] text-xs transition-all flex items-center gap-2 ${
+                            activeCommunity === c.id
+                              ? "bg-white border border-chalk shadow-sm font-semibold text-carbon"
+                              : "text-graphite hover:text-carbon hover:bg-white/60 font-medium"
+                          }`}
+                        >
+                          <span>{c.icon}</span>
+                          <span className="truncate">{c.name}</span>
+                          {activeCommunity === c.id && <span className="ml-auto text-[9px] text-slate shrink-0">{c.members}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Navigation links */}
                   <div>
                     <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Dashboard Nav</span>
                     <nav className="flex flex-col gap-2">
-                      <button className="flex items-center justify-between text-left text-xs font-semibold text-carbon bg-white border border-chalk px-3 py-2 rounded-[6px] shadow-sm">
-                        <span>Overview</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-signal-orange" />
-                      </button>
-                      <button className="flex items-center text-left text-xs font-medium text-graphite hover:text-carbon px-3 py-2 rounded-[6px] transition-all">
-                        <span>Roadmaps</span>
-                      </button>
-                      <button className="flex items-center text-left text-xs font-medium text-graphite hover:text-carbon px-3 py-2 rounded-[6px] transition-all">
-                        <span>Mentors</span>
-                      </button>
-                      <button className="flex items-center text-left text-xs font-medium text-graphite hover:text-carbon px-3 py-2 rounded-[6px] transition-all">
-                        <span>Analytics</span>
-                      </button>
+                      {[
+                        { id: "overview", label: "Overview" },
+                        { id: "roadmaps", label: "Roadmaps" },
+                        { id: "mentors", label: "Mentors" },
+                        { id: "analytics", label: "Analytics" },
+                      ].map(({ id, label }) => (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            setActiveNav(id);
+                            document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }}
+                          className={`flex items-center justify-between text-left text-xs px-3 py-2 rounded-[6px] transition-all ${
+                            activeNav === id
+                              ? "font-semibold text-carbon bg-white border border-chalk shadow-sm"
+                              : "font-medium text-graphite hover:text-carbon hover:bg-white/60"
+                          }`}
+                        >
+                          <span>{label}</span>
+                          {activeNav === id && <span className="w-1.5 h-1.5 rounded-full bg-signal-orange" />}
+                        </button>
+                      ))}
                     </nav>
                   </div>
 
-                  {/* Filters section */}
-                  <div>
-                    <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Filter Context</span>
-                    
-                    {persona !== "organizer" ? (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
-                            Focus Topic <ChevronDown className="w-3 h-3 text-slate" />
-                          </label>
-                          <select className="w-full text-xs bg-white border border-chalk rounded-[6px] px-2 py-1.5 text-carbon outline-none" defaultValue="all">
-                            <option value="all">All Topics</option>
-                            <option value="gpu">GPU Computing</option>
-                            <option value="systems">Systems Programming</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
-                            Resources <ChevronDown className="w-3 h-3 text-slate" />
-                          </label>
-                          <select className="w-full text-xs bg-white border border-chalk rounded-[6px] px-2 py-1.5 text-carbon outline-none" defaultValue="guides">
-                            <option value="guides">Guides & Books</option>
-                            <option value="code">Code Snippets</option>
-                          </select>
-                        </div>
-                      </div>
-                    ) : (
+                  {/* Filters section — organizer only */}
+                  {persona === "organizer" && (
+                    <div>
+                      <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Filter Context</span>
                       <div className="space-y-4">
                         <div>
                           <label className="text-[11px] font-semibold text-graphite block mb-1.5 flex items-center justify-between">
@@ -1409,8 +1107,8 @@ export default function Home() {
                           </select>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </aside>
 
                 {/* MAIN CONTENT AREA */}
@@ -1421,19 +1119,9 @@ export default function Home() {
                     <div className="space-y-8">
                       
                       {/* Welcome Banner (Parchment background with signal orange left border) */}
-                      <div className="p-6 rounded-[8px] bg-fog border-l-4 border-l-signal-orange border-y border-r border-chalk relative overflow-hidden">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                          <div>
-                            <h2 className="font-polysans text-2xl font-normal text-carbon mb-2">Welcome back, {data.name}!</h2>
-                            <p className="text-xs text-graphite leading-relaxed max-w-2xl">{data.welcome_message}</p>
-                          </div>
-                          <button
-                            onClick={() => setScreen("onboarding")}
-                            className="px-3.5 py-2 text-[10px] font-bold bg-white hover:bg-slate-50 text-carbon rounded-full border border-chalk transition-all shrink-0 shadow-sm flex items-center gap-1.5 w-fit"
-                          >
-                            <User className="w-3.5 h-3.5 text-signal-orange" /> Edit Profile & Resume
-                          </button>
-                        </div>
+                      <div id="section-overview" className="p-6 rounded-[8px] bg-fog border-l-4 border-l-signal-orange border-y border-r border-chalk relative overflow-hidden">
+                        <h2 className="font-polysans text-2xl font-normal text-carbon mb-2">Welcome back, {data.name}!</h2>
+                        <p className="text-xs text-graphite leading-relaxed max-w-2xl">{data.welcome_message}</p>
                         
                         {/* Skills Model */}
                         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1489,57 +1177,29 @@ export default function Home() {
                       {/* PRIORITIES & TIMELINE ROADMAP */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         
-                        {/* Contribution Graph */}
+                        {/* Priorities card */}
                         <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
-                          <h3 className="font-polysans text-base font-normal text-carbon mb-1 flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-signal-orange" /> Contribution Graph
+                          <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
+                            <CheckSquare className="w-4 h-4 text-signal-orange" /> Priorities Checklist
                           </h3>
-                          <p className="text-[11px] text-slate mb-4">Community activity over the last 16 weeks</p>
-                          {(() => {
-                            const seed = (persona || "user").split("").reduce((a: number, c: string) => a + c.charCodeAt(0), 0);
-                            const rand = (i: number) => { const x = Math.sin(seed * 9301 + i * 49297 + 233) * 10000; return x - Math.floor(x); };
-                            const WEEKS = 16;
-                            const DAYS = 7;
-                            const dayLabels = ["M", "", "W", "", "F", "", "S"];
-                            const colors = ["#f0f0f0", "#fde0d4", "#ffaa80", "#ff7c45", "#ff682c"];
-                            const totalContribs = Array.from({ length: WEEKS * DAYS }).reduce((sum: number, _, i) => {
-                              const v = rand(i); return sum + (v < 0.5 ? 0 : v < 0.65 ? 1 : v < 0.8 ? 2 : v < 0.92 ? 3 : 4);
-                            }, 0);
-                            return (
-                              <div>
-                                <p className="text-[11px] text-graphite font-medium mb-3">{totalContribs} contributions in the last 16 weeks</p>
-                                <div className="flex gap-[3px]">
-                                  <div className="flex flex-col gap-[3px] mr-1 pt-0">
-                                    {dayLabels.map((d, i) => (
-                                      <div key={i} className="h-[11px] flex items-center">
-                                        <span className="text-[9px] text-slate w-3 leading-none">{d}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  {Array.from({ length: WEEKS }).map((_, w) => (
-                                    <div key={w} className="flex flex-col gap-[3px]">
-                                      {Array.from({ length: DAYS }).map((_, d) => {
-                                        const v = rand(w * DAYS + d);
-                                        const level = v < 0.5 ? 0 : v < 0.65 ? 1 : v < 0.8 ? 2 : v < 0.92 ? 3 : 4;
-                                        return (
-                                          <div key={d} className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: colors[level] }} title={`${level} contributions`} />
-                                        );
-                                      })}
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="flex items-center gap-[3px] mt-3 justify-end">
-                                  <span className="text-[9px] text-slate mr-1">Less</span>
-                                  {colors.map((c, i) => <div key={i} className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: c }} />)}
-                                  <span className="text-[9px] text-slate ml-1">More</span>
-                                </div>
-                              </div>
-                            );
-                          })()}
+                          <ul className="space-y-4">
+                            {data.priorities?.map((priority: string, i: number) => (
+                              <li
+                                key={i}
+                                className="flex gap-3 text-xs text-graphite items-start cursor-pointer group"
+                                onClick={() => setCheckedItems(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; })}
+                              >
+                                <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 mt-0.5 transition-colors ${checkedItems.has(i) ? "bg-signal-orange border-signal-orange text-white" : "bg-fog border-chalk text-slate"}`}>
+                                  {checkedItems.has(i) ? <Check className="w-3 h-3" /> : i + 1}
+                                </span>
+                                <span className={`flex-1 leading-normal transition-colors ${checkedItems.has(i) ? "line-through text-slate" : ""}`}>{priority}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
 
                         {/* Timeline Roadmap */}
-                        <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                        <div id="section-roadmaps" className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
                           <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
                             <BookOpen className="w-4 h-4 text-signal-orange" /> Pathways Milestones
                           </h3>
@@ -1594,33 +1254,61 @@ export default function Home() {
 
                       </div>
 
-                      {/* AREA CHART CARD: Code & Activity Velocity */}
-                      <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
-                        <h4 className="text-xs font-bold text-slate uppercase tracking-wider mb-4">Member Activity Profile</h4>
-                        <div className="font-polysans text-2xl font-normal text-carbon mb-4">Weekly Signal Velocity</div>
-                        
-                        {/* Signal Orange Area Chart */}
-                        <svg className="w-full h-32 overflow-visible" viewBox="0 0 600 100" preserveAspectRatio="none">
-                          <defs>
-                            <linearGradient id="orangeGradMain" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#ff682c" stopOpacity="0.18" />
-                              <stop offset="100%" stopColor="#ff682c" stopOpacity="0.0" />
-                            </linearGradient>
-                          </defs>
-                          <line x1="0" y1="20" x2="600" y2="20" stroke="#f5f5f5" strokeWidth="1" />
-                          <line x1="0" y1="50" x2="600" y2="50" stroke="#f5f5f5" strokeWidth="1" />
-                          <line x1="0" y1="80" x2="600" y2="80" stroke="#f5f5f5" strokeWidth="1" />
-                          
-                          <path d="M 0 100 L 0 75 Q 100 85 200 45 T 400 30 T 600 8 L 600 100 Z" fill="url(#orangeGradMain)" />
-                          <path d="M 0 75 Q 100 85 200 45 T 400 30 T 600 8" fill="none" stroke="#202020" strokeWidth="2.2" strokeLinecap="round" />
-                        </svg>
-                        
-                        <div className="flex justify-between text-[10px] text-slate mt-2">
-                          <span>Monday</span>
-                          <span>Wednesday</span>
-                          <span>Friday</span>
-                          <span>Sunday</span>
+                      {/* CONTRIBUTION GRAPH */}
+                      <div id="section-analytics" className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="text-xs font-bold text-slate uppercase tracking-wider">Activity Graph</h4>
+                          <span className="text-[11px] text-graphite font-medium">{checkedItems.size} task{checkedItems.size !== 1 ? "s" : ""} completed today</span>
                         </div>
+                        <div className="font-polysans text-2xl font-normal text-carbon mb-4">Contribution History</div>
+                        {(() => {
+                          const WEEKS = 26;
+                          const DAYS = 7;
+                          const dayLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
+                          const colors = ["#f0f0f0", "#fde0d4", "#ffaa80", "#ff7c45", "#ff682c"];
+                          // Today's row: JS getDay() is 0=Sun..6=Sat, convert to Mon=0..Sun=6
+                          const jsDay = new Date().getDay();
+                          const todayRow = jsDay === 0 ? 6 : jsDay - 1;
+                          // Today is the last column
+                          const todayCol = WEEKS - 1;
+                          // Level for today based on how many items are checked (0→empty, 1→light, 2→med, 3→dark, 4+→full)
+                          const todayLevel = Math.min(checkedItems.size, 4);
+                          return (
+                            <div>
+                              <p className="text-[11px] text-slate mb-4">{checkedItems.size} contribution{checkedItems.size !== 1 ? "s" : ""} today · check off priorities to fill today's cell</p>
+                              <div className="flex gap-[3px] overflow-x-auto pb-1">
+                                <div className="flex flex-col gap-[3px] mr-2 shrink-0">
+                                  {dayLabels.map((d, i) => (
+                                    <div key={i} className="h-[13px] flex items-center">
+                                      <span className="text-[9px] text-slate w-6 leading-none">{d}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                {Array.from({ length: WEEKS }).map((_, w) => (
+                                  <div key={w} className="flex flex-col gap-[3px] shrink-0">
+                                    {Array.from({ length: DAYS }).map((_, d) => {
+                                      const isToday = w === todayCol && d === todayRow;
+                                      const level = isToday ? todayLevel : 0;
+                                      return (
+                                        <div
+                                          key={d}
+                                          className="w-[13px] h-[13px] rounded-[3px] transition-colors duration-300"
+                                          style={{ backgroundColor: colors[level] }}
+                                          title={isToday ? `${checkedItems.size} contribution${checkedItems.size !== 1 ? "s" : ""} today` : ""}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-[3px] mt-3 justify-end">
+                                <span className="text-[9px] text-slate mr-1">Less</span>
+                                {colors.map((c, i) => <div key={i} className="w-[13px] h-[13px] rounded-[3px]" style={{ backgroundColor: c }} />)}
+                                <span className="text-[9px] text-slate ml-1">More</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* RECOMMENDATIONS (RESOURCES, EVENTS, MENTORS) */}
@@ -1632,19 +1320,38 @@ export default function Home() {
                             <BookOpen className="w-3.5 h-3.5 text-signal-orange" /> Suggested Guides
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {data.resources?.map((res: any, i: number) => (
-                              <div key={res.id || res.name || i} className="p-5 rounded-[8px] bg-white border border-chalk hover:border-slate/40 flex flex-col justify-between shadow-sm">
-                                <div>
-                                  <h5 className="text-xs font-semibold text-carbon">{res.name}</h5>
-                                  <p className="text-[11px] text-graphite mt-1 leading-relaxed">{res.description}</p>
+                            {data.resources?.map((res: any, i: number) => {
+                              const isVideo = res.type === "Video";
+                              const isNotebook = res.type === "Interactive Notebook";
+                              const label = isVideo ? "Watch Video" : isNotebook ? "Open Notebook" : "Read Guide";
+                              return (
+                                <div key={res.id || res.name || i} className="p-5 rounded-[8px] bg-white border border-chalk hover:border-slate/40 flex flex-col justify-between shadow-sm">
+                                  <div>
+                                    {res.type && (
+                                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full mb-2 inline-block ${
+                                        isVideo ? "bg-red-50 text-red-600" : isNotebook ? "bg-purple-50 text-purple-600" : "bg-fog text-slate"
+                                      }`}>{res.type}</span>
+                                    )}
+                                    <h5 className="text-xs font-semibold text-carbon">{res.name}</h5>
+                                    <p className="text-[11px] text-graphite mt-1 leading-relaxed">{res.description}</p>
+                                  </div>
+                                  <div className="mt-3 flex justify-end">
+                                    <a
+                                      href={res.url && res.url !== "#" ? res.url : undefined}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`text-[11px] inline-flex items-center gap-0.5 font-semibold transition-colors ${
+                                        res.url && res.url !== "#"
+                                          ? "text-signal-orange hover:underline cursor-pointer"
+                                          : "text-slate cursor-not-allowed opacity-50"
+                                      }`}
+                                    >
+                                      {label} <ChevronRight className="w-3 h-3" />
+                                    </a>
+                                  </div>
                                 </div>
-                                <div className="mt-3 flex justify-end">
-                                  <a href={res.url} className="text-[11px] text-signal-orange hover:underline inline-flex items-center gap-0.5 font-semibold">
-                                    Read Guide <ChevronRight className="w-3 h-3" />
-                                  </a>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
 
@@ -1674,7 +1381,7 @@ export default function Home() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         
                         {/* Mentor card */}
-                        <div className="p-6 rounded-[8px] bg-fog border border-chalk shadow-sm flex flex-col justify-between">
+                        <div id="section-mentors" className="p-6 rounded-[8px] bg-fog border border-chalk shadow-sm flex flex-col justify-between">
                           <div>
                             <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">Recommended Mentor</span>
                             <div className="flex items-center gap-3">
@@ -1693,9 +1400,72 @@ export default function Home() {
                             </div>
                           </div>
 
-                          <button className="w-full mt-4 py-2 px-4 rounded-full bg-carbon hover:bg-graphite text-white text-xs font-semibold transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm">
-                            <MessageSquare className="w-3.5 h-3.5" /> Direct Message {data.recommended_mentor?.name}
-                          </button>
+                          {/* Google Calendar-style availability */}
+                          {(() => {
+                            const today = new Date();
+                            const dow = today.getDay();
+                            const monday = new Date(today);
+                            monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+                            const days = ["MON","TUE","WED","THU","FRI"].map((d, i) => {
+                              const dt = new Date(monday);
+                              dt.setDate(monday.getDate() + i);
+                              return { label: d, date: dt.getDate(), isToday: dt.toDateString() === today.toDateString() };
+                            });
+                            const month = monday.toLocaleString("default", { month: "long", year: "numeric" });
+                            const slotsByDay = [
+                              ["10:00 AM", "2:00 PM"],
+                              [],
+                              ["11:00 AM", "4:00 PM"],
+                              ["10:00 AM"],
+                              ["3:00 PM"],
+                            ];
+                            return (
+                              <div className="mt-4 rounded-xl overflow-hidden border border-[#dadce0] shadow-sm">
+                                {/* GCal top bar */}
+                                <div className="bg-white px-3 py-2 flex items-center justify-between border-b border-[#dadce0]">
+                                  <div className="flex items-center gap-1.5">
+                                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="#4285f4" strokeWidth="1.5"/><path d="M16 2v4M8 2v4M3 9h18" stroke="#4285f4" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                    <span className="text-[10px] font-medium text-[#3c4043]">{month}</span>
+                                  </div>
+                                  <span className="text-[9px] text-[#1a73e8] font-medium">Google Calendar</span>
+                                </div>
+                                {/* Day headers */}
+                                <div className="grid grid-cols-5 border-b border-[#dadce0] bg-white">
+                                  {days.map(d => (
+                                    <div key={d.label} className="flex flex-col items-center py-1.5">
+                                      <span className="text-[8px] text-[#70757a] font-medium tracking-wider">{d.label}</span>
+                                      <span className={`text-[11px] font-medium w-5 h-5 flex items-center justify-center rounded-full mt-0.5 ${d.isToday ? "bg-[#1a73e8] text-white" : "text-[#3c4043]"}`}>
+                                        {d.date}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                {/* Slot grid */}
+                                <div className="grid grid-cols-5 bg-[#f8f9fa]" style={{ minHeight: 88 }}>
+                                  {slotsByDay.map((daySlots, i) => (
+                                    <div key={i} className="border-r border-[#dadce0] last:border-r-0 p-1 flex flex-col gap-0.5 pt-1.5">
+                                      {daySlots.length === 0 ? (
+                                        <div className="flex-1 flex items-center justify-center">
+                                          <span className="text-[8px] text-[#bdc1c6] italic">Busy</span>
+                                        </div>
+                                      ) : daySlots.map(slot => (
+                                        <button
+                                          key={slot}
+                                          onClick={() => setBookingSlot({ mentor: data.recommended_mentor?.name || "Mentor", day: days[i].label, time: slot })}
+                                          className="w-full text-[8px] font-medium px-1 py-1 rounded-[3px] bg-[#e8f0fe] text-[#1a73e8] border-l-2 border-[#1a73e8] hover:bg-[#d2e3fc] transition-colors text-left leading-tight"
+                                        >
+                                          {slot}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="bg-white border-t border-[#dadce0] px-3 py-1.5 text-center text-[8px] text-[#5f6368]">
+                                  Tap a slot to book · Confirms to Google Calendar
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Matched channels list */}
@@ -1730,6 +1500,46 @@ export default function Home() {
                         </div>
 
                       </div>
+
+                      {/* ACTIVE COMMUNITY PANEL */}
+                      {(() => {
+                        const comm = COMMUNITIES.find(c => c.id === activeCommunity)!;
+                        return (
+                          <div className="rounded-[8px] border border-chalk overflow-hidden shadow-sm">
+                            <div className="bg-carbon px-5 py-4 flex items-center gap-3">
+                              <span className="text-2xl">{comm.icon}</span>
+                              <div>
+                                <h4 className="text-sm font-semibold text-white">{comm.name}</h4>
+                                <p className="text-[10px] text-white/60">{comm.description} · {comm.members} members</p>
+                              </div>
+                            </div>
+                            <div className="bg-white p-4 grid grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-[9px] font-bold text-slate uppercase tracking-wider block mb-2">Channels</span>
+                                <div className="space-y-1">
+                                  {comm.channels.map(ch => (
+                                    <div key={ch} className="text-[11px] text-graphite font-medium flex items-center gap-1 cursor-pointer hover:text-carbon transition-colors">
+                                      <span className="text-slate">#</span>{ch}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-[9px] font-bold text-slate uppercase tracking-wider block mb-2">Upcoming</span>
+                                <div className="space-y-2">
+                                  {comm.events.map(ev => (
+                                    <div key={ev.name} className="text-[10px]">
+                                      <p className="font-semibold text-carbon leading-tight">{ev.name}</p>
+                                      <p className="text-slate">{ev.date}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
 
                     </div>
                   )}
@@ -2073,550 +1883,36 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= AUTH CONSOLE / PHASE 1 SCREEN ================= */}
-        {screen === "auth-console" && (
-          <div className="flex-1 flex flex-col w-full max-w-[1200px] mx-auto px-6 py-8">
-            
-            {/* UNAUTHENTICATED: LOGIN / REGISTER */}
-            {!authToken ? (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-auto py-8">
-                
-                {/* Intro / Marketing Card (Left side) */}
-                <div className="lg:col-span-5 flex flex-col justify-between h-full bg-white border border-chalk rounded-[8px] p-8 shadow-sm">
-                  <div>
-                    <span className="text-[10px] bg-signal-orange/10 text-signal-orange border border-signal-orange/20 px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold uppercase">
-                      Phase 1 Console
-                    </span>
-                    <h2 className="font-polysans text-2xl font-normal text-carbon mt-4 mb-4 tracking-tight">
-                      Authentication & Multi-Tenant Communities
-                    </h2>
-                    <p className="text-xs text-graphite leading-relaxed mb-6">
-                      Welcome to the system integration console. This sandbox interacts directly with your local FastAPI server to configure identities, manage community spaces, and test authentication logic.
-                    </p>
-                    
-                    <div className="space-y-4">
-                      <div className="flex gap-3">
-                        <div className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-carbon">1</span>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-carbon">Decentralized Tenants</h4>
-                          <p className="text-[11px] text-slate mt-0.5 leading-relaxed">
-                            Create self-contained community tenant slices dynamically with individual member roles.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-carbon">2</span>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-carbon">Rich Profile Identity</h4>
-                          <p className="text-[11px] text-slate mt-0.5 leading-relaxed">
-                            Establish user skills, skill levels, learning styles, and objectives to feed agent recommendations.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-carbon">3</span>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-carbon">JWT Cryptography</h4>
-                          <p className="text-[11px] text-slate mt-0.5 leading-relaxed">
-                            Secure API exchange utilizing signature-verified tokens saved directly in your session.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-12 pt-6 border-t border-chalk flex items-center justify-between text-[11px] text-slate font-mono">
-                    <span>Server Status:</span>
-                    <span className="flex items-center gap-1.5 font-bold">
-                      <span className={`w-2 h-2 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      {backendStatus === "connected" ? "FASTAPI ACTIVE" : "SERVER OFFLINE"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Forms (Right side) */}
-                <div className="lg:col-span-7 space-y-6">
-                  
-                  {/* Status Messages */}
-                  {authError && (
-                    <div className="p-4 bg-signal-orange/10 border border-signal-orange/20 text-signal-orange text-xs font-mono rounded-[8px] flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{authError}</span>
-                    </div>
-                  )}
-
-                  {authSuccess && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-mono rounded-[8px] flex items-center gap-2">
-                      <Check className="w-4 h-4 shrink-0" />
-                      <span>{authSuccess}</span>
-                    </div>
-                  )}
-
-                  {/* Sign In & Register Side-by-side or Stacked */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* Log In Card */}
-                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm flex flex-col justify-between">
-                      <form onSubmit={handleConsoleLogin} className="space-y-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Lock className="w-4 h-4 text-carbon" />
-                          <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Sign In</h3>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">User ID / Username</label>
-                          <input 
-                            type="text"
-                            value={loginId}
-                            onChange={(e) => setLoginId(e.target.value)}
-                            placeholder="e.g. rahul"
-                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Password</label>
-                          <input 
-                            type="password"
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            placeholder="••••••••"
-                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
-                          />
-                        </div>
-
-                        <button 
-                          type="submit"
-                          disabled={authLoading}
-                          className="w-full py-2.5 bg-carbon hover:bg-graphite text-white font-semibold text-xs rounded-full transition-all disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
-                        >
-                          {authLoading ? "Verifying..." : "Access Console"}
-                        </button>
-                      </form>
-                    </div>
-
-                    {/* Registration Card */}
-                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm">
-                      <form onSubmit={handleConsoleRegister} className="space-y-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <User className="w-4 h-4 text-carbon" />
-                          <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Create Account</h3>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">User ID (Unique)</label>
-                            <input 
-                              type="text"
-                              value={registerId}
-                              onChange={(e) => setRegisterId(e.target.value)}
-                              placeholder="e.g. priya"
-                              className="w-full px-3 py-2 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Full Name</label>
-                            <input 
-                              type="text"
-                              value={registerFullName}
-                              onChange={(e) => setRegisterFullName(e.target.value)}
-                              placeholder="Priya Patel"
-                              className="w-full px-3 py-2 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Email Address</label>
-                          <input 
-                            type="email"
-                            value={registerEmail}
-                            onChange={(e) => setRegisterEmail(e.target.value)}
-                            placeholder="priya@example.com"
-                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Password</label>
-                          <input 
-                            type="password"
-                            value={registerPassword}
-                            onChange={(e) => setRegisterPassword(e.target.value)}
-                            placeholder="••••••••"
-                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
-                          />
-                        </div>
-
-                        <button 
-                          type="submit"
-                          disabled={authLoading}
-                          className="w-full py-2.5 bg-[#ffffff] hover:bg-fog text-carbon border border-carbon font-semibold text-xs rounded-full transition-all disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
-                        >
-                          {authLoading ? "Creating..." : "Sign Up"}
-                        </button>
-                      </form>
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-            ) : (
-              <div className="space-y-6">
-                
-                {/* BANNED WITH SESSION TOKEN INFO */}
-                <div className="bg-white border border-chalk rounded-[8px] px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-sienna-bronze/10 border border-sienna-bronze/20 flex items-center justify-center text-sienna-bronze">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold text-carbon">
-                        Welcome, {currentUser?.full_name || currentUser?.id}
-                      </h2>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-slate font-mono bg-fog border border-chalk px-2 py-0.5 rounded">
-                          ID: {currentUser?.id}
-                        </span>
-                        <span className="text-[10px] text-slate font-mono bg-fog border border-chalk px-2 py-0.5 rounded">
-                          Role: Member
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="flex items-center bg-fog border border-chalk rounded-full px-3 py-1 text-[11px] font-mono text-graphite max-w-full md:max-w-xs lg:max-w-sm truncate">
-                      <span className="text-slate select-none mr-1.5 font-bold">TOKEN:</span>
-                      <span className="truncate select-all">{authToken.slice(0, 15)}...{authToken.slice(-8)}</span>
-                      <button 
-                        onClick={handleCopyToken}
-                        className="ml-2 hover:text-carbon text-slate p-0.5 transition-all relative cursor-pointer"
-                        title="Copy session token"
-                      >
-                        {tokenCopied ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-500 animate-scale" />
-                        ) : (
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-
-                    <button 
-                      onClick={handleLogout}
-                      className="px-4 py-1.5 rounded-full border border-carbon text-carbon hover:bg-fog active:scale-95 text-xs font-bold transition-all shrink-0 cursor-pointer"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </div>
-
-                {/* Status Messages */}
-                {authError && (
-                  <div className="p-4 bg-signal-orange/10 border border-signal-orange/20 text-signal-orange text-xs font-mono rounded-[8px] flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{authError}</span>
-                  </div>
-                )}
-
-                {authSuccess && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-mono rounded-[8px] flex items-center gap-2">
-                    <Check className="w-4 h-4 shrink-0" />
-                    <span>{authSuccess}</span>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                  
-                  {/* LEFT COLUMN: IDENTITY PROFILE SETUP */}
-                  <div className="lg:col-span-5 bg-white border border-chalk rounded-[8px] p-6 shadow-sm space-y-6">
-                    <div className="flex items-center gap-2 border-b border-chalk pb-4">
-                      <Sparkles className="w-4 h-4 text-signal-orange" />
-                      <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Identity Agent Configuration</h3>
-                    </div>
-
-                    <form onSubmit={handleConsoleUpdateProfile} className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Full Name</label>
-                        <input 
-                          type="text"
-                          value={editFullName}
-                          onChange={(e) => setEditFullName(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Professional Bio</label>
-                        <textarea 
-                          rows={3}
-                          value={editBio}
-                          onChange={(e) => setEditBio(e.target.value)}
-                          placeholder="Briefly describe your low-level systems or deep learning background..."
-                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50 resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Skills (Comma Separated)</label>
-                        <input 
-                          type="text"
-                          value={editSkills}
-                          onChange={(e) => setEditSkills(e.target.value)}
-                          placeholder="e.g. CUDA, PyTorch, C++, Rust"
-                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Skill Level</label>
-                        <div className="relative">
-                          <select 
-                            value={editLevel}
-                            onChange={(e) => setEditLevel(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all appearance-none cursor-pointer"
-                          >
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                          </select>
-                          <ChevronDown className="w-4 h-4 text-slate absolute right-3.5 top-3 pointer-events-none" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Learning Goals</label>
-                        <textarea 
-                          rows={2}
-                          value={editGoals}
-                          onChange={(e) => setEditGoals(e.target.value)}
-                          placeholder="What do you want to accomplish?"
-                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50 resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Learning Style</label>
-                        <input 
-                          type="text"
-                          value={editStyle}
-                          onChange={(e) => setEditStyle(e.target.value)}
-                          placeholder="e.g. hands-on builds, paper study groups"
-                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
-                        />
-                      </div>
-
-                      <button 
-                        type="submit"
-                        disabled={authLoading}
-                        className="w-full py-2.5 bg-carbon hover:bg-graphite text-white font-semibold text-xs rounded-full transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2"
-                      >
-                        {authLoading ? "Saving Changes..." : "Update Identity Context"}
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* RIGHT COLUMN: MULTI-TENANT COMMUNITIES */}
-                  <div className="lg:col-span-7 space-y-6">
-                    
-                    {/* Create New Community */}
-                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm">
-                      <div className="flex items-center gap-2 border-b border-chalk pb-4 mb-4">
-                        <Users className="w-4 h-4 text-sienna-bronze" />
-                        <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Create Tenant Community</h3>
-                      </div>
-
-                      <form onSubmit={handleCreateCommunity} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Community Slug ID</label>
-                            <input 
-                              type="text"
-                              value={newCommId}
-                              onChange={(e) => setNewCommId(e.target.value)}
-                              placeholder="e.g. rust-systems"
-                              className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Community Name</label>
-                            <input 
-                              type="text"
-                              value={newCommName}
-                              onChange={(e) => setNewCommName(e.target.value)}
-                              placeholder="e.g. Rust Systems Programming"
-                              className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Category</label>
-                            <div className="relative">
-                              <select 
-                                value={newCommCategory}
-                                onChange={(e) => setNewCommCategory(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all appearance-none cursor-pointer"
-                              >
-                                <option value="Tech">Tech</option>
-                                <option value="Design">Design</option>
-                                <option value="Product">Product</option>
-                                <option value="General">General</option>
-                              </select>
-                              <ChevronDown className="w-4 h-4 text-slate absolute right-3.5 top-3 pointer-events-none" />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Description</label>
-                            <input 
-                              type="text"
-                              value={newCommDescription}
-                              onChange={(e) => setNewCommDescription(e.target.value)}
-                              placeholder="Low-level memory management and runtime kernels..."
-                              className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end pt-2">
-                          <button 
-                            type="submit"
-                            disabled={authLoading}
-                            className="px-6 py-2.5 bg-carbon hover:bg-graphite text-white font-semibold text-xs rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
-                          >
-                            Create Tenant Slice
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-
-                    {/* Communities Joined & Available */}
-                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm space-y-6">
-                      
-                      {/* My Communities Slices */}
-                      <div>
-                        <h4 className="text-xs font-bold text-carbon uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-signal-orange shrink-0" />
-                          My Communities ({myCommunitiesList.length})
-                        </h4>
-                        
-                        {myCommunitiesList.length === 0 ? (
-                          <div className="p-6 rounded-[8px] bg-fog border border-chalk text-center text-xs text-slate">
-                            You haven&apos;t joined or created any communities yet.
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {myCommunitiesList.map((comm) => (
-                              <div key={comm.id} className="p-4 rounded-[8px] bg-fog border border-chalk flex flex-col justify-between">
-                                <div>
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="font-bold text-carbon text-xs truncate">{comm.name}</span>
-                                    <span className="text-[9px] bg-sienna-bronze/10 text-sienna-bronze border border-sienna-bronze/20 px-2 py-0.5 rounded font-mono font-semibold">
-                                      {comm.category}
-                                    </span>
-                                  </div>
-                                  <span className="text-[9px] text-slate font-mono block mt-1">Slug: {comm.id}</span>
-                                  <p className="text-[11px] text-graphite mt-2 leading-normal line-clamp-2">
-                                    {comm.description || "No description provided."}
-                                  </p>
-                                </div>
-                                <div className="mt-3 pt-3 border-t border-chalk flex justify-between items-center text-[10px]">
-                                  <span className="text-slate font-medium">Role: {comm.created_by === currentUser?.id ? "Owner" : "Member"}</span>
-                                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                                    <Check className="w-3 h-3" /> Active Session
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Explore Communities */}
-                      <div className="pt-4 border-t border-chalk">
-                        <h4 className="text-xs font-bold text-carbon uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-sienna-bronze shrink-0" />
-                          Explore Communities ({communitiesList.length})
-                        </h4>
-                        
-                        {communitiesList.length === 0 ? (
-                          <div className="p-6 rounded-[8px] bg-fog border border-chalk text-center text-xs text-slate">
-                            No communities exist on this server. Create the first one above!
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {communitiesList.map((comm) => {
-                              const isJoined = myCommunitiesList.some(mc => mc.id === comm.id);
-                              return (
-                                <div key={comm.id} className="p-4 rounded-[8px] border border-chalk flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white hover:bg-fog/30 transition-all">
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-bold text-carbon text-xs">{comm.name}</span>
-                                      <span className="text-[9px] bg-slate/10 text-slate border border-slate/20 px-2 py-0.5 rounded font-mono font-medium">
-                                        {comm.category}
-                                      </span>
-                                    </div>
-                                    <p className="text-[11px] text-graphite leading-relaxed">
-                                      {comm.description || "No description provided."}
-                                    </p>
-                                    <span className="text-[9px] text-slate font-mono block">Slug: {comm.id} &bull; Created by: {comm.created_by}</span>
-                                  </div>
-
-                                  <div className="shrink-0 flex items-center">
-                                    {isJoined ? (
-                                      <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5">
-                                        <Check className="w-3.5 h-3.5" /> Joined Slice
-                                      </span>
-                                    ) : (
-                                      <button 
-                                        onClick={() => handleJoinCommunity(comm.id)}
-                                        disabled={authLoading}
-                                        className="px-4 py-1.5 rounded-full bg-carbon hover:bg-graphite text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
-                                      >
-                                        Join Space
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-            )}
-
-          </div>
-        )}
-
       </main>
+
+      {/* BOOKING MODAL */}
+      {bookingSlot && (
+        <div className="fixed inset-0 bg-carbon/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setBookingSlot(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-5 h-5 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-carbon text-center mb-1">Confirm Booking</h3>
+            <p className="text-xs text-graphite text-center mb-6">Your slot will be added to Google Calendar and the mentor will be notified.</p>
+            <div className="bg-fog border border-chalk rounded-xl p-4 mb-6 space-y-2">
+              <div className="flex justify-between text-xs"><span className="text-slate font-medium">Mentor</span><span className="text-carbon font-semibold">{bookingSlot.mentor}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate font-medium">Day</span><span className="text-carbon font-semibold">{bookingSlot.day}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate font-medium">Time</span><span className="text-carbon font-semibold">{bookingSlot.time}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate font-medium">Duration</span><span className="text-carbon font-semibold">30 min</span></div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setBookingSlot(null)} className="flex-1 py-2.5 rounded-full border border-chalk text-xs font-semibold text-graphite hover:bg-fog transition-colors">Cancel</button>
+              <button onClick={() => setBookingSlot(null)} className="flex-1 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5">
+                <Calendar className="w-3 h-3" /> Confirm Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="py-10 px-6 border-t border-chalk text-center text-xs text-slate max-w-[1200px] mx-auto w-full mt-auto">
-        &copy; {new Date().getFullYear()} CommuneOS --- AI-Powered personalizations.
+        &copy; {new Date().getFullYear()} Ventriloc --- CommunityOS AI-Powered personalizations. Built for Track 2.
       </footer>
     </div>
   );

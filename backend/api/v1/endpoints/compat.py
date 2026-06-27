@@ -14,6 +14,47 @@ from services.mock_data import (
 from services.cache_service import cache_service
 from utils.logger import get_logger
 
+# Maps resource_id → (url, type) for enriching LLM-returned resources
+_RESOURCE_URL_MAP: Dict[str, Dict[str, str]] = {
+    "res-001": {"url": "https://www.youtube.com/watch?v=ic55579V0g4", "type": "Video"},
+    "res-002": {"url": "https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/", "type": "Article"},
+    "res-003": {"url": "https://tldp.org/LDP/lkmpg/2.6/html/lkmpg.html", "type": "Guide"},
+    "res-004": {"url": "https://numpy.org/doc/stable/user/quickstart.html", "type": "Interactive Notebook"},
+    "res-005": {"url": "https://pytorch.org/tutorials/intermediate/ddp_tutorial.html", "type": "Tutorial"},
+    "res-006": {"url": "https://doc.rust-lang.org/book/", "type": "Guide"},
+    "res-007": {"url": "https://www.youtube.com/watch?v=0sOvCWFmrtA", "type": "Video"},
+    "res-008": {"url": "https://www.youtube.com/watch?v=PtM44dh7RjI", "type": "Video"},
+    "res-009": {"url": "https://huggingface.co/learn/nlp-course/chapter1/1", "type": "Tutorial"},
+    "res-010": {"url": "https://uxdesign.cc/ui-cheat-sheet-d6facd7e2f4c", "type": "Article"},
+    "res-011": {"url": "https://www.youtube.com/watch?v=EUreLXAlPKs", "type": "Video"},
+    "res-012": {"url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#r-resource-management", "type": "Article"},
+    "res-013": {"url": "https://www.atlassian.com/git/tutorials/comparing-workflows", "type": "Guide"},
+    "res-014": {"url": "https://mlflow.org/docs/latest/deployment/index.html", "type": "Tutorial"},
+    "res-015": {"url": "https://seaborn.pydata.org/tutorial.html", "type": "Interactive Notebook"},
+    "res-016": {"url": "https://www.youtube.com/watch?v=Y9oNgLfF7ws", "type": "Video"},
+    "res-017": {"url": "https://fastapi.tiangolo.com/tutorial/security/", "type": "Guide"},
+    "res-018": {"url": "https://www.amazon.com/Heard-Street-Quantitative-Questions-Interviews/dp/0994708319", "type": "Article"},
+    "res-019": {"url": "https://www.youtube.com/watch?v=sjVGFNPchV0", "type": "Video"},
+    "res-020": {"url": "https://colab.research.google.com/github/cantaro86/Financial-Models-Numerical-Methods/blob/master/1.1%20Black-Scholes%20numerical%20methods.ipynb", "type": "Interactive Notebook"},
+    "res-021": {"url": "https://www.math.tamu.edu/~stecher/425/Sp12/brownianMotion.pdf", "type": "Guide"},
+    "res-022": {"url": "https://www.manning.com/books/c-plus-plus-concurrency-in-action", "type": "Tutorial"},
+    "res-023": {"url": "https://www.youtube.com/watch?v=xfzGZB4HhEE", "type": "Video"},
+    "res-024": {"url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html", "type": "Guide"},
+    "res-025": {"url": "https://www.youtube.com/watch?v=tomUWcQ0P3k", "type": "Video"},
+    "res-026": {"url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/", "type": "Tutorial"},
+    "res-027": {"url": "https://cloud.google.com/learn/certification/data-engineer", "type": "Guide"},
+    "res-028": {"url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/", "type": "Interactive Notebook"},
+    "res-029": {"url": "https://www.youtube.com/watch?v=qBigTkBLU6g", "type": "Video"},
+    "res-030": {"url": "https://mode.com/sql-tutorial/", "type": "Tutorial"},
+    "res-031": {"url": "https://owasp.org/www-project-top-ten/", "type": "Guide"},
+    "res-032": {"url": "https://www.youtube.com/watch?v=0-S5a0eXPoc", "type": "Video"},
+    "res-033": {"url": "https://www.youtube.com/watch?v=VPvVD8t02U8", "type": "Video"},
+    "res-034": {"url": "https://github.com/donnemartin/system-design-primer", "type": "Article"},
+    "res-035": {"url": "https://python.langchain.com/docs/tutorials/", "type": "Tutorial"},
+    "res-036": {"url": "https://www.youtube.com/watch?v=R8_veQiYBjI", "type": "Video"},
+    "res-037": {"url": "https://www.youtube.com/watch?v=3Kq1MIfTWCE", "type": "Video"},
+}
+
 router = APIRouter(tags=["Compat"])
 logger = get_logger("endpoint.compat")
 
@@ -116,7 +157,13 @@ def _member_response(user_id: str, profile: Dict) -> Dict:
             ],
         },
         "resources": [
-            {"id": r.get("id", ""), "name": r.get("title", r.get("name", "")), "url": r.get("url", "#"), "description": r.get("description", "")}
+            {
+                "id": r.get("resource_id", r.get("id", "")),
+                "name": r.get("title", r.get("name", "")),
+                "url": _RESOURCE_URL_MAP.get(r.get("resource_id", ""), {}).get("url") or r.get("url") or "#",
+                "type": _RESOURCE_URL_MAP.get(r.get("resource_id", ""), {}).get("type") or r.get("type", "Guide"),
+                "description": r.get("reason", r.get("description", "")),
+            }
             for r in discovery.get("recommended_resources", [])
         ],
         "events": [
