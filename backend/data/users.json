@@ -1,0 +1,62 @@
+{
+  "organizer": {
+    "user_id": "organizer",
+    "username": "organizer",
+    "bio": "Community operations lead for AgentField Community.",
+    "skills": {
+      "Community Management": 5,
+      "Analytics": 4
+    },
+    "tags": [
+      "organizer",
+      "admin"
+    ],
+    "interests": [
+      "community-ops"
+    ],
+    "goals": [
+      "Grow community engagement",
+      "Reduce churn",
+      "Onboard quality mentors"
+    ],
+    "learning_style": "Data-driven",
+    "skill_level": "Expert",
+    "activity_log": [],
+    "metrics": {
+      "contributions_percentile": 1,
+      "beginners_helped_this_week": 0,
+      "is_mentor_eligible": false
+    },
+    "created_at": "2026-06-01T00:00:00"
+  },
+  "D46cc410-1695-4fda-8d64-0e24a4fd68af": {
+    "user_id": "d46cc410-1695-4fda-8d64-0e24a4fd68af",
+    "username": "sakshamandmicku",
+    "email": null,
+    "bio": "Systems programmer learning quant finance",
+    "avatar": null,
+    "skills": {},
+    "verified_skills": [],
+    "tags": [
+      "Python"
+    ],
+    "interests": [
+      "Quant Finance"
+    ],
+    "goals": [
+      "quant internship",
+      "learn C++"
+    ],
+    "skill_level": null,
+    "learning_style": null,
+    "role": "member",
+    "timezone": null,
+    "github_url": null,
+    "linkedin_url": null,
+    "chat_history": [],
+    "recent_activity": [],
+    "created_at": "2026-06-27T06:17:26.273442",
+    "updated_at": "2026-06-27T06:17:26.273445",
+    "last_active": "2026-06-27T06:17:26.273446"
+  }
+}

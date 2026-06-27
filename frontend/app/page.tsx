@@ -819,32 +819,43 @@ export default function Home() {
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-xs text-slate uppercase tracking-wider font-bold">View as:</span>
                 <div className="flex bg-fog p-1 rounded-full border border-chalk flex-wrap gap-0.5">
-                  {supabaseUserId && (
-                    <button
-                      onClick={() => { setPersona(supabaseUserId); setData(null); }}
-                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === supabaseUserId ? "bg-signal-orange text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
-                    >
-                      <User className="w-3.5 h-3.5" /> You
-                    </button>
+                  {supabaseUserId ? (
+                    <>
+                      <button
+                        onClick={() => { setPersona(supabaseUserId); setData(null); }}
+                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === supabaseUserId ? "bg-signal-orange text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
+                      >
+                        <User className="w-3.5 h-3.5" /> You
+                      </button>
+                      <button
+                        onClick={() => { setPersona("organizer"); setData(null); }}
+                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "organizer" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" /> Organizer Console
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { setPersona("rahul"); setData(null); }}
+                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "rahul" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
+                      >
+                        <User className="w-3.5 h-3.5" /> Rahul (GPU)
+                      </button>
+                      <button
+                        onClick={() => { setPersona("priya"); setData(null); }}
+                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "priya" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
+                      >
+                        <User className="w-3.5 h-3.5" /> Priya (AI Rookie)
+                      </button>
+                      <button
+                        onClick={() => { setPersona("organizer"); setData(null); }}
+                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "organizer" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" /> Organizer Console
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => { setPersona("rahul"); setData(null); }}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "rahul" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
-                  >
-                    <User className="w-3.5 h-3.5" /> Rahul (GPU)
-                  </button>
-                  <button
-                    onClick={() => { setPersona("priya"); setData(null); }}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "priya" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
-                  >
-                    <User className="w-3.5 h-3.5" /> Priya (AI Rookie)
-                  </button>
-                  <button
-                    onClick={() => { setPersona("organizer"); setData(null); }}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "organizer" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" /> Organizer Console
-                  </button>
                 </div>
               </div>
 
