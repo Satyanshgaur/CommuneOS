@@ -1,0 +1,21 @@
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:68 | ============================================================
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:69 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:70 |   Running on http://0.0.0.0:8000
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:71 |   API Docs: http://localhost:8000/docs
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:72 |   LLM Model: google/gemma-4-31b-it:free
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:73 |   LLM Key: ⚠️  Missing (mock mode)
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:74 |   Mock Fallback: ON
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_startup:75 | ============================================================
+2026-06-27 03:42:49 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
+2026-06-27 03:42:49 | INFO     | communeos.main            | on_shutdown:83 | CommuneOS Backend shutdown complete
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:68 | ============================================================
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:69 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:70 |   Running on http://0.0.0.0:8000
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:71 |   API Docs: http://localhost:8000/docs
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:72 |   LLM Model: google/gemma-4-31b-it:free
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:73 |   LLM Key: ⚠️  Missing (mock mode)
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:74 |   Mock Fallback: ON
+2026-06-27 03:43:20 | INFO     | communeos.main            | on_startup:75 | ============================================================
+2026-06-27 03:45:01 | WARNING  | communeos.errors          | validation_exception_handler:37 | Validation error on http://localhost:8000/api/v1/users/create: [{'type': 'list_type', 'loc': ('body', 'goals'), 'msg': 'Input should be a valid list', 'input': 'Master CUDA'}]
+2026-06-27 03:45:59 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
+2026-06-27 03:45:59 | INFO     | communeos.main            | on_shutdown:83 | CommuneOS Backend shutdown complete

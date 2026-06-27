@@ -1,8 +1,14 @@
 # Virtual environment
 .venv/
+.venv12/
 venv/
 ENV/
 env/
+
+# Logs
+logs/*.log
+*.log
+communityos.db
 
 # Python cache & build artifacts
 __pycache__/
