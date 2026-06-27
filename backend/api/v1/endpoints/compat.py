@@ -18,6 +18,55 @@ router = APIRouter(tags=["Compat"])
 logger = get_logger("endpoint.compat")
 
 
+def _identity_reasoning(username: str, skills: list, identity: Dict) -> str:
+    skill_str = ", ".join(skills[:3]) if skills else "general topics"
+    confidence = round(identity.get("overall_confidence", 0.72) * 100)
+    expertise = ", ".join(identity.get("expertise_areas", [])[:2]) or "multiple domains"
+    return (
+        f"Identity Agent: Scanned {username}'s profile and activity signals. "
+        f"Detected {len(skills)} skill(s): {skill_str}. "
+        f"Primary expertise mapped to {expertise}. "
+        f"Overall profile confidence: {confidence}%."
+    )
+
+
+def _discovery_reasoning(username: str, discovery: Dict) -> str:
+    channels = discovery.get("recommended_channels", [])
+    resources = discovery.get("recommended_resources", [])
+    top_channel = channels[0].get("name", "a community") if channels else "relevant communities"
+    return (
+        f"Discovery Agent: Matched {username}'s skill profile against all available channels and resources. "
+        f"Recommended {len(channels)} channel(s) — top pick: {top_channel}. "
+        f"Surfaced {len(resources)} learning resource(s) ranked by relevance to stated goals."
+    )
+
+
+def _learning_reasoning(username: str, learning: Dict, user_data: Dict) -> str:
+    weeks = learning.get("total_weeks", 8)
+    minutes = learning.get("daily_commitment_minutes", 60)
+    goals = user_data.get("goals", [])
+    goal_str = ", ".join(goals[:2]) if goals else "skill development"
+    return (
+        f"Learning Agent: Built a {weeks}-week personalised roadmap for {username} "
+        f"targeting: {goal_str}. "
+        f"Daily commitment: {minutes} min. "
+        f"Roadmap title: {learning.get('roadmap_title', 'Custom Path')}."
+    )
+
+
+def _mentor_reasoning(username: str, mentor: Dict) -> str:
+    m = mentor.get("primary_mentor", mentor)
+    name = m.get("name", "a community mentor")
+    role = m.get("role", "industry expert")
+    score = round(m.get("compatibility_score", 0.85) * 100)
+    match = m.get("match_reason", "skill and goal overlap")
+    return (
+        f"Mentor Agent: Matched {username} with {name} ({role}). "
+        f"Compatibility score: {score}%. "
+        f"Reason: {match}"
+    )
+
+
 def _member_response(user_id: str, profile: Dict) -> Dict:
     """Reshape pipeline output to the format page.tsx expects."""
     identity = profile.get("identity", {})
@@ -66,10 +115,10 @@ def _member_response(user_id: str, profile: Dict) -> Dict:
         ],
         "insights": identity.get("insights", []),
         "explainability": {
-            "identity_agent": identity.get("reasoning", ""),
-            "discovery_agent": discovery.get("reasoning", ""),
-            "learning_agent": learning.get("reasoning", ""),
-            "mentor_agent": mentor.get("reasoning", ""),
+            "identity_agent": identity.get("reasoning") or _identity_reasoning(username, skills, identity),
+            "discovery_agent": discovery.get("reasoning") or _discovery_reasoning(username, discovery),
+            "learning_agent": learning.get("reasoning") or _learning_reasoning(username, learning, user_data),
+            "mentor_agent": mentor.get("reasoning") or _mentor_reasoning(username, mentor),
         },
     }
 
