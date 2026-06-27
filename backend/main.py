@@ -10,6 +10,9 @@ import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from api.errors import register_error_handlers
 from api.v1.endpoints import agents, community, health, users
@@ -20,6 +23,10 @@ from utils.logger import get_logger, setup_logging
 setup_logging()
 logger = get_logger("main")
 
+# ─── Rate Limiter ──────────────────────────────────────────────────────────────
+# Default: 60 req/min per IP. Agent pipeline endpoints get 10/min (applied in agents.py).
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+
 # ─── FastAPI App ───────────────────────────────────────────────────────────────
 app = FastAPI(
     title=settings.APP_TITLE,
@@ -29,6 +36,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ─── CORS Middleware ───────────────────────────────────────────────────────────
 app.add_middleware(
@@ -72,6 +82,7 @@ async def on_startup():
     logger.info(f"  LLM Model: {settings.OPENROUTER_MODEL}")
     logger.info(f"  LLM Key: {'✅ Configured' if settings.has_llm_key else '⚠️  Missing (mock mode)'}")
     logger.info(f"  Mock Fallback: {'ON' if settings.USE_MOCK_DATA_FALLBACK else 'OFF'}")
+    logger.info(f"  Rate Limiting: 60/min default, 10/min agent pipeline")
     logger.info("=" * 60)
 
 

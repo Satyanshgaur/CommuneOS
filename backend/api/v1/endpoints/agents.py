@@ -8,7 +8,9 @@ import asyncio
 import time
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from api.v1.dependencies import get_request_id, validate_user_id_param
 from services import (
@@ -19,13 +21,16 @@ from utils.logger import get_logger
 
 router = APIRouter(prefix="/agents", tags=["Agents"])
 logger = get_logger("endpoint.agents")
+limiter = Limiter(key_func=get_remote_address)
 
 # In-memory status store for polling
 _pipeline_status: Dict[str, Dict] = {}
 
 
 @router.post("/personalize/{user_id}")
+@limiter.limit("10/minute")
 async def personalize_member(
+    request: Request,
     user_id: str = Depends(validate_user_id_param),
     request_id: str = Depends(get_request_id),
 ) -> Dict[str, Any]:
@@ -113,7 +118,9 @@ async def get_agent_status(
 
 
 @router.post("/refresh/{user_id}")
+@limiter.limit("10/minute")
 async def refresh_personalization(
+    request: Request,
     user_id: str = Depends(validate_user_id_param),
     request_id: str = Depends(get_request_id),
 ) -> Dict[str, Any]:
