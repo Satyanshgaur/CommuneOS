@@ -4,6 +4,8 @@ Pre-generated realistic fallback data for all 6 agents.
 Returns deterministic responses based on user_id seeding.
 """
 import hashlib
+import json
+import os
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -11,6 +13,28 @@ from typing import Any, Dict, List, Optional
 from utils.logger import get_logger
 
 logger = get_logger("mock_data")
+
+_USERS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "users.json")
+_USERS_FILE = os.path.normpath(_USERS_FILE)
+
+
+def _load_persisted_users() -> Dict[str, Dict]:
+    try:
+        if os.path.exists(_USERS_FILE):
+            with open(_USERS_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning(f"Could not load persisted users: {e}")
+    return {}
+
+
+def _persist_users(store: Dict[str, Dict]) -> None:
+    try:
+        os.makedirs(os.path.dirname(_USERS_FILE), exist_ok=True)
+        with open(_USERS_FILE, "w") as f:
+            json.dump(store, f, indent=2, default=str)
+    except Exception as e:
+        logger.warning(f"Could not persist users: {e}")
 
 
 def _seed(user_id: str) -> int:
@@ -404,7 +428,7 @@ def get_mock_organizer(health_data: Optional[Dict] = None) -> Dict[str, Any]:
     }
 
 
-# In-memory user store pre-seeded with demo personas
+# In-memory user store pre-seeded with demo personas, merged with persisted real users
 _user_store: Dict[str, Dict] = {
     "rahul": {
         "user_id": "rahul",
@@ -457,17 +481,23 @@ _user_store: Dict[str, Dict] = {
 }
 
 
+# Merge persisted real users on startup (seed personas take lower priority)
+_user_store.update(_load_persisted_users())
+
+
 def get_mock_user(user_id: str) -> Optional[Dict]:
-    """Get a mock user from the in-memory store."""
-    return _user_store.get(user_id.lower())
+    """Get a user from the store (checks exact key first, then lowercased)."""
+    return _user_store.get(user_id) or _user_store.get(user_id.lower())
 
 
 def save_mock_user(user_id: str, user_data: Dict) -> None:
-    """Save a user to the in-memory store."""
-    _user_store[user_id.lower()] = user_data
-    logger.info(f"Saved user to mock store: {user_id}")
+    """Save a user to the store and persist to disk."""
+    _user_store[user_id] = user_data
+    _SEED_IDS = {"rahul", "priya", "organizer"}
+    _persist_users({k: v for k, v in _user_store.items() if k not in _SEED_IDS})
+    logger.info(f"Saved and persisted user: {user_id}")
 
 
 def list_mock_users() -> List[Dict]:
-    """List all users in the mock store."""
+    """List all users in the store."""
     return list(_user_store.values())
