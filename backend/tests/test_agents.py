@@ -6,6 +6,7 @@ import pytest
 import sys
 import os
 from unittest.mock import AsyncMock, patch
+from services.llm_service import LLMService
 
 # Add backend to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -43,7 +44,7 @@ MOCK_USER_DATA = {
 # ─── Identity Agent Tests ─────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_identity_agent_success(mock_llm):
     """IdentityAgent parses user profile and returns structured output on LLM success."""
     llm_output = {
@@ -71,7 +72,7 @@ async def test_identity_agent_success(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_identity_agent_fallback(mock_llm):
     """IdentityAgent gracefully falls back to mock data if LLM fails."""
     mock_llm.return_value = (None, True)
@@ -88,7 +89,7 @@ async def test_identity_agent_fallback(mock_llm):
 # ─── Discovery Agent Tests ────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_discovery_agent_success(mock_llm):
     """DiscoveryAgent recommends channels and resources on LLM success."""
     identity_data = {
@@ -118,7 +119,7 @@ async def test_discovery_agent_success(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_discovery_agent_fallback(mock_llm):
     """DiscoveryAgent falls back to mock channels/resources on LLM failure."""
     mock_llm.return_value = (None, True)
@@ -134,7 +135,7 @@ async def test_discovery_agent_fallback(mock_llm):
 # ─── Learning Agent Tests ─────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_learning_agent_success(mock_llm):
     """LearningAgent generates roadmaps on LLM success."""
     llm_output = {
@@ -161,7 +162,7 @@ async def test_learning_agent_success(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_learning_agent_fallback(mock_llm):
     """LearningAgent falls back to mock roadmap on LLM failure."""
     mock_llm.return_value = (None, True)
@@ -178,7 +179,7 @@ async def test_learning_agent_fallback(mock_llm):
 # ─── Mentor Agent Tests ───────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_mentor_agent_success(mock_llm):
     """MentorAgent matches a primary and backup mentor on LLM success."""
     llm_output = {
@@ -209,7 +210,7 @@ async def test_mentor_agent_success(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_mentor_agent_fallback(mock_llm):
     """MentorAgent falls back to mock mentor list on LLM failure."""
     mock_llm.return_value = (None, True)
@@ -225,7 +226,7 @@ async def test_mentor_agent_fallback(mock_llm):
 # ─── Health Agent Tests ───────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_health_agent_success(mock_llm):
     """HealthAgent analyzes community statistics and returns health report on LLM success."""
     llm_output = {
@@ -250,7 +251,7 @@ async def test_health_agent_success(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_health_agent_fallback(mock_llm):
     """HealthAgent falls back to mock health metrics on LLM failure."""
     mock_llm.return_value = (None, True)
@@ -266,7 +267,7 @@ async def test_health_agent_fallback(mock_llm):
 # ─── Organizer Agent Tests ────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_organizer_agent_success(mock_llm):
     """OrganizerAgent generates operational items on LLM success."""
     llm_output = {
@@ -300,7 +301,7 @@ async def test_organizer_agent_success(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch("services.llm_service.llm_service.complete_json")
+@patch.object(LLMService, "complete_json")
 async def test_organizer_agent_fallback(mock_llm):
     """OrganizerAgent falls back to mock action plan on LLM failure."""
     mock_llm.return_value = (None, True)

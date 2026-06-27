@@ -1,11 +1,11 @@
 """
 CommuneOS Mentor Agent
-Connects learners with the best-matching expert mentors
-based on expertise alignment, availability, and communication style.
+Connects learners with the best-matching expert mentors by querying the Memory Agent (RAG).
 """
 from typing import Any, Dict, List, Optional
 
 from agents.base_agent import BaseAgent
+from agents.memory_agent import MemoryAgent
 from config import settings
 from services.llm_service import llm_service
 from services.mock_data import get_mock_mentor
@@ -13,7 +13,7 @@ from utils.logger import get_logger
 
 logger = get_logger("agent.mentor")
 
-# Community mentor database
+# Fallback mentor list in case RAG or LLM fails
 MENTOR_DATABASE = [
     {
         "mentor_id": "mentor-sarah",
@@ -75,13 +75,11 @@ class MentorAgent(BaseAgent):
     Agent 4: Expert Mentor Matching
     
     Connects learners with the most compatible mentors based on:
-    - Expertise alignment (40%)
-    - Availability overlap (25%)
-    - Communication compatibility (20%)
-    - Experience/success rate (15%)
+    - RAG-retrieved mentor profiles matching user's skills and interests
+    - Expertise alignment, availability, and teaching style
     """
     name = "mentor_agent"
-    cache_ttl = 7200  # 2 hours (mentors change less frequently)
+    cache_ttl = 7200  # 2 hours
 
     SYSTEM_PROMPT = """You are the Mentor Agent for CommuneOS.
 Your job is to match a community member with the best mentor from the available pool.
@@ -100,18 +98,23 @@ You MUST return ONLY valid JSON in this exact structure:
     "teaching_style": "How they teach",
     "years_experience": 5
   },
-  "backup_mentors": [...],
+  "backup_mentors": [
+    {
+      "mentor_id": "mentor-id",
+      "name": "Mentor Full Name",
+      "role": "Their role/title",
+      "compatibility_score": 0.0-1.0,
+      "match_reason": "Brief reason"
+    }
+  ],
   "suggested_meeting_schedule": "Specific schedule suggestion",
   "introduction_template": "Template message to introduce the mentee to the mentor"
 }
 
-Match weights:
-- Expertise alignment with learner's growth areas: 40%
-- Availability/timezone: 25%
-- Teaching style compatibility with learning preference: 20%
-- Success rate and experience: 15%
-
-Be specific about WHY a mentor matches (mention specific overlapping skills/goals).
+Rules:
+- Select the best matching mentor from the list of mentors retrieved from the community database.
+- Base your choice on the mentee's skills, resume context, and learning style.
+- If the RAG results don't contain specific mentors, select from the default pool of Sarah Jenkins, Amit Sharma, Priya Nair, and Alex Kim.
 """
 
     async def _process(
@@ -120,7 +123,22 @@ Be specific about WHY a mentor matches (mention specific overlapping skills/goal
         learning_data: Optional[Dict] = None,
         *args, **kwargs
     ) -> Dict[str, Any]:
-        """Match user with best mentor."""
+        """Match user with best mentor using RAG."""
+        # 1. Fetch personalization context from Memory Agent for mentors
+        search_query = f"mentors matching skills: {', '.join(user_data.get('interests', []))} or goals: {', '.join(user_data.get('goals', []))}"
+        
+        memory_agent = MemoryAgent()
+        memory_res = await memory_agent.run(user_id, user_data, query=search_query, filter_type="mentor")
+        memory_data = memory_res.get("data", {})
+        retrieved_mentors = memory_data.get("community_context_block", "")
+        
+        # If no mentors were found in RAG, fallback to the standard text representation of MENTOR_DATABASE
+        if "No matching community resources found" in retrieved_mentors or not retrieved_mentors:
+            retrieved_mentors = "\n".join([
+                f"- {m['mentor_id']}: {m['name']} ({m['role']}) | Expertise: {', '.join(m['expertise_areas'])} | Style: {m['teaching_style']}"
+                for m in MENTOR_DATABASE
+            ])
+
         growth_areas = []
         learning_style = "visual"
         if identity_data:
@@ -129,30 +147,25 @@ Be specific about WHY a mentor matches (mention specific overlapping skills/goal
 
         roadmap_title = learning_data.get("roadmap_title", "General learning path") if learning_data else "General learning path"
 
-        mentors_text = "\n".join([
-            f"- {m['mentor_id']}: {m['name']} ({m['role']}) | Expertise: {', '.join(m['expertise_areas'])} | Style: {m['teaching_style']} | Success: {m['success_rate']}"
-            for m in MENTOR_DATABASE
-        ])
-
         prompt = f"""Find the best mentor match for this community member:
 
-Member: {user_data.get('username', 'Unknown')}
-Skill level: {user_data.get('skill_level', 'Intermediate')}
+Member Name: {user_data.get('username', 'Unknown')}
+Self-reported Interests/Skills: {', '.join(user_data.get('interests', []))}
 Goals: {', '.join(user_data.get('goals', []))}
 Growth areas (needs mentoring in): {', '.join(growth_areas)}
 Learning style: {learning_style}
 Learning path: {roadmap_title}
 Timezone: {user_data.get('timezone', 'Asia/Kolkata')}
 
-Available mentors:
-{mentors_text}
+AVAILABLE MENTORS IN COMMUNITY (RETRIEVED VIA RAG):
+{retrieved_mentors}
 
 Select the PRIMARY best match and 1-2 backup options. Be specific about compatibility."""
 
         result_json, is_fallback = await llm_service.complete_json(
             prompt=prompt,
             system_prompt=self.SYSTEM_PROMPT,
-            temperature=settings.LLM_TEMPERATURE_DISCOVERY,
+            temperature=0.3,
             max_tokens=settings.LLM_MAX_TOKENS_COMPLEX,
         )
 
@@ -164,7 +177,7 @@ Select the PRIMARY best match and 1-2 backup options. Be specific about compatib
         result_json["user_id"] = user_id
         result_json["_is_fallback"] = False
         primary = result_json.get("primary_mentor", {})
-        logger.info(f"Mentor matched for {user_id}: {primary.get('name', 'unknown')} (score={primary.get('compatibility_score', 0)})")
+        logger.info(f"Mentor matched for {user_id}: {primary.get('name', 'unknown')}")
         return result_json
 
     def _get_fallback(self, user_id: str, user_data: Dict, *args, **kwargs) -> Dict[str, Any]:

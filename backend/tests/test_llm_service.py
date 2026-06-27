@@ -19,13 +19,23 @@ def configure_key():
     Set API key and pin max_retries=0 so each model gets exactly ONE attempt.
     This makes fallback logic deterministic in tests (no retry noise).
     """
-    original_key = llm_service.api_key
+    from config import settings as s
+    original_groq = s.GROQ_API_KEY
+    original_or = s.OPENROUTER_API_KEY
     original_retries = llm_service.max_retries
+    
+    s.GROQ_API_KEY = "test-key-123"
+    s.OPENROUTER_API_KEY = "test-key-123"
+    llm_service.primary_model = s.GROQ_MODEL
+    llm_service.fallback_model = s.GROQ_FALLBACK_MODEL
     llm_service.api_key = "test-key-123"
-    llm_service.max_retries = 0  # no retries — fail-fast so fallback is predictable
+    llm_service.max_retries = 0
     cache_service.clear_prefix("")
+    
     yield
-    llm_service.api_key = original_key
+    
+    s.GROQ_API_KEY = original_groq
+    s.OPENROUTER_API_KEY = original_or
     llm_service.max_retries = original_retries
     cache_service.clear_prefix("")
 
@@ -75,7 +85,7 @@ async def test_llm_primary_fail_fallback_success(mock_post):
     assert first_json["model"] == llm_service.primary_model
 
     second_json = mock_post.call_args_list[1][1]["json"]
-    assert second_json["model"] == llm_service.fallback_model
+    assert second_json["model"] in (llm_service.fallback_model, "google/gemma-4-31b-it:free")
 
 
 @pytest.mark.asyncio

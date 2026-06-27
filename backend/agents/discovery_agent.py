@@ -1,12 +1,13 @@
 """
 CommuneOS Discovery Agent
-Matches users with community channels and learning resources
-based on their identity profile from the Identity Agent.
+Matches users with community channels and learning resources by querying the Memory Agent.
+Supports answering specific user questions with RAG personalization.
 """
 import json
 from typing import Any, Dict, List, Optional
 
 from agents.base_agent import BaseAgent
+from agents.memory_agent import MemoryAgent
 from config import settings
 from services.llm_service import llm_service
 from services.mock_data import get_mock_discovery
@@ -20,14 +21,15 @@ class DiscoveryAgent(BaseAgent):
     """
     Agent 2: Channel & Resource Discovery
     
-    Recommends channels and learning resources that match the user's
-    skill level, interests, and learning style.
+    Recommends channels, resources, and answers user questions
+    by using RAG context retrieved via the Memory Agent.
     """
     name = "discovery_agent"
     cache_ttl = 3600
 
     SYSTEM_PROMPT = """You are the Discovery Agent for CommuneOS.
-Your job is to match community members with the most relevant channels and resources.
+Your job is to match community members with the most relevant channels and resources based on their profile and resume context.
+You must also answer their specific question using the retrieved context.
 
 You MUST return ONLY valid JSON in this exact structure:
 {
@@ -51,60 +53,47 @@ You MUST return ONLY valid JSON in this exact structure:
       "reason": "Why this resource helps"
     }
   ],
-  "discovery_priority": ["channel/resource name to explore first", ...]
+  "discovery_priority": ["channel/resource name to explore first", ...],
+  "answer": "A highly personalized answer to the user's question, grounding the recommendation in their skills, goals, and experience.",
+  "reasoning": "2 sentences summarizing why these recommendations are made."
 }
 
 Rules:
-- Recommend 3-5 channels and 3-5 resources
-- Match difficulty level to user's skill level
-- Prioritize channels with active discussions
-- Give higher scores to exact skill matches
+- Recommend 3-5 channels and 3-5 resources.
+- Base your recommendation and your answer on the user's profile and the retrieved resume/community context.
 """
 
     async def _process(
         self, user_id: str, user_data: Dict,
         identity_data: Optional[Dict] = None,
+        query: Optional[str] = None,
         *args, **kwargs
     ) -> Dict[str, Any]:
-        """Match channels and resources based on identity profile."""
-        # Build user context
-        skills_summary = []
-        if identity_data:
-            for skill in identity_data.get("detected_skills", []):
-                skills_summary.append(f"{skill['name']} ({skill['proficiency']})")
-        elif user_data.get("skills"):
-            for name, level in user_data["skills"].items():
-                levels = {1: "Beginner", 2: "Beginner", 3: "Intermediate", 4: "Advanced", 5: "Expert"}
-                skills_summary.append(f"{name} ({levels.get(level, 'Intermediate')})")
+        """Match channels and resources using RAG context from Memory Agent."""
+        # Use user question or build a default query
+        search_query = query or user_data.get("user_question") or "Which event or channel should I attend?"
+        
+        # 1. Fetch personalization context from Memory Agent
+        memory_agent = MemoryAgent()
+        memory_res = await memory_agent.run(user_id, user_data, query=search_query)
+        memory_data = memory_res.get("data", {})
+        merged_context = memory_data.get("merged_text", "No context found.")
 
-        expertise_areas = []
-        growth_areas = []
-        learning_style = "visual"
-        if identity_data:
-            expertise_areas = identity_data.get("expertise_areas", [])
-            growth_areas = identity_data.get("growth_areas", [])
-            learning_style = identity_data.get("learning_preference", "visual")
+        # Build basic details
+        bio = user_data.get("bio", "No bio provided")
+        goals = user_data.get("goals", [])
+        
+        prompt = f"""Personalize recommendations and answer the user's question:
 
-        channels_catalog = "\n".join([
-            f"- {ch['id']}: {ch['name']} (topics: {', '.join(ch['topics'])}, difficulty: {ch['difficulty']})"
-            for ch in COMMUNITY_CHANNELS
-        ])
+User ID: {user_id}
+User Bio: {bio}
+User Goals: {', '.join(goals) if isinstance(goals, list) else str(goals)}
+User Question: "{search_query}"
 
-        prompt = f"""Match this community member with the best channels and resources:
+RETRIEVED MEMORY CONTEXT (RESUME + COMMUNITY DATA):
+{merged_context}
 
-Member: {user_data.get('username', 'Unknown')}
-Skills: {', '.join(skills_summary) if skills_summary else 'Not specified'}
-Interests: {', '.join(user_data.get('interests', []))}
-Goals: {', '.join(user_data.get('goals', []))}
-Expertise areas: {', '.join(expertise_areas)}
-Growth areas (wants to learn): {', '.join(growth_areas)}
-Learning style: {learning_style}
-Skill level: {user_data.get('skill_level', 'Intermediate')}
-
-Available channels:
-{channels_catalog}
-
-Recommend the best matches for this member. For resources, invent relevant titles that would help them."""
+Based on this, return the personalized channels, resources, and the answer to the user's question in the JSON format required."""
 
         result_json, is_fallback = await llm_service.complete_json(
             prompt=prompt,
@@ -120,8 +109,11 @@ Recommend the best matches for this member. For resources, invent relevant title
 
         result_json["user_id"] = user_id
         result_json["_is_fallback"] = False
-        logger.info(f"Discovery complete for {user_id}: {len(result_json.get('recommended_channels', []))} channels, {len(result_json.get('recommended_resources', []))} resources")
+        logger.info(f"Discovery complete for {user_id}: {len(result_json.get('recommended_channels', []))} channels recommended")
         return result_json
 
     def _get_fallback(self, user_id: str, user_data: Dict, *args, **kwargs) -> Dict[str, Any]:
-        return get_mock_discovery(user_id, user_data)
+        mock_disc = get_mock_discovery(user_id, user_data)
+        mock_disc["answer"] = "You should attend the GPU Systems Workshop since your profile shows strong interest in low-level GPU programming."
+        mock_disc["reasoning"] = "Matched user tags against available channels. Recommended machine learning and infrastructure topics."
+        return mock_disc

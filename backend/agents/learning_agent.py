@@ -1,12 +1,12 @@
 """
 CommuneOS Learning Agent
-Creates personalized milestone-based learning roadmaps
-tailored to individual goals, skill levels, and learning styles.
+Creates personalized milestone-based learning roadmaps by querying the Memory Agent (RAG) for community resources.
 """
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from agents.base_agent import BaseAgent
+from agents.memory_agent import MemoryAgent
 from config import settings
 from services.llm_service import llm_service
 from services.mock_data import get_mock_learning
@@ -20,7 +20,7 @@ class LearningAgent(BaseAgent):
     Agent 3: Learning Roadmap Creation
     
     Generates structured, milestone-based learning paths tailored to
-    the user's skill level, goals, and discovery recommendations.
+    the user's skill level, goals, and RAG-retrieved community resources.
     """
     name = "learning_agent"
     cache_ttl = 3600
@@ -56,12 +56,9 @@ You MUST return ONLY valid JSON in this exact structure:
 }
 
 Rules:
-- Create 4-8 milestones covering the full learning arc
-- Milestones should have progressive complexity (foundation → intermediate → advanced)
-- Daily checklist should have 3-4 immediately actionable tasks for today
-- Mix task types: reading, coding, discussion, watching
-- Be realistic with time estimates
-- The roadmap should directly address the user's stated goals
+- Create 4-8 milestones covering the full learning arc.
+- Incorporate the RAG-retrieved community resources where appropriate.
+- Include a daily checklist with 3-4 immediately actionable tasks for today.
 """
 
     async def _process(
@@ -70,16 +67,22 @@ Rules:
         *args, **kwargs
     ) -> Dict[str, Any]:
         """Create personalized learning roadmap."""
-        skills_summary = []
-        if identity_data:
-            for skill in identity_data.get("detected_skills", []):
-                skills_summary.append(f"{skill['name']} ({skill['proficiency']})")
+        # 1. Fetch personalization context from Memory Agent for resources
+        search_query = f"learning resources for skills: {', '.join(user_data.get('interests', []))} or goals: {', '.join(user_data.get('goals', []))}"
         
-        growth_areas = []
-        learning_style = "visual"
-        if identity_data:
-            growth_areas = identity_data.get("growth_areas", [])
-            learning_style = identity_data.get("learning_preference", "visual")
+        memory_agent = MemoryAgent()
+        memory_res = await memory_agent.run(user_id, user_data, query=search_query, filter_type="resource")
+        memory_data = memory_res.get("data", {})
+        retrieved_resources = memory_data.get("community_context_block", "No specific resources found.")
+
+        skills_summary = []
+        if identity_data and identity_data.get("technology_stack"):
+            skills_summary = identity_data.get("technology_stack", [])
+        else:
+            skills_summary = user_data.get("interests", [])
+
+        growth_areas = identity_data.get("growth_areas", []) if identity_data else []
+        learning_style = identity_data.get("learning_preference", "visual") if identity_data else "visual"
 
         completion_date = (datetime.utcnow() + timedelta(weeks=8)).strftime("%B %d, %Y")
 
@@ -87,14 +90,16 @@ Rules:
 
 Name: {user_data.get('username', 'Unknown')}
 Skill level: {user_data.get('skill_level', 'Intermediate')}
-Current skills: {', '.join(skills_summary) if skills_summary else ', '.join(user_data.get('tags', []))}
+Current skills/Tech stack: {', '.join(skills_summary)}
 Goals: {', '.join(user_data.get('goals', ['General learning']))}
-Interests: {', '.join(user_data.get('interests', []))}
 Growth areas to develop: {', '.join(growth_areas) if growth_areas else 'Not specified'}
 Learning style: {learning_style}
 Target completion: around {completion_date}
 
-Create a comprehensive 8-week learning roadmap that will help them achieve their goals.
+RETRIEVED COMMUNITY RESOURCES (RETRIEVED VIA RAG):
+{retrieved_resources}
+
+Create a comprehensive 8-week learning roadmap that helps them achieve their goals using the resources provided.
 Include 4-6 weekly milestones and 3-4 daily checklist tasks for today."""
 
         result_json, is_fallback = await llm_service.complete_json(

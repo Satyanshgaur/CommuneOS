@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from api.errors import register_error_handlers
-from api.v1.endpoints import agents, community, compat, health, users
+from api.v1.endpoints import agents, community, compat, health, users, auth
 from config import settings
 from utils.logger import get_logger, setup_logging
 
@@ -66,6 +66,7 @@ register_error_handlers(app)
 # ─── Register API Routers ──────────────────────────────────────────────────────
 API_PREFIX = "/api/v1"
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(agents.router, prefix=API_PREFIX)
 app.include_router(community.router, prefix=API_PREFIX)
@@ -76,6 +77,12 @@ app.include_router(compat.router)   # /api/members/{id}, /api/organizer — for 
 @app.on_event("startup")
 async def on_startup():
     """Log startup info and warm up services."""
+    # Seed community memory database on startup
+    try:
+        from services.vector_db import seed_community_database
+        seed_community_database()
+    except Exception as e:
+        logger.error(f"Failed to seed community database: {e}")
     logger.info("=" * 60)
     logger.info(f"  CommuneOS Agent Backend v{settings.APP_VERSION}")
     logger.info(f"  Running on http://{settings.HOST}:{settings.PORT}")

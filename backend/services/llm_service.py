@@ -25,6 +25,7 @@ class LLMService:
     def __init__(self):
         self.timeout = settings.LLM_TIMEOUT_SECONDS
         self.max_retries = settings.AGENT_MAX_RETRIES
+        self.api_key = ""
 
     def _groq_headers(self) -> Dict[str, str]:
         return {
@@ -199,8 +200,60 @@ class LLMService:
         try:
             return json.loads(clean), False
         except json.JSONDecodeError as e:
-            logger.warning(f"LLM JSON parse failed: {e} | text[:200]={text[:200]}")
-            return None, True
+            logger.warning(f"LLM JSON parse failed: {e}. Attempting repair...")
+            try:
+                repaired = repair_json(clean)
+                parsed = json.loads(repaired)
+                logger.info("Successfully repaired truncated JSON from LLM.")
+                return parsed, False
+            except Exception as re:
+                logger.error(f"Failed to repair JSON: {re} | text[:200]={text[:200]}")
+                return None, True
+
+
+def repair_json(s: str) -> str:
+    s = s.strip()
+    if not s:
+        return "{}"
+    in_string = False
+    escape = False
+    stack = []
+    repaired = []
+    
+    for char in s:
+        repaired.append(char)
+        if escape:
+            escape = False
+            continue
+        if char == '\\':
+            escape = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        
+        if not in_string:
+            if char == '{':
+                stack.append('}')
+            elif char == '[':
+                stack.append(']')
+            elif char in ('}', ']') and stack:
+                if stack[-1] == char:
+                    stack.pop()
+                else:
+                    if char in stack:
+                        while stack and stack.pop() != char:
+                            pass
+                            
+    if in_string:
+        if repaired and repaired[-1] == '\\':
+            repaired.pop()
+        repaired.append('"')
+        
+    while stack:
+        repaired.append(stack.pop())
+        
+    return "".join(repaired)
 
 
 # Module-level singleton

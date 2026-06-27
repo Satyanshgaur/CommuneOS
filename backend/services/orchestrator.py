@@ -1,16 +1,7 @@
 """
 CommuneOS Agent Orchestrator Service
-Dedicated pipeline manager for coordinating all 6 agents.
-
-Patterns:
-  - Member Personalization: Identity → (Discovery + Learning) → Mentor
-  - Community Health:       Health → Organizer
-
-Features:
-  - Hard pipeline timeouts via asyncio.wait_for
-  - Per-step error recovery with graceful degradation
-  - Structured logging with step-by-step timing
-  - Instant mock-data fallback path
+Coordinates execution of all specialized agents (Identity, Discovery, Learning, Mentor, Health, Organizer).
+Uses Memory Agent to perform RAG vector database retrievals for all personalization requests.
 """
 import asyncio
 import json
@@ -46,10 +37,30 @@ def _instant_profile(user_id: str, user_data: Dict, elapsed_ms: float = 0) -> Di
     learning.pop("_is_fallback", None)
     mentor = get_mock_mentor(user_id, identity)
     mentor.pop("_is_fallback", None)
+    
+    # Adapt to new schema
+    detected_skills = identity.get("detected_skills", [])
+    tech_stack = [s["name"] for s in detected_skills] if detected_skills else ["Python", "Systems"]
+    inferred = {s["name"]: s["proficiency"] for s in detected_skills} if detected_skills else {"Python": "Intermediate"}
+    
     return {
         "user_id": user_id,
-        "identity": identity,
-        "discovery": discovery,
+        "identity": {
+            "current_skill_level": user_data.get("skill_level") or "Intermediate",
+            "learning_goals": user_data.get("goals") or ["Become an AI Systems Engineer"],
+            "primary_interests": user_data.get("interests") or ["AI", "Systems"],
+            "technology_stack": tech_stack,
+            "inferred_skills": inferred,
+            "insights": [f"Has interest in {', '.join(user_data.get('interests', ['AI']))}"],
+            "reasoning": identity.get("summary", "Fallback profile generated."),
+        },
+        "discovery": {
+            "recommended_channels": discovery.get("recommended_channels", []),
+            "recommended_resources": discovery.get("recommended_resources", []),
+            "discovery_priority": discovery.get("discovery_priority", []),
+            "answer": "You should attend the GPU Systems Workshop since your profile shows strong interest in low-level GPU programming.",
+            "reasoning": "Matched user tags against available channels."
+        },
         "learning": learning,
         "mentor": mentor,
         "pipeline_time_ms": elapsed_ms,
@@ -79,14 +90,17 @@ _UNIFIED_SYSTEM = """You are CommuneOS, an AI community platform. Analyze user p
 
 Output ONLY valid JSON — no markdown, no explanation, no code fences."""
 
-_UNIFIED_PROMPT = """Analyze this user's profile and return personalized recommendations by selecting from the provided lists.
+_UNIFIED_PROMPT = """Analyze this user's profile and resume context to return personalized recommendations by selecting from the provided lists.
 
 USER PROFILE:
 - Username: {username}
 - Bio: {bio}
-- Skills/Tags: {tags}
+- Stated Skills/Tags: {tags}
 - Interests: {interests}
 - Goals: {goals}
+
+RETRIEVED PERSONAL & COMMUNITY RAG CONTEXT:
+{memory_context}
 
 AVAILABLE CHANNELS (select 3-4 most relevant, use exact names):
 {channels}
@@ -100,42 +114,46 @@ AVAILABLE MENTORS (select the single best match, use exact name and role):
 Return this exact JSON structure:
 {{
   "identity": {{
-    "detected_skills": [{{"name": "skill_name", "proficiency": "Beginner|Intermediate|Advanced", "confidence": 0.75, "source": "stated"}}],
-    "expertise_areas": ["area1", "area2"],
-    "growth_areas": ["area1", "area2"],
-    "overall_confidence": 0.80,
-    "reasoning": "2 sentences: what skills were detected and how confident the agent is."
+    "current_skill_level": "Beginner|Intermediate|Advanced|Expert",
+    "learning_goals": ["Goal1", "Goal2"],
+    "primary_interests": ["Interest1", "Interest2"],
+    "technology_stack": ["Tech1", "Tech2"],
+    "inferred_skills": {{"Skill1": "Beginner|Intermediate|Advanced|Expert"}},
+    "insights": ["Insight1", "Insight2"],
+    "reasoning": "2 sentences summarizing their background."
   }},
   "discovery": {{
     "recommended_channels": [
-      {{"channel_id": "ch-id", "name": "EXACT channel name from list", "reason": "1 sentence why", "relevance_score": 0.90}}
+      {{"channel_id": "ch-id", "name": "EXACT channel name", "reason": "1 sentence why", "relevance_score": 0.90}}
     ],
     "recommended_resources": [
-      {{"resource_id": "res-id", "title": "EXACT resource title from list", "reason": "1 sentence why", "relevance_score": 0.88}}
+      {{"resource_id": "res-id", "title": "EXACT resource title", "reason": "1 sentence why", "relevance_score": 0.88}}
     ],
-    "reasoning": "2 sentences: why these channels and resources match the user."
+    "answer": "A highly personalized recommendation paragraph answering what they should do or attend.",
+    "reasoning": "2 sentences explaining why these channels and resources match."
   }},
   "learning": {{
     "roadmap_title": "Custom path name based on their goals",
     "total_weeks": 8,
     "daily_commitment_minutes": 45,
     "milestones": [
-      {{"week": 1, "title": "milestone title", "objectives": ["specific objective"], "estimated_hours": 5.0}},
-      {{"week": 3, "title": "milestone title", "objectives": ["specific objective"], "estimated_hours": 6.0}},
-      {{"week": 6, "title": "milestone title", "objectives": ["specific objective"], "estimated_hours": 8.0}}
+      {{"week": 1, "title": "milestone title", "objectives": ["specific objective"], "estimated_hours": 5.0}}
     ],
-    "reasoning": "2 sentences: what the roadmap targets and why this pace."
+    "daily_checklist": [
+      {{"task_id": "task-1", "task": "Specific actionable task", "type": "reading|coding", "duration_minutes": 30, "resource_link": null, "completed": false}}
+    ],
+    "reasoning": "2 sentences explaining the roadmap."
   }},
   "mentor": {{
     "primary_mentor": {{
       "mentor_id": "mentor-id",
-      "name": "EXACT mentor name from list",
-      "role": "EXACT role from list",
+      "name": "EXACT mentor name",
+      "role": "EXACT role",
       "expertise_areas": ["area1", "area2"],
       "compatibility_score": 0.92,
       "match_reason": "1 sentence explaining the match."
     }},
-    "reasoning": "2 sentences: why this mentor was chosen over others."
+    "reasoning": "2 sentences explaining why this mentor was chosen."
   }}
 }}"""
 
@@ -162,12 +180,19 @@ async def _unified_pipeline(user_id: str, user_data: Dict) -> Optional[Dict]:
     except Exception:
         pools = {"channels": "General, Systems Programming, Quant Finance", "resources": "see community", "mentors": "see community"}
 
+    # Fetch RAG context from Memory Agent
+    from agents.memory_agent import MemoryAgent
+    memory_agent = MemoryAgent()
+    memory_res = await memory_agent.run(user_id, user_data)
+    memory_context = memory_res.get("data", {}).get("merged_text", "No specific memory found.")
+
     prompt = _UNIFIED_PROMPT.format(
         username=user_data.get("username", user_id[:8]),
         bio=user_data.get("bio", "Not provided"),
         tags=", ".join(user_data.get("tags", [])) or "None",
         interests=", ".join(user_data.get("interests", [])) or "None",
         goals=", ".join(user_data.get("goals", [])) or "None",
+        memory_context=memory_context,
         **pools,
     )
 
@@ -207,13 +232,10 @@ async def _unified_pipeline(user_id: str, user_data: Dict) -> Optional[Dict]:
 
 async def _member_llm_pipeline(user_id: str, user_data: Dict) -> Dict:
     """
-    LLM-powered member personalization:
+    LLM-powered member personalization using sequential per-agent execution:
       Step 1: Identity Agent     (sequential — others depend on it)
       Step 2: Discovery + Learning (asyncio.gather — parallel)
       Step 3: Mentor Agent       (uses learning output)
-
-    Each agent has its own internal fallback. If LLM fails per-agent,
-    that agent silently returns mock data and the pipeline continues.
     """
     from agents.identity_agent import IdentityAgent
     from agents.discovery_agent import DiscoveryAgent
@@ -323,13 +345,13 @@ async def run_member_pipeline(user_id: str, user_data: Dict) -> Dict:
         if unified:
             elapsed = round((time.time() - t0) * 1000, 1)
             identity_data = unified.get("identity", {})
-            identity_data["inferred_skills"] = {
-                s["name"]: s["confidence"] for s in identity_data.get("detected_skills", [])
-            }
-            # Carry user profile through identity so downstream scoring works
-            for field in ("tags", "interests", "goals", "bio"):
-                if field not in identity_data:
-                    identity_data[field] = user_data.get(field, [] if field != "bio" else "")
+            
+            # Map legacy format variables to avoid compatibility issues
+            identity_data["detected_skills"] = [
+                {"name": name, "proficiency": level, "confidence": 0.9, "source": "resume"}
+                for name, level in identity_data.get("inferred_skills", {}).items()
+            ]
+            
             profile = {
                 "user_id": user_id,
                 "identity": identity_data,
@@ -350,8 +372,7 @@ async def run_member_pipeline(user_id: str, user_data: Dict) -> Dict:
     except Exception as e:
         logger.warning(f"[{user_id}] Unified pipeline error: {e}")
 
-    # ── Attempt 2: per-agent pipeline — only worth trying if unified timed out
-    #    (not rate-limited; if all models are rate-limited, per-agent will also fail)
+    # ── Attempt 2: per-agent pipeline ──────────────────────────────────────────
     if profile is None and not _unified_rate_limited:
         try:
             profile = await asyncio.wait_for(

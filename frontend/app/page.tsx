@@ -151,20 +151,25 @@ const FALLBACK_DATA = {
 };
 
 export default function Home() {
-  const [screen, setScreen] = useState<"auth" | "onboarding" | "landing" | "demo">("auth");
+  const [screen, setScreen] = useState<"auth" | "onboarding" | "landing" | "demo" | "auth-console">("auth");
   const [authMode, setAuthMode] = useState<"login" | "signup" | "verify">("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
 
   // Onboarding form state
+  const [onboardingName, setOnboardingName] = useState("");
   const [onboardingBio, setOnboardingBio] = useState("");
-  const [onboardingSkills, setOnboardingSkills] = useState("");
-  const [onboardingGoals, setOnboardingGoals] = useState("");
+  const [onboardingRole, setOnboardingRole] = useState("");
+  const [onboardingSkillLevel, setOnboardingSkillLevel] = useState("Intermediate");
+  const [onboardingInterests, setOnboardingInterests] = useState("");
+  const [onboardingCareerGoal, setOnboardingCareerGoal] = useState("");
+  const [onboardingResume, setOnboardingResume] = useState<File | null>(null);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState("");
 
@@ -175,7 +180,261 @@ export default function Home() {
 
   // Explainability drawer state
   const [showAllExplainability, setShowAllExplainability] = useState<boolean>(false);
+  
+  // Auth console states
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [communitiesList, setCommunitiesList] = useState<any[]>([]);
+  const [myCommunitiesList, setMyCommunitiesList] = useState<any[]>([]);
+  
+  // Login / Register inputs
+  const [loginId, setLoginId] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
+  const [registerId, setRegisterId] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerFullName, setRegisterFullName] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  
+  // Create community inputs
+  const [newCommId, setNewCommId] = useState("");
+  const [newCommName, setNewCommName] = useState("");
+  const [newCommCategory, setNewCommCategory] = useState("Tech");
+  const [newCommDescription, setNewCommDescription] = useState("");
+  
+  // Edit profile inputs
+  const [editFullName, setEditFullName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editSkills, setEditSkills] = useState("");
+  const [editLevel, setEditLevel] = useState("Beginner");
+  const [editGoals, setEditGoals] = useState("");
+  const [editStyle, setEditStyle] = useState("");
+  
+  const [tokenCopied, setTokenCopied] = useState(false);
 
+  // Helper: Copy Token
+  const handleCopyToken = () => {
+    if (authToken) {
+      navigator.clipboard.writeText(authToken);
+      setTokenCopied(true);
+      setTimeout(() => setTokenCopied(false), 2000);
+    }
+  };
+
+  // Helper: Logout
+  const handleConsoleLogout = () => {
+    localStorage.removeItem("communityos_token");
+    setAuthToken(null);
+    setCurrentUser(null);
+    setScreen("landing");
+  };
+
+  // Helper: Fetch Communities
+  const fetchCommunities = async (token: string) => {
+    try {
+      const resAll = await fetch("http://localhost:8000/api/communities");
+      if (resAll.ok) {
+        const json = await resAll.json();
+        setCommunitiesList(json);
+      }
+      const resMy = await fetch("http://localhost:8000/api/communities/my", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (resMy.ok) {
+        const json = await resMy.json();
+        setMyCommunitiesList(json);
+      }
+    } catch (e) {
+      console.error("Error fetching communities:", e);
+    }
+  };
+
+  // Helper: Fetch Current User
+  const fetchCurrentUser = async (token: string) => {
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/me", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setCurrentUser(json);
+        setEditFullName(json.full_name || "");
+        setEditBio(json.bio || "");
+        setEditSkills(json.tags ? json.tags.join(", ") : "");
+        setEditLevel(json.skill_level || "Beginner");
+        setEditGoals(json.goals ? json.goals.join(", ") : "");
+        setEditStyle(json.learning_style || "");
+      }
+    } catch (e) {
+      console.error("Error fetching current user:", e);
+    }
+  };
+
+  // Helper: Login
+  const handleConsoleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/login-json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: loginId, password: loginPassword })
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setAuthToken(json.access_token);
+        localStorage.setItem("communityos_token", json.access_token);
+        await fetchCurrentUser(json.access_token);
+        await fetchCommunities(json.access_token);
+        setAuthSuccess("Logged in successfully!");
+      } else {
+        setAuthError(json.detail || "Login failed.");
+      }
+    } catch {
+      setAuthError("Could not connect to the authentication server.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Helper: Register
+  const handleConsoleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: registerId,
+          email: registerEmail,
+          full_name: registerFullName,
+          password: registerPassword
+        })
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setAuthSuccess("Registration successful! You can now log in.");
+      } else {
+        setAuthError(json.detail || "Registration failed.");
+      }
+    } catch {
+      setAuthError("Could not connect to the registration server.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Helper: Update Profile
+  const handleConsoleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authToken || !currentUser) return;
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthLoading(true);
+    try {
+      const tags = editSkills.split(",").map(s => s.trim()).filter(Boolean);
+      const goals = editGoals.split(",").map(g => g.trim()).filter(Boolean);
+      const res = await fetch("http://localhost:8000/api/auth/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          full_name: editFullName,
+          bio: editBio,
+          tags: tags,
+          skill_level: editLevel,
+          goals: goals,
+          learning_style: editStyle
+        })
+      });
+      const updatedProfile = await res.json();
+      if (res.ok) {
+        setCurrentUser(updatedProfile);
+        setAuthSuccess("Profile updated successfully!");
+      } else {
+        setAuthError(updatedProfile.detail || "Failed to update profile.");
+      }
+    } catch {
+      setAuthError("Could not connect to the profile server.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleCreateCommunity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authToken) return;
+    setAuthError(null);
+    setAuthSuccess(null);
+    if (!newCommId || !newCommName) {
+      setAuthError("Please fill in slug and name fields.");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/communities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          id: newCommId,
+          name: newCommName,
+          category: newCommCategory,
+          description: newCommDescription
+        })
+      });
+      const resJson = await res.json();
+      if (res.ok) {
+        setAuthSuccess(`Community "${newCommName}" created successfully!`);
+        setNewCommId("");
+        setNewCommName("");
+        setNewCommDescription("");
+        await fetchCommunities(authToken);
+      } else {
+        setAuthError(resJson.detail || "Failed to create community.");
+      }
+    } catch {
+      setAuthError("Could not connect to the community server.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleJoinCommunity = async (commId: string) => {
+    if (!authToken) return;
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8000/api/communities/${commId}/join`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${authToken}`
+        }
+      });
+      const resJson = await res.json();
+      if (res.ok) {
+        setAuthSuccess("Joined community successfully!");
+        await fetchCommunities(authToken);
+      } else {
+        setAuthError(resJson.detail || "Failed to join community.");
+      }
+    } catch {
+      setAuthError("Could not connect to the community server.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+  
   // Simulation states
   const [executedActions, setExecutedActions] = useState<Record<string, boolean>>({});
   const [executingActionId, setExecutingActionId] = useState<string | null>(null);
@@ -202,21 +461,31 @@ export default function Home() {
     };
 
     const init = async () => {
-      const sb = await getSupabaseClient();
-      if (sb) {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session?.user) {
-          await routeAfterAuth(session.user.id, session.user.email ?? null);
-        }
-        sb.auth.onAuthStateChange((_event, s) => {
-          if (s?.user) {
-            routeAfterAuth(s.user.id, s.user.email ?? null);
+      const savedToken = localStorage.getItem("communityos_token");
+      if (savedToken) {
+        try {
+          const res = await fetch("http://localhost:8000/api/auth/me", {
+            headers: { "Authorization": `Bearer ${savedToken}` }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            setUserEmail(json.email);
+            setSupabaseUserId(json.user_id);
+            setPersona(json.user_id);
+            if (json.bio && json.current_role) {
+              setScreen("demo");
+            } else {
+              setScreen("onboarding");
+            }
           } else {
-            setUserEmail(null);
-            setSupabaseUserId(null);
+            localStorage.removeItem("communityos_token");
             setScreen("auth");
           }
-        });
+        } catch {
+          setScreen("auth");
+        }
+      } else {
+        setScreen("auth");
       }
       setSessionChecked(true);
     };
@@ -228,27 +497,79 @@ export default function Home() {
     e.preventDefault();
     setAuthError("");
     setAuthLoading(true);
-    const sb = await getSupabaseClient();
-    if (!sb) { setAuthError("Backend offline — cannot reach auth service."); setAuthLoading(false); return; }
-    const { error } = await sb.auth.signInWithPassword({ email: authEmail, password: authPassword });
-    if (error) setAuthError(error.message);
-    setAuthLoading(false);
+    setAuthSuccess(null);
+    try {
+      const userId = authEmail.includes("@") ? authEmail.split("@")[0] : authEmail;
+      const res = await fetch("http://localhost:8000/api/auth/login-json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, password: authPassword }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setSupabaseUserId(userId);
+        setUserEmail(authEmail.includes("@") ? authEmail : `${userId}@communeos.ai`);
+        localStorage.setItem("communityos_token", json.access_token);
+        
+        // Fetch profile to route correctly
+        const profRes = await fetch("http://localhost:8000/api/auth/me", {
+          headers: { "Authorization": `Bearer ${json.access_token}` }
+        });
+        if (profRes.ok) {
+          const profJson = await profRes.json();
+          setPersona(profJson.user_id);
+          if (profJson.bio && profJson.current_role) {
+            setScreen("demo");
+          } else {
+            setScreen("onboarding");
+          }
+        } else {
+          setScreen("onboarding");
+        }
+      } else {
+        setAuthError(json.detail || "Invalid login credentials.");
+      }
+    } catch {
+      setAuthError("Failed to reach auth backend.");
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     setAuthLoading(true);
-    const sb = await getSupabaseClient();
-    if (!sb) { setAuthError("Backend offline — cannot reach auth service."); setAuthLoading(false); return; }
-    const { error } = await sb.auth.signUp({ email: authEmail, password: authPassword });
-    if (error) { setAuthError(error.message); } else { setAuthMode("verify"); }
-    setAuthLoading(false);
+    setAuthSuccess(null);
+    try {
+      const userId = authEmail.includes("@") ? authEmail.split("@")[0] : authEmail;
+      const email = authEmail.includes("@") ? authEmail : `${userId}@communeos.ai`;
+      const res = await fetch("http://localhost:8000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          email: email,
+          password: authPassword,
+          full_name: userId,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setAuthSuccess("Registration successful! You can now log in.");
+        setAuthMode("login");
+      } else {
+        setAuthError(json.detail || "Registration failed.");
+      }
+    } catch {
+      setAuthError("Failed to reach auth backend.");
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleLogout = async () => {
-    const sb = await getSupabaseClient();
-    if (sb) await sb.auth.signOut();
+    localStorage.removeItem("communityos_token");
     setUserEmail(null);
     setSupabaseUserId(null);
     setScreen("auth");
@@ -264,20 +585,20 @@ export default function Home() {
       return;
     }
     try {
-      const skills = onboardingSkills.split(",").map(s => s.trim()).filter(Boolean);
-      const goals = onboardingGoals.split(",").map(g => g.trim()).filter(Boolean);
-      const username = (userEmail ?? supabaseUserId).split("@")[0];
-      const res = await fetch("http://localhost:8000/api/v1/users/create", {
+      const formData = new FormData();
+      formData.append("username", onboardingName || (userEmail ?? supabaseUserId).split("@")[0]);
+      formData.append("bio", onboardingBio);
+      formData.append("current_role", onboardingRole);
+      formData.append("skill_level", onboardingSkillLevel);
+      formData.append("interests", onboardingInterests);
+      formData.append("goals", onboardingCareerGoal);
+      if (onboardingResume) {
+        formData.append("resume", onboardingResume);
+      }
+
+      const res = await fetch(`http://localhost:8000/api/v1/users/${supabaseUserId}/onboard`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: supabaseUserId,
-          username,
-          bio: onboardingBio,
-          tags: skills,
-          interests: goals,
-          goals,
-        }),
+        body: formData,
       });
       if (!res.ok) throw new Error("Backend error");
       setPersona(supabaseUserId);
@@ -452,34 +773,92 @@ export default function Home() {
 
           <form onSubmit={handleOnboarding} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Bio</label>
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Name</label>
+              <input
+                required
+                type="text"
+                value={onboardingName}
+                onChange={e => setOnboardingName(e.target.value)}
+                placeholder="Rahul"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Current Role</label>
+                <input
+                  required
+                  type="text"
+                  value={onboardingRole}
+                  onChange={e => setOnboardingRole(e.target.value)}
+                  placeholder="Student"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Skill Level</label>
+                <select
+                  required
+                  value={onboardingSkillLevel}
+                  onChange={e => setOnboardingSkillLevel(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Expert">Expert</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Interests <span className="text-slate font-normal normal-case">(comma separated)</span></label>
+              <input
+                required
+                type="text"
+                value={onboardingInterests}
+                onChange={e => setOnboardingInterests(e.target.value)}
+                placeholder="GPU Programming, Linux"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Career Goal</label>
+              <input
+                required
+                type="text"
+                value={onboardingCareerGoal}
+                onChange={e => setOnboardingCareerGoal(e.target.value)}
+                placeholder="Become an AI Systems Engineer"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Short Bio</label>
               <textarea
                 required
                 rows={3}
                 value={onboardingBio}
                 onChange={e => setOnboardingBio(e.target.value)}
-                placeholder="What are you building or learning? Your background, interests..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30 resize-none"
+                placeholder="I love Linux and GPU programming."
+                className="w-full px-3.5 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30 resize-none"
               />
             </div>
+
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Skills <span className="text-slate font-normal normal-case">(comma separated)</span></label>
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Upload Resume <span className="text-slate font-normal normal-case">(PDF)</span></label>
               <input
-                type="text"
-                value={onboardingSkills}
-                onChange={e => setOnboardingSkills(e.target.value)}
-                placeholder="Python, C++, Machine Learning..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Goals <span className="text-slate font-normal normal-case">(comma separated)</span></label>
-              <input
-                type="text"
-                value={onboardingGoals}
-                onChange={e => setOnboardingGoals(e.target.value)}
-                placeholder="Get an internship, learn systems programming..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+                type="file"
+                accept=".pdf"
+                onChange={e => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setOnboardingResume(e.target.files[0]);
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-slate/30 bg-fog text-carbon text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-signal-orange file:text-white hover:file:bg-sienna-bronze"
               />
             </div>
 
@@ -505,17 +884,13 @@ export default function Home() {
 
       {/* HEADER / FLOATING NAV BAR */}
       <header className="w-full py-6 px-6 md:px-12 flex justify-between items-center max-w-[1200px] mx-auto z-40">
-
-        {/* LOGO MARK: ventriloc with trailing orange swoosh */}
+        {/* LOGO MARK: communeos with trailing orange swoosh */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setScreen("landing")}>
           <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon relative flex items-center">
-            ventriloc
+            communeos
             <svg className="w-6 h-6 text-signal-orange ml-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M3 17C9 17 15 13 21 5" />
             </svg>
-          </span>
-          <span className="text-[10px] bg-carbon text-white px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold">
-            COMMUNEOS
           </span>
         </div>
 
@@ -533,6 +908,12 @@ export default function Home() {
           >
             Interactive Demo
           </button>
+          <button 
+            onClick={() => setScreen("auth-console")} 
+            className={`px-3 py-1 text-sm font-medium transition-all rounded-full ${screen === "auth-console" ? "text-signal-orange" : "text-carbon hover:text-graphite"}`}
+          >
+            Auth Console
+          </button>
           <span className="w-px h-4 bg-slate/20 mx-2" />
           <div className="flex items-center gap-1.5 text-xs text-graphite">
             <span className={`w-2 h-2 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} />
@@ -543,11 +924,11 @@ export default function Home() {
         {/* USER + CTA */}
         <div className="flex items-center gap-4">
           {userEmail && (
-            <div className="hidden md:flex items-center gap-2 text-xs text-graphite">
+            <div className="flex items-center gap-1.5 md:gap-2 text-xs text-graphite">
               <div className="w-6 h-6 rounded-full bg-signal-orange/10 flex items-center justify-center">
                 <User className="w-3.5 h-3.5 text-signal-orange" />
               </div>
-              <span className="max-w-[140px] truncate">{userEmail}</span>
+              <span className="max-w-[80px] md:max-w-[140px] truncate font-medium">{userEmail.split("@")[0]}</span>
               <button onClick={handleLogout} title="Sign out" className="p-1 rounded-full hover:bg-chalk transition-colors">
                 <LogOut className="w-3.5 h-3.5 text-graphite" />
               </button>
@@ -583,10 +964,7 @@ export default function Home() {
               
               {/* Left Column: Headline & Action Buttons */}
               <div className="md:col-span-6 flex flex-col items-start text-left">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sienna-bronze/10 border border-sienna-bronze/20 text-sienna-bronze text-[11px] font-semibold uppercase tracking-wider mb-6">
-                  <Sparkles className="w-3.5 h-3.5" /> Hackathon Track 2 Project
-                </div>
-                
+
                 {/* HERO HEADLINE: Compressed Monument style (PolySans, tight line-height) */}
                 <h1 className="font-polysans font-normal text-[52px] md:text-[66px] leading-[0.91] tracking-[-1.32px] text-carbon">
                   Traditional <br />
@@ -601,12 +979,18 @@ export default function Home() {
                 </p>
                 
                 {/* CTA CLUSTER: Carbon-filled & outlined pill buttons */}
-                <div className="flex flex-row gap-4 mt-8 w-full sm:w-auto">
+                <div className="flex flex-row flex-wrap gap-4 mt-8 w-full sm:w-auto">
                   <button 
                     onClick={() => setScreen("demo")}
                     className="px-6 py-3 rounded-full bg-carbon text-white font-medium text-[15px] hover:bg-graphite active:scale-95 transition-all shadow-[0_1px_3px_rgba(32,32,32,0.04)] flex items-center justify-center gap-2"
                   >
                     Interactive Demo <Play className="w-4 h-4 fill-white" />
+                  </button>
+                  <button 
+                    onClick={() => setScreen("auth-console")}
+                    className="px-6 py-3 rounded-full bg-[#ffffff] border border-carbon text-carbon font-medium text-[15px] hover:bg-fog active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse hover:animate-none"
+                  >
+                    Auth Console <Lock className="w-4 h-4" />
                   </button>
                   <a 
                     href="#agents-info"
@@ -1038,8 +1422,18 @@ export default function Home() {
                       
                       {/* Welcome Banner (Parchment background with signal orange left border) */}
                       <div className="p-6 rounded-[8px] bg-fog border-l-4 border-l-signal-orange border-y border-r border-chalk relative overflow-hidden">
-                        <h2 className="font-polysans text-2xl font-normal text-carbon mb-2">Welcome back, {data.name}!</h2>
-                        <p className="text-xs text-graphite leading-relaxed max-w-2xl">{data.welcome_message}</p>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                          <div>
+                            <h2 className="font-polysans text-2xl font-normal text-carbon mb-2">Welcome back, {data.name}!</h2>
+                            <p className="text-xs text-graphite leading-relaxed max-w-2xl">{data.welcome_message}</p>
+                          </div>
+                          <button
+                            onClick={() => setScreen("onboarding")}
+                            className="px-3.5 py-2 text-[10px] font-bold bg-white hover:bg-slate-50 text-carbon rounded-full border border-chalk transition-all shrink-0 shadow-sm flex items-center gap-1.5 w-fit"
+                          >
+                            <User className="w-3.5 h-3.5 text-signal-orange" /> Edit Profile & Resume
+                          </button>
+                        </div>
                         
                         {/* Skills Model */}
                         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1679,11 +2073,550 @@ export default function Home() {
           </div>
         )}
 
+        {/* ================= AUTH CONSOLE / PHASE 1 SCREEN ================= */}
+        {screen === "auth-console" && (
+          <div className="flex-1 flex flex-col w-full max-w-[1200px] mx-auto px-6 py-8">
+            
+            {/* UNAUTHENTICATED: LOGIN / REGISTER */}
+            {!authToken ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start my-auto py-8">
+                
+                {/* Intro / Marketing Card (Left side) */}
+                <div className="lg:col-span-5 flex flex-col justify-between h-full bg-white border border-chalk rounded-[8px] p-8 shadow-sm">
+                  <div>
+                    <span className="text-[10px] bg-signal-orange/10 text-signal-orange border border-signal-orange/20 px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold uppercase">
+                      Phase 1 Console
+                    </span>
+                    <h2 className="font-polysans text-2xl font-normal text-carbon mt-4 mb-4 tracking-tight">
+                      Authentication & Multi-Tenant Communities
+                    </h2>
+                    <p className="text-xs text-graphite leading-relaxed mb-6">
+                      Welcome to the system integration console. This sandbox interacts directly with your local FastAPI server to configure identities, manage community spaces, and test authentication logic.
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-carbon">1</span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-carbon">Decentralized Tenants</h4>
+                          <p className="text-[11px] text-slate mt-0.5 leading-relaxed">
+                            Create self-contained community tenant slices dynamically with individual member roles.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-carbon">2</span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-carbon">Rich Profile Identity</h4>
+                          <p className="text-[11px] text-slate mt-0.5 leading-relaxed">
+                            Establish user skills, skill levels, learning styles, and objectives to feed agent recommendations.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-carbon">3</span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-carbon">JWT Cryptography</h4>
+                          <p className="text-[11px] text-slate mt-0.5 leading-relaxed">
+                            Secure API exchange utilizing signature-verified tokens saved directly in your session.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-12 pt-6 border-t border-chalk flex items-center justify-between text-[11px] text-slate font-mono">
+                    <span>Server Status:</span>
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <span className={`w-2 h-2 rounded-full ${backendStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      {backendStatus === "connected" ? "FASTAPI ACTIVE" : "SERVER OFFLINE"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Forms (Right side) */}
+                <div className="lg:col-span-7 space-y-6">
+                  
+                  {/* Status Messages */}
+                  {authError && (
+                    <div className="p-4 bg-signal-orange/10 border border-signal-orange/20 text-signal-orange text-xs font-mono rounded-[8px] flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{authError}</span>
+                    </div>
+                  )}
+
+                  {authSuccess && (
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-mono rounded-[8px] flex items-center gap-2">
+                      <Check className="w-4 h-4 shrink-0" />
+                      <span>{authSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Sign In & Register Side-by-side or Stacked */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {/* Log In Card */}
+                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm flex flex-col justify-between">
+                      <form onSubmit={handleConsoleLogin} className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Lock className="w-4 h-4 text-carbon" />
+                          <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Sign In</h3>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">User ID / Username</label>
+                          <input 
+                            type="text"
+                            value={loginId}
+                            onChange={(e) => setLoginId(e.target.value)}
+                            placeholder="e.g. rahul"
+                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Password</label>
+                          <input 
+                            type="password"
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
+                          />
+                        </div>
+
+                        <button 
+                          type="submit"
+                          disabled={authLoading}
+                          className="w-full py-2.5 bg-carbon hover:bg-graphite text-white font-semibold text-xs rounded-full transition-all disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+                        >
+                          {authLoading ? "Verifying..." : "Access Console"}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Registration Card */}
+                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm">
+                      <form onSubmit={handleConsoleRegister} className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="w-4 h-4 text-carbon" />
+                          <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Create Account</h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">User ID (Unique)</label>
+                            <input 
+                              type="text"
+                              value={registerId}
+                              onChange={(e) => setRegisterId(e.target.value)}
+                              placeholder="e.g. priya"
+                              className="w-full px-3 py-2 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Full Name</label>
+                            <input 
+                              type="text"
+                              value={registerFullName}
+                              onChange={(e) => setRegisterFullName(e.target.value)}
+                              placeholder="Priya Patel"
+                              className="w-full px-3 py-2 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Email Address</label>
+                          <input 
+                            type="email"
+                            value={registerEmail}
+                            onChange={(e) => setRegisterEmail(e.target.value)}
+                            placeholder="priya@example.com"
+                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Password</label>
+                          <input 
+                            type="password"
+                            value={registerPassword}
+                            onChange={(e) => setRegisterPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/60"
+                          />
+                        </div>
+
+                        <button 
+                          type="submit"
+                          disabled={authLoading}
+                          className="w-full py-2.5 bg-[#ffffff] hover:bg-fog text-carbon border border-carbon font-semibold text-xs rounded-full transition-all disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+                        >
+                          {authLoading ? "Creating..." : "Sign Up"}
+                        </button>
+                      </form>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            ) : (
+              <div className="space-y-6">
+                
+                {/* BANNED WITH SESSION TOKEN INFO */}
+                <div className="bg-white border border-chalk rounded-[8px] px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-sienna-bronze/10 border border-sienna-bronze/20 flex items-center justify-center text-sienna-bronze">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-carbon">
+                        Welcome, {currentUser?.full_name || currentUser?.id}
+                      </h2>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-slate font-mono bg-fog border border-chalk px-2 py-0.5 rounded">
+                          ID: {currentUser?.id}
+                        </span>
+                        <span className="text-[10px] text-slate font-mono bg-fog border border-chalk px-2 py-0.5 rounded">
+                          Role: Member
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center bg-fog border border-chalk rounded-full px-3 py-1 text-[11px] font-mono text-graphite max-w-full md:max-w-xs lg:max-w-sm truncate">
+                      <span className="text-slate select-none mr-1.5 font-bold">TOKEN:</span>
+                      <span className="truncate select-all">{authToken.slice(0, 15)}...{authToken.slice(-8)}</span>
+                      <button 
+                        onClick={handleCopyToken}
+                        className="ml-2 hover:text-carbon text-slate p-0.5 transition-all relative cursor-pointer"
+                        title="Copy session token"
+                      >
+                        {tokenCopied ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-500 animate-scale" />
+                        ) : (
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+
+                    <button 
+                      onClick={handleLogout}
+                      className="px-4 py-1.5 rounded-full border border-carbon text-carbon hover:bg-fog active:scale-95 text-xs font-bold transition-all shrink-0 cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status Messages */}
+                {authError && (
+                  <div className="p-4 bg-signal-orange/10 border border-signal-orange/20 text-signal-orange text-xs font-mono rounded-[8px] flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{authError}</span>
+                  </div>
+                )}
+
+                {authSuccess && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-mono rounded-[8px] flex items-center gap-2">
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>{authSuccess}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  {/* LEFT COLUMN: IDENTITY PROFILE SETUP */}
+                  <div className="lg:col-span-5 bg-white border border-chalk rounded-[8px] p-6 shadow-sm space-y-6">
+                    <div className="flex items-center gap-2 border-b border-chalk pb-4">
+                      <Sparkles className="w-4 h-4 text-signal-orange" />
+                      <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Identity Agent Configuration</h3>
+                    </div>
+
+                    <form onSubmit={handleConsoleUpdateProfile} className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Full Name</label>
+                        <input 
+                          type="text"
+                          value={editFullName}
+                          onChange={(e) => setEditFullName(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Professional Bio</label>
+                        <textarea 
+                          rows={3}
+                          value={editBio}
+                          onChange={(e) => setEditBio(e.target.value)}
+                          placeholder="Briefly describe your low-level systems or deep learning background..."
+                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50 resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Skills (Comma Separated)</label>
+                        <input 
+                          type="text"
+                          value={editSkills}
+                          onChange={(e) => setEditSkills(e.target.value)}
+                          placeholder="e.g. CUDA, PyTorch, C++, Rust"
+                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Skill Level</label>
+                        <div className="relative">
+                          <select 
+                            value={editLevel}
+                            onChange={(e) => setEditLevel(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all appearance-none cursor-pointer"
+                          >
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                          </select>
+                          <ChevronDown className="w-4 h-4 text-slate absolute right-3.5 top-3 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Learning Goals</label>
+                        <textarea 
+                          rows={2}
+                          value={editGoals}
+                          onChange={(e) => setEditGoals(e.target.value)}
+                          placeholder="What do you want to accomplish?"
+                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50 resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Learning Style</label>
+                        <input 
+                          type="text"
+                          value={editStyle}
+                          onChange={(e) => setEditStyle(e.target.value)}
+                          placeholder="e.g. hands-on builds, paper study groups"
+                          className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
+                        />
+                      </div>
+
+                      <button 
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full py-2.5 bg-carbon hover:bg-graphite text-white font-semibold text-xs rounded-full transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2"
+                      >
+                        {authLoading ? "Saving Changes..." : "Update Identity Context"}
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* RIGHT COLUMN: MULTI-TENANT COMMUNITIES */}
+                  <div className="lg:col-span-7 space-y-6">
+                    
+                    {/* Create New Community */}
+                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm">
+                      <div className="flex items-center gap-2 border-b border-chalk pb-4 mb-4">
+                        <Users className="w-4 h-4 text-sienna-bronze" />
+                        <h3 className="font-polysans text-base font-normal text-carbon tracking-tight">Create Tenant Community</h3>
+                      </div>
+
+                      <form onSubmit={handleCreateCommunity} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Community Slug ID</label>
+                            <input 
+                              type="text"
+                              value={newCommId}
+                              onChange={(e) => setNewCommId(e.target.value)}
+                              placeholder="e.g. rust-systems"
+                              className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Community Name</label>
+                            <input 
+                              type="text"
+                              value={newCommName}
+                              onChange={(e) => setNewCommName(e.target.value)}
+                              placeholder="e.g. Rust Systems Programming"
+                              className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Category</label>
+                            <div className="relative">
+                              <select 
+                                value={newCommCategory}
+                                onChange={(e) => setNewCommCategory(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="Tech">Tech</option>
+                                <option value="Design">Design</option>
+                                <option value="Product">Product</option>
+                                <option value="General">General</option>
+                              </select>
+                              <ChevronDown className="w-4 h-4 text-slate absolute right-3.5 top-3 pointer-events-none" />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate uppercase tracking-wider mb-1.5">Description</label>
+                            <input 
+                              type="text"
+                              value={newCommDescription}
+                              onChange={(e) => setNewCommDescription(e.target.value)}
+                              placeholder="Low-level memory management and runtime kernels..."
+                              className="w-full px-4 py-2.5 rounded-[8px] bg-fog border border-chalk text-carbon text-xs font-medium focus:outline-none focus:border-signal-orange focus:ring-1 focus:ring-signal-orange transition-all placeholder:text-slate/50"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button 
+                            type="submit"
+                            disabled={authLoading}
+                            className="px-6 py-2.5 bg-carbon hover:bg-graphite text-white font-semibold text-xs rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            Create Tenant Slice
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+
+                    {/* Communities Joined & Available */}
+                    <div className="bg-white border border-chalk rounded-[8px] p-6 shadow-sm space-y-6">
+                      
+                      {/* My Communities Slices */}
+                      <div>
+                        <h4 className="text-xs font-bold text-carbon uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-signal-orange shrink-0" />
+                          My Communities ({myCommunitiesList.length})
+                        </h4>
+                        
+                        {myCommunitiesList.length === 0 ? (
+                          <div className="p-6 rounded-[8px] bg-fog border border-chalk text-center text-xs text-slate">
+                            You haven&apos;t joined or created any communities yet.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {myCommunitiesList.map((comm) => (
+                              <div key={comm.id} className="p-4 rounded-[8px] bg-fog border border-chalk flex flex-col justify-between">
+                                <div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-bold text-carbon text-xs truncate">{comm.name}</span>
+                                    <span className="text-[9px] bg-sienna-bronze/10 text-sienna-bronze border border-sienna-bronze/20 px-2 py-0.5 rounded font-mono font-semibold">
+                                      {comm.category}
+                                    </span>
+                                  </div>
+                                  <span className="text-[9px] text-slate font-mono block mt-1">Slug: {comm.id}</span>
+                                  <p className="text-[11px] text-graphite mt-2 leading-normal line-clamp-2">
+                                    {comm.description || "No description provided."}
+                                  </p>
+                                </div>
+                                <div className="mt-3 pt-3 border-t border-chalk flex justify-between items-center text-[10px]">
+                                  <span className="text-slate font-medium">Role: {comm.created_by === currentUser?.id ? "Owner" : "Member"}</span>
+                                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                                    <Check className="w-3 h-3" /> Active Session
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Explore Communities */}
+                      <div className="pt-4 border-t border-chalk">
+                        <h4 className="text-xs font-bold text-carbon uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sienna-bronze shrink-0" />
+                          Explore Communities ({communitiesList.length})
+                        </h4>
+                        
+                        {communitiesList.length === 0 ? (
+                          <div className="p-6 rounded-[8px] bg-fog border border-chalk text-center text-xs text-slate">
+                            No communities exist on this server. Create the first one above!
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {communitiesList.map((comm) => {
+                              const isJoined = myCommunitiesList.some(mc => mc.id === comm.id);
+                              return (
+                                <div key={comm.id} className="p-4 rounded-[8px] border border-chalk flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white hover:bg-fog/30 transition-all">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-carbon text-xs">{comm.name}</span>
+                                      <span className="text-[9px] bg-slate/10 text-slate border border-slate/20 px-2 py-0.5 rounded font-mono font-medium">
+                                        {comm.category}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-graphite leading-relaxed">
+                                      {comm.description || "No description provided."}
+                                    </p>
+                                    <span className="text-[9px] text-slate font-mono block">Slug: {comm.id} &bull; Created by: {comm.created_by}</span>
+                                  </div>
+
+                                  <div className="shrink-0 flex items-center">
+                                    {isJoined ? (
+                                      <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5">
+                                        <Check className="w-3.5 h-3.5" /> Joined Slice
+                                      </span>
+                                    ) : (
+                                      <button 
+                                        onClick={() => handleJoinCommunity(comm.id)}
+                                        disabled={authLoading}
+                                        className="px-4 py-1.5 rounded-full bg-carbon hover:bg-graphite text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+                                      >
+                                        Join Space
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        )}
+
       </main>
 
       {/* FOOTER */}
       <footer className="py-10 px-6 border-t border-chalk text-center text-xs text-slate max-w-[1200px] mx-auto w-full mt-auto">
-        &copy; {new Date().getFullYear()} Ventriloc --- CommunityOS AI-Powered personalizations. Built for Track 2.
+        &copy; {new Date().getFullYear()} CommuneOS --- AI-Powered personalizations.
       </footer>
     </div>
   );

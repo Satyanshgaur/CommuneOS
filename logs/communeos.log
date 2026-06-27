@@ -19,3 +19,556 @@
 2026-06-27 03:45:01 | WARNING  | communeos.errors          | validation_exception_handler:37 | Validation error on http://localhost:8000/api/v1/users/create: [{'type': 'list_type', 'loc': ('body', 'goals'), 'msg': 'Input should be a valid list', 'input': 'Master CUDA'}]
 2026-06-27 03:45:59 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
 2026-06-27 03:45:59 | INFO     | communeos.main            | on_shutdown:83 | CommuneOS Backend shutdown complete
+2026-06-27 14:22:40 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 8375.3ms
+2026-06-27 14:26:04 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 14:26:04 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 14:26:29 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 25267ms | success=True | fallback=False
+2026-06-27 14:26:29 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for testuser: Tech stack []
+2026-06-27 14:26:29 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 25268ms | success=True | fallback=False
+2026-06-27 14:26:29 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:29 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 14:26:30 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 377ms | success=True | fallback=False
+2026-06-27 14:26:30 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 377ms | success=True | fallback=True
+2026-06-27 14:26:30 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:30 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 14:26:30 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 366ms | success=True | fallback=False
+2026-06-27 14:26:30 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for testuser: 1 channels recommended
+2026-06-27 14:26:30 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 366ms | success=True | fallback=False
+2026-06-27 14:26:30 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:30 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 14:26:30 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 404ms | success=True | fallback=False
+2026-06-27 14:26:30 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 405ms | success=True | fallback=True
+2026-06-27 14:26:30 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:30 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:26:31 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 443ms | success=True | fallback=False
+2026-06-27 14:26:31 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for testuser: 4 weeks, 1 milestones
+2026-06-27 14:26:31 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 444ms | success=True | fallback=False
+2026-06-27 14:26:31 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:31 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:26:31 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 389ms | success=True | fallback=False
+2026-06-27 14:26:31 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 390ms | success=True | fallback=True
+2026-06-27 14:26:31 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:31 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 376ms | success=True | fallback=False
+2026-06-27 14:26:32 | INFO     | communeos.agent.mentor    | _process:180 | Mentor matched for testuser: Sarah Jenkins
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 376ms | success=True | fallback=False
+2026-06-27 14:26:32 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:32 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 360ms | success=True | fallback=False
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 360ms | success=True | fallback=True
+2026-06-27 14:26:32 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:26:32 | INFO     | communeos.agent.health    | _analyze_community:172 | Health analysis complete: score=0.82, at_risk=0
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=False
+2026-06-27 14:26:32 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=True
+2026-06-27 14:26:32 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:26:32 | INFO     | communeos.agent.organizer | _generate_actions:157 | Organizer plan generated: 1 actions, 0 events
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=False
+2026-06-27 14:26:32 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:26:32 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=True
+2026-06-27 14:26:32 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:26:54 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: test_user
+2026-06-27 14:31:38 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 14:31:38 | INFO     | communeos.services.vector_db | seed_community_database:50 | Seeding community memory collection...
+2026-06-27 14:31:40 | INFO     | communeos.services.vector_db | seed_community_database:137 | Community memory successfully seeded with 54 items.
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:85 | ============================================================
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:86 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:87 |   Running on http://0.0.0.0:8000
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:88 |   API Docs: http://localhost:8000/docs
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:91 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:92 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:93 |   Mock Fallback: ON
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:94 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:96 |   Supabase: ⚠️  Missing
+2026-06-27 14:31:40 | INFO     | communeos.main            | on_startup:97 | ============================================================
+2026-06-27 14:41:50 | ERROR    | communeos.supabase_service | fetch_profile:67 | Supabase fetch error: Request URL is missing an 'http://' or 'https://' protocol.
+2026-06-27 14:41:50 | WARNING  | communeos.endpoint.users  | get_user:207 | User not found: local-user
+2026-06-27 14:42:21 | ERROR    | communeos.supabase_service | fetch_profile:67 | Supabase fetch error: Request URL is missing an 'http://' or 'https://' protocol.
+2026-06-27 14:42:21 | WARNING  | communeos.endpoint.users  | get_user:207 | User not found: local-user
+2026-06-27 14:43:13 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
+2026-06-27 14:43:13 | INFO     | communeos.main            | on_shutdown:120 | CommuneOS Backend shutdown complete
+2026-06-27 14:43:15 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 14:43:15 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:85 | ============================================================
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:86 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:87 |   Running on http://0.0.0.0:8000
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:88 |   API Docs: http://localhost:8000/docs
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:91 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:92 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:93 |   Mock Fallback: ON
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:94 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:96 |   Supabase: ⚠️  Missing
+2026-06-27 14:43:15 | INFO     | communeos.main            | on_startup:97 | ============================================================
+2026-06-27 14:43:16 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
+2026-06-27 14:43:16 | INFO     | communeos.main            | on_shutdown:120 | CommuneOS Backend shutdown complete
+2026-06-27 14:43:18 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 14:43:18 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:86 | ============================================================
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:87 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:88 |   Running on http://0.0.0.0:8000
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:89 |   API Docs: http://localhost:8000/docs
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:92 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:93 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:94 |   Mock Fallback: ON
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:95 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:97 |   Supabase: ⚠️  Missing
+2026-06-27 14:43:18 | INFO     | communeos.main            | on_startup:98 | ============================================================
+2026-06-27 14:43:44 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 14:43:44 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 14:43:44 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 428ms | success=True | fallback=False
+2026-06-27 14:43:44 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for testuser: Tech stack []
+2026-06-27 14:43:44 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 428ms | success=True | fallback=False
+2026-06-27 14:43:44 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:44 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 14:43:45 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 325ms | success=True | fallback=False
+2026-06-27 14:43:45 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 326ms | success=True | fallback=True
+2026-06-27 14:43:45 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:45 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 14:43:45 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 315ms | success=True | fallback=False
+2026-06-27 14:43:45 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for testuser: 1 channels recommended
+2026-06-27 14:43:45 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 316ms | success=True | fallback=False
+2026-06-27 14:43:45 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:45 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 14:43:45 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 317ms | success=True | fallback=False
+2026-06-27 14:43:45 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 317ms | success=True | fallback=True
+2026-06-27 14:43:45 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:45 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:43:46 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 305ms | success=True | fallback=False
+2026-06-27 14:43:46 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for testuser: 4 weeks, 1 milestones
+2026-06-27 14:43:46 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 305ms | success=True | fallback=False
+2026-06-27 14:43:46 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:46 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:43:46 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 310ms | success=True | fallback=False
+2026-06-27 14:43:46 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 310ms | success=True | fallback=True
+2026-06-27 14:43:46 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:46 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:43:46 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 317ms | success=True | fallback=False
+2026-06-27 14:43:46 | INFO     | communeos.agent.mentor    | _process:180 | Mentor matched for testuser: Sarah Jenkins
+2026-06-27 14:43:46 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 318ms | success=True | fallback=False
+2026-06-27 14:43:46 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:46 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 14:43:47 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 306ms | success=True | fallback=False
+2026-06-27 14:43:47 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 307ms | success=True | fallback=True
+2026-06-27 14:43:47 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 14:43:47 | INFO     | communeos.agent.health    | _analyze_community:172 | Health analysis complete: score=0.82, at_risk=0
+2026-06-27 14:43:47 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=False
+2026-06-27 14:43:47 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:43:47 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=True
+2026-06-27 14:43:47 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:43:47 | INFO     | communeos.agent.organizer | _generate_actions:157 | Organizer plan generated: 1 actions, 0 events
+2026-06-27 14:43:47 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=False
+2026-06-27 14:43:47 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:43:47 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=True
+2026-06-27 14:43:47 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 14:43:50 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: test_user
+2026-06-27 14:44:17 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: satyanshgaur0
+2026-06-27 14:45:27 | INFO     | communeos.endpoint.users  | onboard_user:94 | Received resume upload: Satyansh_Gaur_Resume.pdf for satyanshgaur0
+2026-06-27 14:45:27 | INFO     | communeos.services.resume | extract_text_from_pdf:45 | Opening PDF resume: /home/satyansh/communeos/backend/api/data/resumes/satyanshgaur0.pdf
+2026-06-27 14:45:27 | INFO     | communeos.services.resume | extract_text_from_pdf:51 | Successfully extracted 4011 characters of text from PDF.
+2026-06-27 14:45:27 | INFO     | communeos.services.resume | parse_resume_text:58 | Calling Resume Extraction Agent...
+2026-06-27 14:45:42 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 15131.7ms
+2026-06-27 14:45:42 | INFO     | communeos.services.vector_db | add_user_resume_chunks:149 | Cleared existing resume memory for user: satyanshgaur0
+2026-06-27 14:45:42 | INFO     | communeos.services.vector_db | add_user_resume_chunks:177 | Uploaded 5 resume chunks to user_memory for satyanshgaur0
+2026-06-27 14:45:42 | INFO     | communeos.endpoint.users  | onboard_user:115 | Resume processed successfully for satyanshgaur0
+2026-06-27 14:45:42 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: satyanshgaur0
+2026-06-27 14:45:42 | ERROR    | communeos.supabase_service | upsert_profile:48 | Supabase upsert error: Request URL is missing an 'http://' or 'https://' protocol.
+2026-06-27 14:45:42 | INFO     | communeos.agent.memory    | _process:46 | [satyanshgaur0] Memory Agent querying with term: 'i love satellites and tle programming Became an ai infra engineer cuda linux'
+2026-06-27 14:45:43 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 343ms | success=True | fallback=False
+2026-06-27 14:46:04 | WARNING  | communeos.orchestrator    | run_member_pipeline:371 | [satyanshgaur0] Unified pipeline timeout
+2026-06-27 14:46:04 | INFO     | communeos.orchestrator    | _member_llm_pipeline:249 | [satyanshgaur0] Step 1/3 -> Identity Agent
+2026-06-27 14:46:04 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for satyanshgaur0
+2026-06-27 14:46:23 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 19001.9ms
+2026-06-27 14:46:23 | WARNING  | communeos.llm_service     | complete_json:202 | LLM JSON parse failed: Unterminated string starting at: line 33 column 5 (char 573) | text[:200]={
+  "current_skill_level": "Advanced",
+  "learning_goals": [
+    "Become an AI Infrastructure Engineer",
+    "Master satellite TLE programming",
+    "Deepen CUDA and Linux expertise"
+  ],
+  "primary_i
+2026-06-27 14:46:23 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 19004ms | success=True | fallback=True
+2026-06-27 14:46:23 | INFO     | communeos.orchestrator    | _member_llm_pipeline:253 | [satyanshgaur0] Identity done in 19004.0ms | fallback=True
+2026-06-27 14:46:23 | INFO     | communeos.orchestrator    | _member_llm_pipeline:258 | [satyanshgaur0] Step 2/3 -> Discovery + Learning (parallel)
+2026-06-27 14:46:23 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for satyanshgaur0
+2026-06-27 14:46:23 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for satyanshgaur0
+2026-06-27 14:46:43 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 20068.9ms
+2026-06-27 14:46:43 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for satyanshgaur0: 5 channels recommended
+2026-06-27 14:46:43 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 20070ms | success=True | fallback=False
+2026-06-27 14:46:49 | WARNING  | communeos.orchestrator    | run_member_pipeline:384 | [satyanshgaur0] Full pipeline timeout after 67003.3ms — instant mock fallback
+2026-06-27 14:49:56 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: suraj
+2026-06-27 14:53:58 | INFO     | communeos.endpoint.users  | onboard_user:94 | Received resume upload: My_Resume.pdf for suraj
+2026-06-27 14:53:58 | INFO     | communeos.services.resume | extract_text_from_pdf:45 | Opening PDF resume: /home/satyansh/communeos/backend/api/data/resumes/suraj.pdf
+2026-06-27 14:53:58 | INFO     | communeos.services.resume | extract_text_from_pdf:51 | Successfully extracted 4429 characters of text from PDF.
+2026-06-27 14:53:58 | INFO     | communeos.services.resume | parse_resume_text:58 | Calling Resume Extraction Agent...
+2026-06-27 14:54:25 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 27734.2ms
+2026-06-27 14:54:25 | WARNING  | communeos.llm_service     | complete_json:202 | LLM JSON parse failed: Expecting value: line 32 column 9 (char 568) | text[:200]={
+  "skills": [
+    "ETL",
+    "Data Pipeline",
+    "Distributed Systems",
+    "TimescaleDB",
+    "Data Warehouse",
+    "DuckDB",
+    "Arrow",
+    "Parquet",
+    "Model Evaluation",
+    "Feature Engin
+2026-06-27 14:54:25 | WARNING  | communeos.services.resume | parse_resume_text:67 | Resume Extraction Agent failed or fell back. Generating basic parsed profile.
+2026-06-27 14:54:25 | INFO     | communeos.services.vector_db | add_user_resume_chunks:149 | Cleared existing resume memory for user: suraj
+2026-06-27 14:54:26 | INFO     | communeos.services.vector_db | add_user_resume_chunks:177 | Uploaded 5 resume chunks to user_memory for suraj
+2026-06-27 14:54:26 | INFO     | communeos.endpoint.users  | onboard_user:115 | Resume processed successfully for suraj
+2026-06-27 14:54:26 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: suraj
+2026-06-27 14:54:26 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix 'agent:': 4 keys removed
+2026-06-27 14:54:26 | ERROR    | communeos.supabase_service | upsert_profile:48 | Supabase upsert error: Request URL is missing an 'http://' or 'https://' protocol.
+2026-06-27 14:54:26 | INFO     | communeos.agent.memory    | _process:46 | [suraj] Memory Agent querying with term: 'i love machine learning Became an mlops engineer machine learning'
+2026-06-27 14:54:26 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 359ms | success=True | fallback=False
+2026-06-27 14:54:48 | WARNING  | communeos.orchestrator    | run_member_pipeline:371 | [suraj] Unified pipeline timeout
+2026-06-27 14:54:48 | INFO     | communeos.orchestrator    | _member_llm_pipeline:249 | [suraj] Step 1/3 -> Identity Agent
+2026-06-27 14:54:48 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for suraj
+2026-06-27 14:55:33 | WARNING  | communeos.orchestrator    | run_member_pipeline:384 | [suraj] Full pipeline timeout after 67002.4ms — instant mock fallback
+2026-06-27 15:03:17 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 6 keys removed
+2026-06-27 15:03:17 | INFO     | communeos.main            | on_shutdown:121 | CommuneOS Backend shutdown complete
+2026-06-27 15:03:19 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:03:19 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:86 | ============================================================
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:87 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:88 |   Running on http://0.0.0.0:8000
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:89 |   API Docs: http://localhost:8000/docs
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:92 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:93 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:94 |   Mock Fallback: ON
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:95 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:97 |   Supabase: ⚠️  Missing
+2026-06-27 15:03:19 | INFO     | communeos.main            | on_startup:98 | ============================================================
+2026-06-27 15:03:27 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
+2026-06-27 15:03:27 | INFO     | communeos.main            | on_shutdown:121 | CommuneOS Backend shutdown complete
+2026-06-27 15:03:28 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:03:29 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:86 | ============================================================
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:87 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:88 |   Running on http://0.0.0.0:8000
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:89 |   API Docs: http://localhost:8000/docs
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:92 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:93 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:94 |   Mock Fallback: ON
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:95 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:97 |   Supabase: ⚠️  Missing
+2026-06-27 15:03:29 | INFO     | communeos.main            | on_startup:98 | ============================================================
+2026-06-27 15:04:48 | INFO     | communeos.agent.memory    | _process:46 | [rahul] Memory Agent querying with term: 'Systems programming and GPU enthusiast. Building custom CUDA kernels and optimizing LLM inference engines. Master CUDA optimization Understand hardware-level execution Contribute to open-source gpu-computing systems-programming rust'
+2026-06-27 15:04:49 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 321ms | success=True | fallback=False
+2026-06-27 15:05:10 | WARNING  | communeos.orchestrator    | run_member_pipeline:371 | [rahul] Unified pipeline timeout
+2026-06-27 15:05:10 | INFO     | communeos.orchestrator    | _member_llm_pipeline:249 | [rahul] Step 1/3 -> Identity Agent
+2026-06-27 15:05:10 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for rahul
+2026-06-27 15:05:20 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 10123.6ms
+2026-06-27 15:05:20 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for rahul: Tech stack ['CUDA', 'Rust']
+2026-06-27 15:05:20 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 10125ms | success=True | fallback=False
+2026-06-27 15:05:20 | INFO     | communeos.orchestrator    | _member_llm_pipeline:253 | [rahul] Identity done in 10125.3ms | fallback=False
+2026-06-27 15:05:20 | INFO     | communeos.orchestrator    | _member_llm_pipeline:258 | [rahul] Step 2/3 -> Discovery + Learning (parallel)
+2026-06-27 15:05:20 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for rahul
+2026-06-27 15:05:20 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for rahul
+2026-06-27 15:05:26 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:05:26 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:05:26 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 418ms | success=True | fallback=False
+2026-06-27 15:05:26 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for testuser: Tech stack []
+2026-06-27 15:05:26 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 418ms | success=True | fallback=False
+2026-06-27 15:05:26 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:26 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:05:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 308ms | success=True | fallback=False
+2026-06-27 15:05:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 309ms | success=True | fallback=True
+2026-06-27 15:05:27 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:27 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:05:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 309ms | success=True | fallback=False
+2026-06-27 15:05:27 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for testuser: 1 channels recommended
+2026-06-27 15:05:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 309ms | success=True | fallback=False
+2026-06-27 15:05:27 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:27 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:05:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 306ms | success=True | fallback=False
+2026-06-27 15:05:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 306ms | success=True | fallback=True
+2026-06-27 15:05:27 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:27 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 324ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for testuser: 4 weeks, 1 milestones
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 325ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 293ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 294ms | success=True | fallback=True
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 310ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.agent.mentor    | _process:180 | Mentor matched for testuser: Sarah Jenkins
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 310ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 296ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 296ms | success=True | fallback=True
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.agent.health    | _analyze_community:172 | Health analysis complete: score=0.82, at_risk=0
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 1ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=True
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.agent.organizer | _generate_actions:157 | Organizer plan generated: 1 actions, 0 events
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=False
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:28 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=True
+2026-06-27 15:05:28 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:29 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: test_user
+2026-06-27 15:05:35 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 14615.7ms
+2026-06-27 15:05:35 | WARNING  | communeos.llm_service     | complete_json:202 | LLM JSON parse failed: Unterminated string starting at: line 2 column 20 (char 21). Attempting repair...
+2026-06-27 15:05:35 | INFO     | communeos.llm_service     | complete_json:206 | Successfully repaired truncated JSON from LLM.
+2026-06-27 15:05:35 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for rahul: None weeks, 0 milestones
+2026-06-27 15:05:35 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 14617ms | success=True | fallback=False
+2026-06-27 15:05:40 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:05:40 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:05:40 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 419ms | success=True | fallback=False
+2026-06-27 15:05:40 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for testuser: Tech stack []
+2026-06-27 15:05:40 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 420ms | success=True | fallback=False
+2026-06-27 15:05:40 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:40 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:05:40 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 330ms | success=True | fallback=False
+2026-06-27 15:05:40 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 330ms | success=True | fallback=True
+2026-06-27 15:05:40 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:40 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:05:41 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 345ms | success=True | fallback=False
+2026-06-27 15:05:41 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for testuser: 1 channels recommended
+2026-06-27 15:05:41 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 345ms | success=True | fallback=False
+2026-06-27 15:05:41 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:41 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:05:41 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 345ms | success=True | fallback=False
+2026-06-27 15:05:41 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 346ms | success=True | fallback=True
+2026-06-27 15:05:41 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:41 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:41 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 342ms | success=True | fallback=False
+2026-06-27 15:05:41 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for testuser: 4 weeks, 1 milestones
+2026-06-27 15:05:41 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 343ms | success=True | fallback=False
+2026-06-27 15:05:41 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:41 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 334ms | success=True | fallback=False
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 335ms | success=True | fallback=True
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 316ms | success=True | fallback=False
+2026-06-27 15:05:42 | INFO     | communeos.agent.mentor    | _process:180 | Mentor matched for testuser: Sarah Jenkins
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 316ms | success=True | fallback=False
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 285ms | success=True | fallback=False
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 285ms | success=True | fallback=True
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.agent.health    | _analyze_community:172 | Health analysis complete: score=0.82, at_risk=0
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=False
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=True
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.agent.organizer | _generate_actions:157 | Organizer plan generated: 1 actions, 0 events
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=False
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=True
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:42 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: test_user
+2026-06-27 15:05:42 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:43 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 200 in 56.0ms
+2026-06-27 15:05:43 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 503 in 37.4ms
+2026-06-27 15:05:43 | ERROR    | communeos.llm_service     | _call:83 | LLM google/gemma-4-31b-it:free error 503: <MagicMock name='mock.text.__getitem__()' id='129438704021856'>
+2026-06-27 15:05:43 | WARNING  | communeos.llm_service     | complete:163 | LLM all providers failed — using mock data
+2026-06-27 15:05:43 | WARNING  | communeos.llm_service     | _call:87 | LLM google/gemma-4-31b-it:free timeout after 30s
+2026-06-27 15:05:43 | WARNING  | communeos.llm_service     | complete:163 | LLM all providers failed — using mock data
+2026-06-27 15:05:43 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 503 in 37.6ms
+2026-06-27 15:05:43 | ERROR    | communeos.llm_service     | _call:83 | LLM google/gemma-4-31b-it:free error 503: <MagicMock name='mock.text.__getitem__()' id='129438781182000'>
+2026-06-27 15:05:43 | WARNING  | communeos.llm_service     | complete:163 | LLM all providers failed — using mock data
+2026-06-27 15:05:43 | INFO     | communeos.llm_service     | _call:72 | LLM google/gemma-4-31b-it:free response: 200 in 22625.0ms
+2026-06-27 15:05:43 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for rahul: 3 channels recommended
+2026-06-27 15:05:43 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 22626ms | success=True | fallback=False
+2026-06-27 15:05:43 | INFO     | communeos.orchestrator    | _member_llm_pipeline:280 | [rahul] Discovery+Learning done in 22626.3ms | disc_fallback=False learn_fallback=False
+2026-06-27 15:05:43 | INFO     | communeos.orchestrator    | _member_llm_pipeline:286 | [rahul] Step 3/3 -> Mentor Agent
+2026-06-27 15:05:43 | INFO     | communeos.agent.memory_agent | run:66 | Cache hit for rahul
+2026-06-27 15:05:52 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:05:52 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:05:52 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 422ms | success=True | fallback=False
+2026-06-27 15:05:52 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for testuser: Tech stack []
+2026-06-27 15:05:52 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 423ms | success=True | fallback=False
+2026-06-27 15:05:52 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:52 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:05:52 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 311ms | success=True | fallback=False
+2026-06-27 15:05:52 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 312ms | success=True | fallback=True
+2026-06-27 15:05:52 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:52 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:05:53 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 323ms | success=True | fallback=False
+2026-06-27 15:05:53 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for testuser: 1 channels recommended
+2026-06-27 15:05:53 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 323ms | success=True | fallback=False
+2026-06-27 15:05:53 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:53 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:05:53 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 334ms | success=True | fallback=False
+2026-06-27 15:05:53 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 335ms | success=True | fallback=True
+2026-06-27 15:05:53 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:53 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:53 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 343ms | success=True | fallback=False
+2026-06-27 15:05:53 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for testuser: 4 weeks, 1 milestones
+2026-06-27 15:05:53 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 344ms | success=True | fallback=False
+2026-06-27 15:05:53 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:53 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 325ms | success=True | fallback=False
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 325ms | success=True | fallback=True
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 324ms | success=True | fallback=False
+2026-06-27 15:05:54 | INFO     | communeos.agent.mentor    | _process:180 | Mentor matched for testuser: Sarah Jenkins
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 324ms | success=True | fallback=False
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 332ms | success=True | fallback=False
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 332ms | success=True | fallback=True
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.agent.health    | _analyze_community:172 | Health analysis complete: score=0.82, at_risk=0
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=False
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=True
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.agent.organizer | _generate_actions:157 | Organizer plan generated: 1 actions, 0 events
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=False
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=True
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:54 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: test_user
+2026-06-27 15:05:54 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 200 in 52.8ms
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | complete:134 | Groq success: llama-3.3-70b-versatile
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 503 in 39.6ms
+2026-06-27 15:05:55 | ERROR    | communeos.llm_service     | _call:83 | LLM llama-3.3-70b-versatile error 503: <MagicMock name='mock.text.__getitem__()' id='128133033639360'>
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 200 in 36.9ms
+2026-06-27 15:05:55 | WARNING  | communeos.llm_service     | _call:87 | LLM llama-3.3-70b-versatile timeout after 30s
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 200 in 37.0ms
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 503 in 39.6ms
+2026-06-27 15:05:55 | ERROR    | communeos.llm_service     | _call:83 | LLM llama-3.3-70b-versatile error 503: <MagicMock name='mock.text.__getitem__()' id='128133033910112'>
+2026-06-27 15:05:55 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 500 in 37.2ms
+2026-06-27 15:05:55 | ERROR    | communeos.llm_service     | _call:83 | LLM google/gemma-4-31b-it:free error 500: <MagicMock name='mock.text.__getitem__()' id='128133034197584'>
+2026-06-27 15:05:55 | WARNING  | communeos.llm_service     | complete:163 | LLM all providers failed — using mock data
+2026-06-27 15:05:55 | WARNING  | communeos.orchestrator    | run_member_pipeline:384 | [rahul] Full pipeline timeout after 67002.4ms — instant mock fallback
+2026-06-27 15:05:55 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 8 keys removed
+2026-06-27 15:05:55 | INFO     | communeos.main            | on_shutdown:121 | CommuneOS Backend shutdown complete
+2026-06-27 15:05:58 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:05:58 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:86 | ============================================================
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:87 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:88 |   Running on http://0.0.0.0:8000
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:89 |   API Docs: http://localhost:8000/docs
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:92 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:93 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:94 |   Mock Fallback: ON
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:95 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:97 |   Supabase: ⚠️  Missing
+2026-06-27 15:05:58 | INFO     | communeos.main            | on_startup:98 | ============================================================
+2026-06-27 15:06:03 | WARNING  | communeos.cache           | clear_all:67 | Cache CLEAR ALL: 0 keys removed
+2026-06-27 15:06:03 | INFO     | communeos.main            | on_shutdown:121 | CommuneOS Backend shutdown complete
+2026-06-27 15:06:05 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:06:05 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:86 | ============================================================
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:87 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:88 |   Running on http://0.0.0.0:8000
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:89 |   API Docs: http://localhost:8000/docs
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:92 |   LLM Primary:  ⚠️  No Groq key
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:93 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:94 |   Mock Fallback: ON
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:95 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:97 |   Supabase: ⚠️  Missing
+2026-06-27 15:06:05 | INFO     | communeos.main            | on_startup:98 | ============================================================
+2026-06-27 15:06:14 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:06:14 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:06:15 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 451ms | success=True | fallback=False
+2026-06-27 15:06:15 | INFO     | communeos.agent.identity  | _process:103 | Identity analysis complete for testuser: Tech stack []
+2026-06-27 15:06:15 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 451ms | success=True | fallback=False
+2026-06-27 15:06:15 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:15 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Low-level system engineer interested in GPU coding and parallel programming. Learn CUDA Optimize kernels Systems Programming GPU Architecture'
+2026-06-27 15:06:15 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 331ms | success=True | fallback=False
+2026-06-27 15:06:15 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | identity_agent | 331ms | success=True | fallback=True
+2026-06-27 15:06:15 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:15 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:06:15 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 329ms | success=True | fallback=False
+2026-06-27 15:06:15 | INFO     | communeos.agent.discovery | _process:112 | Discovery complete for testuser: 1 channels recommended
+2026-06-27 15:06:15 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 330ms | success=True | fallback=False
+2026-06-27 15:06:15 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:15 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'Which event or channel should I attend?'
+2026-06-27 15:06:16 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 334ms | success=True | fallback=False
+2026-06-27 15:06:16 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | discovery_agent | 335ms | success=True | fallback=True
+2026-06-27 15:06:16 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:16 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:06:16 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 343ms | success=True | fallback=False
+2026-06-27 15:06:16 | INFO     | communeos.agent.learning  | _process:124 | Learning roadmap created for testuser: 4 weeks, 1 milestones
+2026-06-27 15:06:16 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 344ms | success=True | fallback=False
+2026-06-27 15:06:16 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:16 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'learning resources for skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:06:16 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 349ms | success=True | fallback=False
+2026-06-27 15:06:16 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | learning_agent | 349ms | success=True | fallback=True
+2026-06-27 15:06:16 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:16 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 310ms | success=True | fallback=False
+2026-06-27 15:06:17 | INFO     | communeos.agent.mentor    | _process:180 | Mentor matched for testuser: Sarah Jenkins
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 310ms | success=True | fallback=False
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.agent.memory    | _process:46 | [testuser] Memory Agent querying with term: 'mentors matching skills: Systems Programming, GPU Architecture or goals: Learn CUDA, Optimize kernels'
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 367ms | success=True | fallback=False
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | mentor_agent | 367ms | success=True | fallback=True
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 2 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.agent.health    | _analyze_community:172 | Health analysis complete: score=0.82, at_risk=0
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=False
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | health_agent | 0ms | success=True | fallback=True
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.agent.organizer | _generate_actions:157 | Organizer plan generated: 1 actions, 0 events
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=False
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | organizer_agent | 0ms | success=True | fallback=True
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: test_user
+2026-06-27 15:06:17 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix '': 1 keys removed
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 200 in 61.1ms
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | complete:134 | Groq success: llama-3.3-70b-versatile
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 503 in 39.5ms
+2026-06-27 15:06:17 | ERROR    | communeos.llm_service     | _call:83 | LLM llama-3.3-70b-versatile error 503: <MagicMock name='mock.text.__getitem__()' id='129902919446448'>
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 200 in 37.2ms
+2026-06-27 15:06:17 | WARNING  | communeos.llm_service     | _call:87 | LLM llama-3.3-70b-versatile timeout after 30s
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 200 in 36.7ms
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 503 in 39.9ms
+2026-06-27 15:06:17 | ERROR    | communeos.llm_service     | _call:83 | LLM llama-3.3-70b-versatile error 503: <MagicMock name='mock.text.__getitem__()' id='129902919625760'>
+2026-06-27 15:06:17 | INFO     | communeos.llm_service     | _call:73 | LLM google/gemma-4-31b-it:free response: 500 in 36.7ms
+2026-06-27 15:06:17 | ERROR    | communeos.llm_service     | _call:83 | LLM google/gemma-4-31b-it:free error 500: <MagicMock name='mock.text.__getitem__()' id='129902919690096'>
+2026-06-27 15:06:17 | WARNING  | communeos.llm_service     | complete:163 | LLM all providers failed — using mock data
+2026-06-27 15:11:10 | INFO     | communeos.services.vector_db | get_chroma_client:22 | Initializing ChromaDB persistent client at: /home/satyansh/communeos/backend/data/chroma_db
+2026-06-27 15:11:10 | INFO     | communeos.services.vector_db | seed_community_database:47 | Community memory already contains 54 items. Skipping seed.
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:86 | ============================================================
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:87 |   CommuneOS Agent Backend v1.0.0
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:88 |   Running on http://0.0.0.0:8000
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:89 |   API Docs: http://localhost:8000/docs
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:92 |   LLM Primary:  ✅ Groq (llama-3.3-70b-versatile)
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:93 |   LLM Fallback: ✅ OpenRouter (google/gemma-4-31b-it:free)
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:94 |   Mock Fallback: ON
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:95 |   Rate Limiting: 60/min default, 10/min agent pipeline
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:97 |   Supabase: ⚠️  Missing
+2026-06-27 15:11:10 | INFO     | communeos.main            | on_startup:98 | ============================================================
+2026-06-27 15:11:21 | INFO     | communeos.agent.memory    | _process:46 | [suraj] Memory Agent querying with term: 'i love machine learning Became an mlops engineer machine learning'
+2026-06-27 15:11:22 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 543ms | success=True | fallback=False
+2026-06-27 15:11:24 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 200 in 2452.1ms
+2026-06-27 15:11:24 | INFO     | communeos.llm_service     | complete:134 | Groq success: llama-3.3-70b-versatile
+2026-06-27 15:11:24 | INFO     | communeos.orchestrator    | _unified_pipeline:223 | [suraj] Unified pipeline SUCCESS via LLM
+2026-06-27 15:11:24 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | full_pipeline | 2998ms | success=True | fallback=False
+2026-06-27 15:11:24 | INFO     | communeos.orchestrator    | run_member_pipeline:366 | [suraj] Unified pipeline: 2998.2ms
+2026-06-27 15:14:25 | INFO     | communeos.endpoint.users  | onboard_user:94 | Received resume upload: My_Resume.pdf for suraj
+2026-06-27 15:14:25 | INFO     | communeos.services.resume | extract_text_from_pdf:45 | Opening PDF resume: /home/satyansh/communeos/backend/api/data/resumes/suraj.pdf
+2026-06-27 15:14:25 | INFO     | communeos.services.resume | extract_text_from_pdf:51 | Successfully extracted 4429 characters of text from PDF.
+2026-06-27 15:14:25 | INFO     | communeos.services.resume | parse_resume_text:58 | Calling Resume Extraction Agent...
+2026-06-27 15:14:26 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 200 in 1072.8ms
+2026-06-27 15:14:26 | INFO     | communeos.llm_service     | complete:134 | Groq success: llama-3.3-70b-versatile
+2026-06-27 15:14:26 | INFO     | communeos.services.vector_db | add_user_resume_chunks:149 | Cleared existing resume memory for user: suraj
+2026-06-27 15:14:26 | INFO     | communeos.services.vector_db | add_user_resume_chunks:177 | Uploaded 5 resume chunks to user_memory for suraj
+2026-06-27 15:14:26 | INFO     | communeos.endpoint.users  | onboard_user:115 | Resume processed successfully for suraj
+2026-06-27 15:14:26 | INFO     | communeos.mock_data       | save_mock_user:590 | Saved and persisted user: suraj
+2026-06-27 15:14:26 | INFO     | communeos.cache           | clear_prefix:60 | Cache CLEAR prefix 'agent:': 2 keys removed
+2026-06-27 15:14:26 | ERROR    | communeos.supabase_service | upsert_profile:48 | Supabase upsert error: Request URL is missing an 'http://' or 'https://' protocol.
+2026-06-27 15:14:26 | INFO     | communeos.agent.memory    | _process:46 | [suraj] Memory Agent querying with term: 'i love python and fast api become a data scientist data science python'
+2026-06-27 15:14:27 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | memory_agent | 405ms | success=True | fallback=False
+2026-06-27 15:14:29 | INFO     | communeos.llm_service     | _call:73 | LLM llama-3.3-70b-versatile response: 200 in 2684.9ms
+2026-06-27 15:14:29 | INFO     | communeos.llm_service     | complete:134 | Groq success: llama-3.3-70b-versatile
+2026-06-27 15:14:29 | INFO     | communeos.orchestrator    | _unified_pipeline:223 | [suraj] Unified pipeline SUCCESS via LLM
+2026-06-27 15:14:29 | INFO     | communeos.analytics       | record_agent_execution:44 | Agent execution | full_pipeline | 3091ms | success=True | fallback=False
+2026-06-27 15:14:29 | INFO     | communeos.orchestrator    | run_member_pipeline:366 | [suraj] Unified pipeline: 3090.9ms
