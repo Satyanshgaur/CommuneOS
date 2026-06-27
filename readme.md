@@ -1,4 +1,11 @@
 # CommunityOS — Adaptive AI Community Platform
+
+![Version](https://img.shields.io/badge/version-v1.0.0-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0%2B-009688.svg?logo=fastapi&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15%2B-black?logo=nextdotjs)
+![License](https://img.shields.io/badge/license-Apache_2.0-blue)
+
 ![CommunityOS Architecture & Concept Diagrams](./images/frontend_dashboard.jpeg)
 
 > **AI-Powered Community Operations Agent**
@@ -240,3 +247,9 @@ CommunityOS is scheduled to expand from its synchronous pipeline prototype into 
 2. **Real-time Synchronizations**: Integrate **Supabase Realtime** listeners to update client dashboards automatically as agents complete workflows in the background.
 3. **Database Memory Scaling**: Leverage PostgreSQL `pgvector` index structures within Supabase to perform advanced semantic matching over thousands of concurrent member profiles.
 4. **Blob Storage**: Securely store raw resumes and uploaded developer artifacts using Supabase Storage buckets.
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](file:///home/satyansh/communeos/LICENSE) file for details.
