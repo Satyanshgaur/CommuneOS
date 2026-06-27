@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { 
-  User, Sparkles, Cpu, BookOpen, Calendar, Users, Award, Activity, 
-  TrendingUp, AlertTriangle, ChevronRight, 
-  Lock, RefreshCw, Play, Check, CheckSquare, ShieldCheck, 
-  Search, MessageSquare, Terminal, AlertCircle, ChevronDown
+import React, { useState, useEffect, useRef } from "react";
+import {
+  User, Sparkles, Cpu, BookOpen, Calendar, Users, Award, Activity,
+  TrendingUp, AlertTriangle, ChevronRight,
+  Lock, RefreshCw, Play, Check, CheckSquare, ShieldCheck,
+  Search, MessageSquare, Terminal, AlertCircle, ChevronDown, LogOut, Mail
 } from "lucide-react";
+import { getSupabaseClient } from "../lib/supabase";
 
 // Local high-fidelity fallback data in case the backend is loading or unavailable
 const FALLBACK_DATA = {
@@ -150,15 +151,23 @@ const FALLBACK_DATA = {
 };
 
 export default function Home() {
-  const [screen, setScreen] = useState<"landing" | "demo">("landing");
+  const [screen, setScreen] = useState<"auth" | "landing" | "demo">("auth");
+  const [authMode, setAuthMode] = useState<"login" | "signup" | "verify">("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+
   const [persona, setPersona] = useState<"rahul" | "priya" | "organizer">("rahul");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [backendStatus, setBackendStatus] = useState<"connected" | "disconnected" | "checking">("checking");
-  
+
   // Explainability drawer state
   const [showAllExplainability, setShowAllExplainability] = useState<boolean>(false);
-  
+
   // Simulation states
   const [executedActions, setExecutedActions] = useState<Record<string, boolean>>({});
   const [executingActionId, setExecutingActionId] = useState<string | null>(null);
@@ -166,19 +175,69 @@ export default function Home() {
   const [invitedMentors, setInvitedMentors] = useState<Record<string, boolean>>({});
   const [reengagedMembers, setReengagedMembers] = useState<Record<string, boolean>>({});
 
+  // On mount: check existing Supabase session
+  useEffect(() => {
+    const init = async () => {
+      const sb = await getSupabaseClient();
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session?.user) {
+          setUserEmail(session.user.email ?? null);
+          setScreen("landing");
+        }
+        sb.auth.onAuthStateChange((_event, s) => {
+          if (s?.user) {
+            setUserEmail(s.user.email ?? null);
+            setScreen("landing");
+          } else {
+            setUserEmail(null);
+            setScreen("auth");
+          }
+        });
+      }
+      setSessionChecked(true);
+    };
+    init();
+  }, []);
+
+  // Auth handlers
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+    const sb = await getSupabaseClient();
+    if (!sb) { setAuthError("Backend offline — cannot reach auth service."); setAuthLoading(false); return; }
+    const { error } = await sb.auth.signInWithPassword({ email: authEmail, password: authPassword });
+    if (error) setAuthError(error.message);
+    setAuthLoading(false);
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+    const sb = await getSupabaseClient();
+    if (!sb) { setAuthError("Backend offline — cannot reach auth service."); setAuthLoading(false); return; }
+    const { error } = await sb.auth.signUp({ email: authEmail, password: authPassword });
+    if (error) { setAuthError(error.message); } else { setAuthMode("verify"); }
+    setAuthLoading(false);
+  };
+
+  const handleLogout = async () => {
+    const sb = await getSupabaseClient();
+    if (sb) await sb.auth.signOut();
+    setUserEmail(null);
+    setScreen("auth");
+  };
+
   // Check backend health and load data
   useEffect(() => {
     const checkBackend = async () => {
       try {
         const res = await fetch("http://localhost:8000/");
-        if (res.ok) {
-          setBackendStatus("connected");
-        } else {
-          setBackendStatus("disconnected");
-        }
-      } catch {
-        setBackendStatus("disconnected");
-      }
+        if (res.ok) { setBackendStatus("connected"); }
+        else { setBackendStatus("disconnected"); }
+      } catch { setBackendStatus("disconnected"); }
     };
     checkBackend();
   }, []);
@@ -221,12 +280,102 @@ export default function Home() {
     }, 1500);
   };
 
+  // Show nothing until session check completes (avoids flash)
+  if (!sessionChecked) {
+    return (
+      <div className="min-h-screen bg-mist flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-signal-orange border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // AUTH SCREEN
+  if (screen === "auth") {
+    return (
+      <div className="min-h-screen bg-mist flex flex-col items-center justify-center px-4">
+        <div className="flex items-center gap-2 mb-10">
+          <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon flex items-center">
+            ventriloc
+            <svg className="w-6 h-6 text-signal-orange ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 17C9 17 15 13 21 5" />
+            </svg>
+          </span>
+          <span className="text-[10px] bg-carbon text-white px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold">COMMUNEOS</span>
+        </div>
+
+        <div className="w-full max-w-sm bg-white border border-slate/20 rounded-2xl p-8 shadow-[0_2px_16px_rgba(32,32,32,0.06)]">
+          {authMode === "verify" ? (
+            <div className="text-center">
+              <div className="w-12 h-12 bg-signal-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-5 h-5 text-signal-orange" />
+              </div>
+              <h2 className="text-xl font-semibold text-carbon mb-2">Check your email</h2>
+              <p className="text-sm text-graphite mb-6">We sent a verification link to <strong>{authEmail}</strong>. Click it to activate your account, then log in.</p>
+              <button onClick={() => setAuthMode("login")} className="w-full py-2.5 rounded-full bg-carbon text-white text-sm font-medium hover:bg-graphite transition-colors">
+                Back to Login
+              </button>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold text-carbon mb-1">
+                {authMode === "login" ? "Welcome back" : "Create account"}
+              </h2>
+              <p className="text-sm text-graphite mb-6">
+                {authMode === "login" ? "Sign in to access your agent-powered space." : "Join CommuneOS to get your personalised community profile."}
+              </p>
+
+              <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-carbon mb-1.5">Email</label>
+                  <input
+                    type="email" required value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-sm text-carbon placeholder:text-slate focus:outline-none focus:border-signal-orange transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-carbon mb-1.5">Password</label>
+                  <input
+                    type="password" required value={authPassword} minLength={6}
+                    onChange={e => setAuthPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-sm text-carbon placeholder:text-slate focus:outline-none focus:border-signal-orange transition-colors"
+                  />
+                </div>
+
+                {authError && (
+                  <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{authError}</div>
+                )}
+
+                <button
+                  type="submit" disabled={authLoading}
+                  className="w-full py-2.5 rounded-full bg-carbon text-white text-sm font-medium hover:bg-graphite active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {authLoading ? "Please wait..." : authMode === "login" ? "Sign In" : "Sign Up"}
+                </button>
+              </form>
+
+              <p className="text-xs text-center text-graphite mt-5">
+                {authMode === "login" ? (
+                  <>No account? <button onClick={() => { setAuthMode("signup"); setAuthError(""); }} className="text-signal-orange font-medium hover:underline">Sign up</button></>
+                ) : (
+                  <>Already have an account? <button onClick={() => { setAuthMode("login"); setAuthError(""); }} className="text-signal-orange font-medium hover:underline">Sign in</button></>
+                )}
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-mist text-carbon font-inter selection:bg-signal-orange selection:text-white min-h-screen">
-      
+
       {/* HEADER / FLOATING NAV BAR */}
       <header className="w-full py-6 px-6 md:px-12 flex justify-between items-center max-w-[1200px] mx-auto z-40">
-        
+
         {/* LOGO MARK: ventriloc with trailing orange swoosh */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setScreen("landing")}>
           <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon relative flex items-center">
@@ -261,18 +410,28 @@ export default function Home() {
           </div>
         </div>
 
-        {/* LANGUAGE TOGGLE & PRIMARY CTA */}
-        <div className="flex items-center gap-6">
-          <span className="text-sm font-medium text-carbon hover:underline cursor-pointer">EN</span>
+        {/* USER + CTA */}
+        <div className="flex items-center gap-4">
+          {userEmail && (
+            <div className="hidden md:flex items-center gap-2 text-xs text-graphite">
+              <div className="w-6 h-6 rounded-full bg-signal-orange/10 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-signal-orange" />
+              </div>
+              <span className="max-w-[140px] truncate">{userEmail}</span>
+              <button onClick={handleLogout} title="Sign out" className="p-1 rounded-full hover:bg-chalk transition-colors">
+                <LogOut className="w-3.5 h-3.5 text-graphite" />
+              </button>
+            </div>
+          )}
           {screen === "landing" ? (
-            <button 
+            <button
               onClick={() => setScreen("demo")}
               className="px-5 py-2.5 rounded-full bg-carbon text-white font-medium text-[15px] hover:bg-graphite active:scale-95 transition-all shadow-[0_1px_3px_rgba(32,32,32,0.04)] flex items-center gap-2"
             >
               Demo console
             </button>
           ) : (
-            <button 
+            <button
               onClick={() => setScreen("landing")}
               className="px-5 py-2.5 rounded-full border border-carbon text-carbon font-medium text-[15px] hover:bg-fog active:scale-95 transition-all"
             >
