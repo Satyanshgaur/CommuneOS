@@ -1095,19 +1095,53 @@ export default function Home() {
                       {/* PRIORITIES & TIMELINE ROADMAP */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         
-                        {/* Priorities card */}
+                        {/* Contribution Graph */}
                         <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm">
-                          <h3 className="font-polysans text-base font-normal text-carbon mb-4 flex items-center gap-2">
-                            <CheckSquare className="w-4 h-4 text-signal-orange" /> Priorities Checklist
+                          <h3 className="font-polysans text-base font-normal text-carbon mb-1 flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-signal-orange" /> Contribution Graph
                           </h3>
-                          <ul className="space-y-4">
-                            {data.priorities?.map((priority: string, i: number) => (
-                              <li key={i} className="flex gap-3 text-xs text-graphite items-start">
-                                <span className="w-5 h-5 rounded-full bg-fog border border-chalk flex items-center justify-center text-[10px] text-slate font-mono shrink-0 mt-0.5">{i+1}</span>
-                                <span className="flex-1 leading-normal">{priority}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          <p className="text-[11px] text-slate mb-4">Community activity over the last 16 weeks</p>
+                          {(() => {
+                            const seed = (persona || "user").split("").reduce((a: number, c: string) => a + c.charCodeAt(0), 0);
+                            const rand = (i: number) => { const x = Math.sin(seed * 9301 + i * 49297 + 233) * 10000; return x - Math.floor(x); };
+                            const WEEKS = 16;
+                            const DAYS = 7;
+                            const dayLabels = ["M", "", "W", "", "F", "", "S"];
+                            const colors = ["#f0f0f0", "#fde0d4", "#ffaa80", "#ff7c45", "#ff682c"];
+                            const totalContribs = Array.from({ length: WEEKS * DAYS }).reduce((sum: number, _, i) => {
+                              const v = rand(i); return sum + (v < 0.5 ? 0 : v < 0.65 ? 1 : v < 0.8 ? 2 : v < 0.92 ? 3 : 4);
+                            }, 0);
+                            return (
+                              <div>
+                                <p className="text-[11px] text-graphite font-medium mb-3">{totalContribs} contributions in the last 16 weeks</p>
+                                <div className="flex gap-[3px]">
+                                  <div className="flex flex-col gap-[3px] mr-1 pt-0">
+                                    {dayLabels.map((d, i) => (
+                                      <div key={i} className="h-[11px] flex items-center">
+                                        <span className="text-[9px] text-slate w-3 leading-none">{d}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {Array.from({ length: WEEKS }).map((_, w) => (
+                                    <div key={w} className="flex flex-col gap-[3px]">
+                                      {Array.from({ length: DAYS }).map((_, d) => {
+                                        const v = rand(w * DAYS + d);
+                                        const level = v < 0.5 ? 0 : v < 0.65 ? 1 : v < 0.8 ? 2 : v < 0.92 ? 3 : 4;
+                                        return (
+                                          <div key={d} className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: colors[level] }} title={`${level} contributions`} />
+                                        );
+                                      })}
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex items-center gap-[3px] mt-3 justify-end">
+                                  <span className="text-[9px] text-slate mr-1">Less</span>
+                                  {colors.map((c, i) => <div key={i} className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: c }} />)}
+                                  <span className="text-[9px] text-slate ml-1">More</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Timeline Roadmap */}
