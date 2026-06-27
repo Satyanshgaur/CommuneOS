@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from api.errors import register_error_handlers
-from api.v1.endpoints import agents, community, health, users
+from api.v1.endpoints import agents, community, compat, health, users
 from config import settings
 from utils.logger import get_logger, setup_logging
 
@@ -69,7 +69,8 @@ API_PREFIX = "/api/v1"
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(agents.router, prefix=API_PREFIX)
 app.include_router(community.router, prefix=API_PREFIX)
-app.include_router(health.router)  # /health, /metrics — no prefix
+app.include_router(health.router)   # /health, /metrics — no prefix
+app.include_router(compat.router)   # /api/members/{id}, /api/organizer — for Next.js frontend
 
 # ─── Startup / Shutdown Events ─────────────────────────────────────────────────
 @app.on_event("startup")
