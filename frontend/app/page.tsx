@@ -151,7 +151,7 @@ const FALLBACK_DATA = {
 };
 
 export default function Home() {
-  const [screen, setScreen] = useState<"auth" | "landing" | "demo">("auth");
+  const [screen, setScreen] = useState<"auth" | "onboarding" | "landing" | "demo">("auth");
   const [authMode, setAuthMode] = useState<"login" | "signup" | "verify">("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -159,8 +159,16 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
 
-  const [persona, setPersona] = useState<"rahul" | "priya" | "organizer">("rahul");
+  // Onboarding form state
+  const [onboardingBio, setOnboardingBio] = useState("");
+  const [onboardingSkills, setOnboardingSkills] = useState("");
+  const [onboardingGoals, setOnboardingGoals] = useState("");
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState("");
+
+  const [persona, setPersona] = useState<string>("rahul");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [backendStatus, setBackendStatus] = useState<"connected" | "disconnected" | "checking">("checking");
@@ -177,20 +185,35 @@ export default function Home() {
 
   // On mount: check existing Supabase session
   useEffect(() => {
+    const routeAfterAuth = async (userId: string, email: string | null) => {
+      setUserEmail(email);
+      setSupabaseUserId(userId);
+      try {
+        const res = await fetch(`http://localhost:8000/api/v1/users/${userId}`);
+        if (res.ok) {
+          setPersona(userId);
+          setScreen("demo");
+        } else {
+          setScreen("onboarding");
+        }
+      } catch {
+        setScreen("onboarding");
+      }
+    };
+
     const init = async () => {
       const sb = await getSupabaseClient();
       if (sb) {
         const { data: { session } } = await sb.auth.getSession();
         if (session?.user) {
-          setUserEmail(session.user.email ?? null);
-          setScreen("landing");
+          await routeAfterAuth(session.user.id, session.user.email ?? null);
         }
         sb.auth.onAuthStateChange((_event, s) => {
           if (s?.user) {
-            setUserEmail(s.user.email ?? null);
-            setScreen("landing");
+            routeAfterAuth(s.user.id, s.user.email ?? null);
           } else {
             setUserEmail(null);
+            setSupabaseUserId(null);
             setScreen("auth");
           }
         });
@@ -227,7 +250,43 @@ export default function Home() {
     const sb = await getSupabaseClient();
     if (sb) await sb.auth.signOut();
     setUserEmail(null);
+    setSupabaseUserId(null);
     setScreen("auth");
+  };
+
+  const handleOnboarding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOnboardingError("");
+    setOnboardingLoading(true);
+    if (!supabaseUserId) {
+      setOnboardingError("Session lost — please log in again.");
+      setOnboardingLoading(false);
+      return;
+    }
+    try {
+      const skills = onboardingSkills.split(",").map(s => s.trim()).filter(Boolean);
+      const goals = onboardingGoals.split(",").map(g => g.trim()).filter(Boolean);
+      const username = (userEmail ?? supabaseUserId).split("@")[0];
+      const res = await fetch("http://localhost:8000/api/v1/users/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: supabaseUserId,
+          username,
+          bio: onboardingBio,
+          tags: skills,
+          interests: goals,
+          goals,
+        }),
+      });
+      if (!res.ok) throw new Error("Backend error");
+      setPersona(supabaseUserId);
+      setScreen("demo");
+    } catch {
+      setOnboardingError("Failed to save profile. Is the backend running?");
+    } finally {
+      setOnboardingLoading(false);
+    }
   };
 
   // Check backend health and load data
@@ -259,10 +318,10 @@ export default function Home() {
           const json = await res.json();
           setData(json);
         } else {
-          setData(FALLBACK_DATA[persona]);
+          setData(FALLBACK_DATA[persona as keyof typeof FALLBACK_DATA] ?? FALLBACK_DATA.rahul);
         }
       } catch {
-        setData(FALLBACK_DATA[persona]);
+        setData(FALLBACK_DATA[persona as keyof typeof FALLBACK_DATA] ?? FALLBACK_DATA.rahul);
       } finally {
         setLoading(false);
       }
@@ -365,6 +424,77 @@ export default function Home() {
               </p>
             </>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // ONBOARDING SCREEN
+  if (screen === "onboarding") {
+    return (
+      <div className="min-h-screen bg-mist flex flex-col items-center justify-center px-4">
+        <div className="flex items-center gap-2 mb-10">
+          <span className="font-polysans font-normal text-2xl tracking-[-0.02em] text-carbon flex items-center">
+            ventriloc
+            <svg className="w-6 h-6 text-signal-orange ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 17C9 17 15 13 21 5" />
+            </svg>
+          </span>
+          <span className="text-[10px] bg-carbon text-white px-2 py-0.5 rounded-full font-mono tracking-wider font-semibold">COMMUNEOS</span>
+        </div>
+
+        <div className="w-full max-w-sm bg-white border border-slate/20 rounded-2xl p-8 shadow-[0_2px_16px_rgba(32,32,32,0.06)]">
+          <div className="w-12 h-12 bg-signal-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-5 h-5 text-signal-orange" />
+          </div>
+          <h2 className="text-xl font-semibold text-carbon mb-1 text-center">Set up your profile</h2>
+          <p className="text-sm text-graphite mb-6 text-center">The agents use this to personalise your experience.</p>
+
+          <form onSubmit={handleOnboarding} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Bio</label>
+              <textarea
+                required
+                rows={3}
+                value={onboardingBio}
+                onChange={e => setOnboardingBio(e.target.value)}
+                placeholder="What are you building or learning? Your background, interests..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30 resize-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Skills <span className="text-slate font-normal normal-case">(comma separated)</span></label>
+              <input
+                type="text"
+                value={onboardingSkills}
+                onChange={e => setOnboardingSkills(e.target.value)}
+                placeholder="Python, C++, Machine Learning..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-carbon uppercase tracking-wider">Goals <span className="text-slate font-normal normal-case">(comma separated)</span></label>
+              <input
+                type="text"
+                value={onboardingGoals}
+                onChange={e => setOnboardingGoals(e.target.value)}
+                placeholder="Get an internship, learn systems programming..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate/30 bg-fog text-carbon text-sm placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-signal-orange/30"
+              />
+            </div>
+
+            {onboardingError && (
+              <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{onboardingError}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={onboardingLoading}
+              className="w-full py-2.5 rounded-full bg-signal-orange text-white text-sm font-semibold hover:bg-sienna-bronze transition-colors disabled:opacity-60"
+            >
+              {onboardingLoading ? "Setting up..." : "Build my profile"}
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -686,22 +816,30 @@ export default function Home() {
             
             {/* PERSONA CHANGER HEADER */}
             <div className="bg-white border border-chalk rounded-[8px] px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 mb-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate uppercase tracking-wider font-bold">Select Persona:</span>
-                <div className="flex bg-fog p-1 rounded-full border border-chalk">
-                  <button 
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-xs text-slate uppercase tracking-wider font-bold">View as:</span>
+                <div className="flex bg-fog p-1 rounded-full border border-chalk flex-wrap gap-0.5">
+                  {supabaseUserId && (
+                    <button
+                      onClick={() => { setPersona(supabaseUserId); setData(null); }}
+                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === supabaseUserId ? "bg-signal-orange text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
+                    >
+                      <User className="w-3.5 h-3.5" /> You
+                    </button>
+                  )}
+                  <button
                     onClick={() => { setPersona("rahul"); setData(null); }}
                     className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "rahul" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
                   >
                     <User className="w-3.5 h-3.5" /> Rahul (GPU)
                   </button>
-                  <button 
+                  <button
                     onClick={() => { setPersona("priya"); setData(null); }}
                     className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "priya" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
                   >
                     <User className="w-3.5 h-3.5" /> Priya (AI Rookie)
                   </button>
-                  <button 
+                  <button
                     onClick={() => { setPersona("organizer"); setData(null); }}
                     className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "organizer" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
                   >
@@ -940,10 +1078,10 @@ export default function Home() {
                         <div className="p-6 rounded-[8px] bg-white border border-chalk shadow-sm flex flex-col justify-between">
                           <div>
                             <span className="text-[11px] font-medium text-slate block mb-1">Mentor Matching</span>
-                            <div className="font-polysans text-3xl font-normal text-carbon">{persona === "rahul" ? "Matched" : "Assigned"}</div>
+                            <div className="font-polysans text-3xl font-normal text-carbon">{data?.recommended_mentor?.name ? "Matched" : "Assigned"}</div>
                           </div>
                           <div className="mt-4 flex items-center gap-1 text-[11px] text-sienna-bronze bg-sienna-bronze/10 px-2 py-0.5 rounded-full w-fit">
-                            {persona === "rahul" ? "Sarah (Nvidia)" : "Elena (Researcher)"}
+                            {data?.recommended_mentor?.name || "Elena (Researcher)"}
                           </div>
                         </div>
 
