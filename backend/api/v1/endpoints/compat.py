@@ -26,13 +26,20 @@ def _member_response(user_id: str, profile: Dict) -> Dict:
     mentor = profile.get("mentor", {})
 
     user_data = get_mock_user(user_id) or {}
+    username = user_data.get("username") or user_id.split("-")[0]
+
+    # Merge all skill signals: LLM-inferred + stored tags + interests
+    inferred = list(identity.get("inferred_skills", {}).keys())
+    stored_tags = user_data.get("tags", [])
+    interests = user_data.get("interests", [])
+    skills = inferred or list(dict.fromkeys(stored_tags + interests))
 
     return {
         "member_id": user_id,
-        "name": user_data.get("username", user_id.capitalize()),
+        "name": username,
         "bio": user_data.get("bio", ""),
-        "skills": list(identity.get("inferred_skills", {}).keys()) or user_data.get("tags", []),
-        "welcome_message": f"Welcome back {user_id.capitalize()}! Here are your personalised recommendations.",
+        "skills": skills,
+        "welcome_message": f"Welcome back, {username}! Here are your personalised recommendations.",
         "priorities": learning.get("checklist", [])[:3] if isinstance(learning.get("checklist"), list) else [],
         "recommended_mentor": {
             "name": mentor.get("primary_mentor", {}).get("name", mentor.get("mentor_name", "")),
