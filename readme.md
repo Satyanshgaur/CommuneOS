@@ -40,7 +40,7 @@ graph TD
 
 ## 🤖 The Multi-Agent Network
 
-Each user persona experiences a dynamically adjusted environment driven by six collaborating agents under the coordination of the [Orchestrator](file:///home/satyansh/communeos/backend/services/orchestrator.py):
+Each user experiences a dynamically adjusted environment driven by six collaborating agents under the coordination of the [Orchestrator](file:///home/satyansh/communeos/backend/services/orchestrator.py):
 
 ```
   Identity Agent  👉  Discovery Agent  👉  Learning Agent  👉  Mentor Agent
@@ -61,30 +61,6 @@ Each user persona experiences a dynamically adjusted environment driven by six c
 6. **Organizer Agent** ([organizer_agent.py](file:///home/satyansh/communeos/backend/agents/organizer_agent.py)): Synthesizes health signals into a backlog of actionable operational tasks, events, and mentor promotions for community managers.
 7. **Memory Agent** ([memory_agent.py](file:///home/satyansh/communeos/backend/agents/memory_agent.py)): Acts as the semantic index router, querying both user memory (resume chunks) and community catalogs from ChromaDB to inject context into reasoning runs.
 
----
-
-## 🎮 Interactive Demo Scenarios
-
-The interactive dashboard enables organizers and judges to swap between three distinct perspectives:
-
-### 1. Rahul (Intermediate Systems & GPU Enthusiast)
-- **Dashboard Adjustments**: Recommended channels focus on `#gpu-computing` and `#systems-programming` (social rooms are deprioritized).
-- **Priorities**: CUDA Roadmap completion, matrix multiplication optimizations, and helping beginner Aman.
-- **Mentor**: Sarah Chen (Senior GPU Engineer @ NVIDIA).
-- **AI Reasoning**: Demonstrates how agents detected his CUDA shared memory questions, matched him with Sarah, and filtered low-level GPU manuals.
-
-### 2. Priya (Beginner AI & Deep Learning Learner)
-- **Dashboard Adjustments**: Recommended channels focus on `#pytorch-study-group` and `#machine-learning-basics`. 
-- **Priorities**: Completing PyTorch MNIST classifier tutorials and posting her first introduction.
-- **Mentor**: Elena Vasquez (Machine Learning Researcher @ DeepMind).
-- **AI Reasoning**: Shows agents routing her to beginner notebooks instead of advanced GPU architectures because she is a newcomer with a non-CS background.
-
-### 3. Organizer (Operations & Automation Hub)
-- **Dashboard Adjustments**: Switches the dashboard into an operational command center.
-- **Metrics**: Active members ratio, unanswered threads, weekly messages, and trending discussion topics.
-- **Action Hub**: Features options to trigger automated moderation steps (e.g., welcoming Priya, promoting Rahul to a mentor, or sending re-engagement check-ins to Vikram).
-
----
 
 ## 📂 Repository Map
 
@@ -167,23 +143,6 @@ When a user uploads a PDF resume during onboarding:
 3. **Execution**: The specialized agents execute (or run via the unified pipeline) to structure recommendations.
 4. **Caching & Formatting**: The outputs are cached locally via the [CacheService](file:///home/satyansh/communeos/backend/services/cache_service.py) (1-hour TTL) and mapped through [compat.py](file:///home/satyansh/communeos/backend/api/v1/endpoints/compat.py) into the exact JSON format required by the Next.js UI.
 
----
-
-## 🎨 Design System: "Ventriloc" Style Guide
-
-The frontend features a clean, premium, and professional light-themed interface centered around the **Ventriloc Design Tokens** ([DESIGN.md](file:///home/satyansh/communeos/DESIGN.md)):
-
-*   **Colors**:
-    *   `Mist` Canvas (`#efefef`) — The dominant warm-gray background framing page layouts.
-    *   `Paper` (`#ffffff`) — Pure white cards and panels creating a layered layout.
-    *   `Signal Orange` (`#ff682c`) — Muted data accents, area charts, active indicators, and logo marks.
-    *   `Carbon` (`#202020`) — Text, dark pill button backgrounds, and strong borders.
-*   **Typography**:
-    *   `Space Grotesk` / `DM Sans` (substitute for PolySans) — Used for headers with a tight line-height (`0.91`) for a modern, architectural structure.
-    *   `Inter` — Primary typeface for body text, button labels, grid cards, and navigation links.
-*   **Shapes**: Soft `8px` border-radii for preview cards and inputs; full `20px` pill styling for active action buttons and tags.
-
----
 
 ## 🔒 API Endpoints & Routes
 
@@ -270,7 +229,7 @@ In a new terminal window, start the Next.js development server:
 cd frontend
 npm run dev
 ```
-The web dashboard application will be active at `http://localhost:3000`. Log in using any of the pre-seeded accounts (`rahul` or `priya`) with the password `password`.
+The web dashboard application will be active at `http://localhost:3000`. Register a new user profile on the interface and log in, or use a pre-seeded account with the password `password`.
 
 ---
 
