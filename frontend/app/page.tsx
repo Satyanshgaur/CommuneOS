@@ -827,12 +827,6 @@ export default function Home() {
                       >
                         <User className="w-3.5 h-3.5" /> You
                       </button>
-                      <button
-                        onClick={() => { setPersona("organizer"); setData(null); }}
-                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${persona === "organizer" ? "bg-carbon text-white shadow-sm" : "text-graphite hover:text-carbon"}`}
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5" /> Organizer Console
-                      </button>
                     </>
                   ) : (
                     <>
@@ -1122,7 +1116,15 @@ export default function Home() {
                             <BookOpen className="w-4 h-4 text-signal-orange" /> Pathways Milestones
                           </h3>
                           <div className="relative border-l border-chalk ml-3 pl-6 space-y-4">
-                            {persona === "rahul" ? (
+                            {data.milestones && data.milestones.length > 0 ? (
+                              data.milestones.map((m: any, i: number) => (
+                                <div key={i} className="relative">
+                                  <div className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${i === 0 ? "bg-signal-orange" : "bg-chalk border border-slate"}`} />
+                                  <h4 className={`text-xs font-semibold ${i === 0 ? "text-carbon" : "text-graphite"}`}>{m.title}</h4>
+                                  <p className="text-[11px] text-slate mt-0.5">{Array.isArray(m.objectives) ? m.objectives[0] : m.objectives}</p>
+                                </div>
+                              ))
+                            ) : persona === "rahul" ? (
                               <>
                                 <div className="relative">
                                   <div className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-signal-orange" />
@@ -1202,8 +1204,8 @@ export default function Home() {
                             <BookOpen className="w-3.5 h-3.5 text-signal-orange" /> Suggested Guides
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {data.resources?.map((res: any) => (
-                              <div key={res.id} className="p-5 rounded-[8px] bg-white border border-chalk hover:border-slate/40 flex flex-col justify-between shadow-sm">
+                            {data.resources?.map((res: any, i: number) => (
+                              <div key={res.id || res.name || i} className="p-5 rounded-[8px] bg-white border border-chalk hover:border-slate/40 flex flex-col justify-between shadow-sm">
                                 <div>
                                   <h5 className="text-xs font-semibold text-carbon">{res.name}</h5>
                                   <p className="text-[11px] text-graphite mt-1 leading-relaxed">{res.description}</p>
@@ -1276,8 +1278,8 @@ export default function Home() {
                             <div>
                               <span className="text-[9px] text-slate font-bold uppercase tracking-wider block mb-2">High Affinity (Unlocked)</span>
                               <div className="space-y-1.5">
-                                {data.communities?.recommended?.map((com: any) => (
-                                  <div key={com.id} className="p-3 rounded-[6px] bg-fog border border-chalk flex items-center justify-between hover:border-slate/40 transition-all cursor-pointer">
+                                {data.communities?.recommended?.map((com: any, i: number) => (
+                                  <div key={com.id || com.name || i} className="p-3 rounded-[6px] bg-fog border border-chalk flex items-center justify-between hover:border-slate/40 transition-all cursor-pointer">
                                     <span className="text-xs font-medium text-carbon"># {com.name}</span>
                                     <ChevronRight className="w-3.5 h-3.5 text-slate" />
                                   </div>

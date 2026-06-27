@@ -42,6 +42,31 @@ def _seed(user_id: str) -> int:
     return int(hashlib.md5(user_id.encode()).hexdigest()[:8], 16)
 
 
+def _keywords(profile: Optional[Dict]) -> set:
+    """Extract lowercase keywords from a user/identity profile for relevance scoring."""
+    if not profile:
+        return set()
+    kws: set = set()
+    for field in ("tags", "interests", "goals"):
+        for item in profile.get(field, []):
+            kws.update(str(item).lower().split())
+    for skill in profile.get("detected_skills", []):
+        kws.update(str(skill.get("name", "")).lower().split())
+    for area in profile.get("expertise_areas", []) + profile.get("growth_areas", []):
+        kws.update(str(area).lower().split())
+    bio = profile.get("bio", "")
+    if bio:
+        stop = {"and", "or", "the", "a", "an", "in", "to", "of", "for", "with", "i", "my", "is", "am"}
+        kws.update(w for w in bio.lower().split() if w not in stop and len(w) > 2)
+    return kws
+
+
+def _score(item_text: str, keywords: set) -> int:
+    """Count keyword hits in a text string using substring matching."""
+    text_lower = item_text.lower()
+    return sum(1 for kw in keywords if kw in text_lower)
+
+
 def get_mock_identity(user_id: str, profile: Optional[Dict] = None) -> Dict[str, Any]:
     """
     Return mock Identity Agent output.
@@ -61,9 +86,14 @@ def get_mock_identity(user_id: str, profile: Optional[Dict] = None) -> Dict[str,
         {"name": "Linux Systems", "proficiency": "Intermediate", "confidence": 0.73, "source": "stated"},
     ]
     
-    # Extract from profile if available
+    # Extract from profile if available — prefer explicit tags/interests over generic skills dict
     detected_skills = []
-    if profile and profile.get("skills"):
+    if profile and profile.get("tags"):
+        for tag in profile.get("tags", []):
+            detected_skills.append({"name": tag, "proficiency": "Intermediate", "confidence": 0.78, "source": "stated"})
+        for interest in profile.get("interests", []):
+            detected_skills.append({"name": interest, "proficiency": "Beginner", "confidence": 0.65, "source": "interest"})
+    elif profile and profile.get("skills"):
         for skill_name, level in profile["skills"].items():
             level_map = {1: "Beginner", 2: "Beginner", 3: "Intermediate", 4: "Advanced", 5: "Expert"}
             detected_skills.append({
@@ -73,7 +103,6 @@ def get_mock_identity(user_id: str, profile: Optional[Dict] = None) -> Dict[str,
                 "source": "stated"
             })
     else:
-        # Select 3 skills deterministically
         indices = [(seed % len(skill_pool)), ((seed + 1) % len(skill_pool)), ((seed + 2) % len(skill_pool))]
         detected_skills = [skill_pool[i] for i in indices]
     
@@ -98,11 +127,17 @@ def get_mock_identity(user_id: str, profile: Optional[Dict] = None) -> Dict[str,
     return {
         "user_id": user_id,
         "detected_skills": detected_skills,
+        "inferred_skills": {s["name"]: s["confidence"] for s in detected_skills},
         "expertise_areas": expertise_pools[idx],
         "growth_areas": growth_pools[idx],
         "learning_preference": learning_styles[seed % len(learning_styles)],
         "overall_confidence": 0.62 + (seed % 20) * 0.01,
         "summary": f"Profile built from stated skills and community activity. Confidence: {round(0.62 + (seed % 20) * 0.01, 2)}",
+        # Carry through user profile fields so downstream mock functions can rank by them
+        "tags": profile.get("tags", []) if profile else [],
+        "interests": profile.get("interests", []) if profile else [],
+        "goals": profile.get("goals", []) if profile else [],
+        "bio": profile.get("bio", "") if profile else "",
         "_is_fallback": True,
     }
 
@@ -119,8 +154,12 @@ def get_mock_discovery(user_id: str, identity: Optional[Dict] = None) -> Dict[st
         {"channel_id": "ch-ai-infra", "name": "AI Infrastructure", "relevance_score": 0.76, "reason": "Growth area matching your distribution interests", "difficulty": "Advanced"},
         {"channel_id": "ch-react", "name": "React Frameworks", "relevance_score": 0.65, "reason": "Web tech complement to your backend skills", "difficulty": "Intermediate"},
         {"channel_id": "ch-open-source", "name": "Open Source Contribution", "relevance_score": 0.72, "reason": "Community engagement opportunity", "difficulty": "Intermediate"},
+        {"channel_id": "ch-quant", "name": "Quant Finance & Trading", "relevance_score": 0.95, "reason": "Covers quant research, algorithmic trading, and finance fundamentals", "difficulty": "Advanced"},
+        {"channel_id": "ch-lowlatency", "name": "Low Latency & HFT Systems", "relevance_score": 0.93, "reason": "Matches HFT and low-latency C++ systems interest", "difficulty": "Advanced"},
+        {"channel_id": "ch-cpp", "name": "Modern C++ & Systems", "relevance_score": 0.90, "reason": "C++ core language, STL, memory, concurrency for systems programmers", "difficulty": "Advanced"},
+        {"channel_id": "ch-competitive", "name": "Competitive Programming", "relevance_score": 0.82, "reason": "Algorithms, data structures, and contest prep", "difficulty": "Intermediate"},
     ]
-    
+
     resource_pool = [
         {"resource_id": "res-001", "title": "PyTorch Tensors: A Visual Guide", "type": "Video", "duration": "18 min", "difficulty": "Beginner", "relevance_score": 0.94, "reason": "Directly matches your ML onboarding path"},
         {"resource_id": "res-002", "title": "CUDA Shared Memory & Coalescing", "type": "Article", "duration": "25 min", "difficulty": "Advanced", "relevance_score": 0.91, "reason": "Critical for GPU optimization goals"},
@@ -139,19 +178,34 @@ def get_mock_discovery(user_id: str, identity: Optional[Dict] = None) -> Dict[st
         {"resource_id": "res-015", "title": "Data Visualization Best Practices with Seaborn", "type": "Interactive Notebook", "duration": "45 min", "difficulty": "Beginner", "relevance_score": 0.76, "reason": "Improve user-facing data reporting and dashboards"},
         {"resource_id": "res-016", "title": "Introduction to GPU Programming with WebGPU", "type": "Video", "duration": "35 min", "difficulty": "Intermediate", "relevance_score": 0.81, "reason": "GPU acceleration directly in the web browser"},
         {"resource_id": "res-017", "title": "FastAPI Authentication and Security Best Practices", "type": "Guide", "duration": "50 min", "difficulty": "Intermediate", "relevance_score": 0.83, "reason": "Secure endpoints and build robust auth pipelines"},
+        {"resource_id": "res-018", "title": "Quantitative Finance Interview Guide (Green Book)", "type": "Guide", "duration": "120 min", "difficulty": "Advanced", "relevance_score": 0.97, "reason": "Essential for quant research and trading roles"},
+        {"resource_id": "res-019", "title": "C++ for High-Frequency Trading: Lock-Free Queues", "type": "Article", "duration": "45 min", "difficulty": "Advanced", "relevance_score": 0.95, "reason": "Core low-latency C++ patterns used in HFT systems"},
+        {"resource_id": "res-020", "title": "Options Pricing & Black-Scholes in Python", "type": "Interactive Notebook", "duration": "60 min", "difficulty": "Intermediate", "relevance_score": 0.93, "reason": "Quant finance fundamentals: derivatives pricing and hedging"},
+        {"resource_id": "res-021", "title": "Stochastic Calculus Primer for Quants", "type": "Guide", "duration": "90 min", "difficulty": "Advanced", "relevance_score": 0.91, "reason": "Mathematical foundation for quant research roles"},
+        {"resource_id": "res-022", "title": "C++ Concurrency in Action (Chapters 1-5)", "type": "Tutorial", "duration": "80 min", "difficulty": "Advanced", "relevance_score": 0.90, "reason": "Lock-free data structures and atomic operations in C++17"},
+        {"resource_id": "res-023", "title": "Algorithmic Trading with Python: Backtesting Basics", "type": "Tutorial", "duration": "55 min", "difficulty": "Intermediate", "relevance_score": 0.88, "reason": "Build and backtest quant trading strategies"},
     ]
     
-    # Select channels deterministically
-    n_channels = 3 + (seed % 3)  # 3-5 channels
-    selected_channels = []
-    for i in range(min(n_channels, len(channel_pool))):
-        selected_channels.append(channel_pool[(seed + i) % len(channel_pool)])
-    
-    n_resources = 3 + (seed % 4)  # 3-6 resources
-    selected_resources = []
-    for i in range(min(n_resources, len(resource_pool))):
-        selected_resources.append(resource_pool[(seed + i) % len(resource_pool)])
-    
+    # Rank channels and resources by keyword overlap with user profile
+    kws = _keywords(identity)
+    if kws:
+        scored_channels = sorted(
+            channel_pool,
+            key=lambda c: _score(f"{c['name']} {c.get('reason', '')}", kws),
+            reverse=True,
+        )
+        scored_resources = sorted(
+            resource_pool,
+            key=lambda r: _score(f"{r['title']} {r.get('reason', '')}", kws),
+            reverse=True,
+        )
+    else:
+        scored_channels = channel_pool[(seed % len(channel_pool)):] + channel_pool[:(seed % len(channel_pool))]
+        scored_resources = resource_pool[(seed % len(resource_pool)):] + resource_pool[:(seed % len(resource_pool))]
+
+    selected_channels = scored_channels[:4]
+    selected_resources = scored_resources[:4]
+
     return {
         "user_id": user_id,
         "recommended_channels": selected_channels,
@@ -320,11 +374,49 @@ def get_mock_mentor(user_id: str, identity: Optional[Dict] = None) -> Dict[str, 
             "availability": "Weekends variable", "teaching_style": "Simulation builds and agent tuning sessions",
             "years_experience": 8
         },
+        {
+            "mentor_id": "mentor-ravi", "name": "Ravi Krishnamurthy",
+            "role": "Quantitative Researcher @ Jane Street", "avatar": "RK",
+            "expertise_areas": ["Quant Finance", "C++", "Algorithmic Trading", "Statistics"],
+            "compatibility_score": 0.93,
+            "match_reason": "Deep expertise in quant research, HFT systems, and C++ for low-latency trading. Ideal for students targeting quant roles.",
+            "availability": "Weekends 10 AM - 12 PM IST", "teaching_style": "Green Book problems + system design deep dives",
+            "years_experience": 9
+        },
+        {
+            "mentor_id": "mentor-alex", "name": "Alex Kowalski",
+            "role": "HFT Systems Engineer", "avatar": "AK",
+            "expertise_areas": ["C++", "Low Latency", "Systems Programming", "Finance"],
+            "compatibility_score": 0.91,
+            "match_reason": "Builds matching engines and order management systems in C++. Strong fit for systems programming and quant engineering paths.",
+            "availability": "Mon/Thu evenings", "teaching_style": "Code review + architecture walkthroughs",
+            "years_experience": 7
+        },
     ]
-    
-    primary_idx = seed % len(mentor_pool)
-    backup_idx = (seed + 1) % len(mentor_pool)
-    
+
+    # Generic action words that cause false-positive mentor matches
+    _STOP_KWS = {"learn", "get", "study", "want", "need", "become", "build", "develop", "job", "internship"}
+
+    kws = _keywords(identity) - _STOP_KWS
+    if kws:
+        # Weight expertise areas 3x more than match reason to avoid false positives
+        def _mentor_score(m: dict) -> int:
+            expertise_score = _score(" ".join(m.get("expertise_areas", [])), kws) * 3
+            reason_score = _score(m.get("match_reason", ""), kws)
+            return expertise_score + reason_score
+
+        scored = sorted(
+            mentor_pool,
+            key=_mentor_score,
+            reverse=True,
+        )
+        primary_idx = 0
+        backup_idx = 1
+        mentor_pool = scored  # type: ignore[assignment]
+    else:
+        primary_idx = seed % len(mentor_pool)
+        backup_idx = (seed + 1) % len(mentor_pool)
+
     return {
         "user_id": user_id,
         "primary_mentor": mentor_pool[primary_idx],
@@ -501,3 +593,69 @@ def save_mock_user(user_id: str, user_data: Dict) -> None:
 def list_mock_users() -> List[Dict]:
     """List all users in the store."""
     return list(_user_store.values())
+
+
+# ─── Module-level pool exports for LLM prompt injection ───────────────────────
+
+_channel_pool_raw = [
+    {"channel_id": "ch-ml", "name": "Machine Learning", "reason": "ML interests and Python skills"},
+    {"channel_id": "ch-cuda", "name": "GPU & Accelerators", "reason": "CUDA and GPU programming"},
+    {"channel_id": "ch-systems", "name": "Systems Programming", "reason": "C++ and Linux systems expertise"},
+    {"channel_id": "ch-data", "name": "Data Science & Python", "reason": "Python as primary language"},
+    {"channel_id": "ch-ai-infra", "name": "AI Infrastructure", "reason": "Distributed systems and MLOps"},
+    {"channel_id": "ch-react", "name": "React Frameworks", "reason": "Frontend web development"},
+    {"channel_id": "ch-open-source", "name": "Open Source Contribution", "reason": "Community engagement"},
+    {"channel_id": "ch-quant", "name": "Quant Finance & Trading", "reason": "Quant research and algorithmic trading"},
+    {"channel_id": "ch-lowlatency", "name": "Low Latency & HFT Systems", "reason": "HFT and low-latency C++ systems"},
+    {"channel_id": "ch-cpp", "name": "Modern C++ & Systems", "reason": "C++ language, STL, memory, concurrency"},
+    {"channel_id": "ch-competitive", "name": "Competitive Programming", "reason": "Algorithms and contest prep"},
+    {"channel_id": "ch-content", "name": "Content Creation & Video", "reason": "Video editing, storytelling, YouTube growth, and creator tools"},
+    {"channel_id": "ch-creative", "name": "Creative Skills & Design", "reason": "Graphic design, photography, visual storytelling for creators"},
+    {"channel_id": "ch-cooking", "name": "Food & Cooking Community", "reason": "Cooking techniques, food photography, recipe development and culinary skills"},
+    {"channel_id": "ch-marketing", "name": "Digital Marketing & Growth", "reason": "Social media strategy, audience building, brand partnerships"},
+    {"channel_id": "ch-freelance", "name": "Freelancing & Creative Careers", "reason": "Monetizing creative skills, client acquisition, portfolio building"},
+]
+
+_resource_pool_raw = [
+    {"resource_id": "res-001", "title": "PyTorch Tensors: A Visual Guide", "reason": "ML onboarding with Python"},
+    {"resource_id": "res-002", "title": "CUDA Shared Memory & Coalescing", "reason": "GPU optimization for CUDA programmers"},
+    {"resource_id": "res-003", "title": "Linux Kernel Module Programming Guide", "reason": "Systems programming and OS internals"},
+    {"resource_id": "res-004", "title": "NumPy Matrix Operations in Practice", "reason": "Python math and data manipulation"},
+    {"resource_id": "res-005", "title": "Distributed PyTorch Training Guide", "reason": "Scaling ML models across GPUs"},
+    {"resource_id": "res-006", "title": "Rust Programming for Systems Engineers", "reason": "Low-level systems safety in Rust"},
+    {"resource_id": "res-007", "title": "FastAPI Complete Tutorial", "reason": "Production Python backend APIs"},
+    {"resource_id": "res-008", "title": "Docker & Kubernetes: MLOps Containerization", "reason": "Container orchestration for ML"},
+    {"resource_id": "res-009", "title": "Introduction to Transformers & NLP", "reason": "Language models and NLP"},
+    {"resource_id": "res-010", "title": "UI/UX Design Patterns for AI Applications", "reason": "Frontend design for AI products"},
+    {"resource_id": "res-011", "title": "Deep Reinforcement Learning in PyTorch", "reason": "RL agents and environments"},
+    {"resource_id": "res-012", "title": "Advanced C++ Memory Management", "reason": "High-performance C++ and GPU interaction"},
+    {"resource_id": "res-018", "title": "Quantitative Finance Interview Guide (Green Book)", "reason": "Essential for quant research and trading roles"},
+    {"resource_id": "res-019", "title": "C++ for High-Frequency Trading: Lock-Free Queues", "reason": "Core low-latency C++ patterns for HFT"},
+    {"resource_id": "res-020", "title": "Options Pricing & Black-Scholes in Python", "reason": "Quant finance derivatives pricing"},
+    {"resource_id": "res-021", "title": "Stochastic Calculus Primer for Quants", "reason": "Mathematical foundation for quant research"},
+    {"resource_id": "res-022", "title": "C++ Concurrency in Action (Chapters 1-5)", "reason": "Lock-free data structures and atomics in C++17"},
+    {"resource_id": "res-023", "title": "Algorithmic Trading with Python: Backtesting Basics", "reason": "Build and backtest quant trading strategies"},
+    {"resource_id": "res-024", "title": "Video Editing Masterclass: Premiere Pro & DaVinci Resolve", "reason": "Professional video editing skills for content creators"},
+    {"resource_id": "res-025", "title": "YouTube Growth Strategy: From 0 to 10K Subscribers", "reason": "Building an audience and growing a YouTube channel"},
+    {"resource_id": "res-026", "title": "Food Photography & Styling for Social Media", "reason": "Photographing and presenting food content for Instagram and YouTube"},
+    {"resource_id": "res-027", "title": "Cooking Techniques: Knife Skills to Advanced Methods", "reason": "Building foundational cooking skills from beginner to intermediate"},
+    {"resource_id": "res-028", "title": "Content Creator Business: Brand Deals & Monetization", "reason": "Turning content creation into a career with sponsorships and revenue"},
+    {"resource_id": "res-029", "title": "Storytelling for Video: Scripts, Hooks & Retention", "reason": "Writing compelling video scripts that keep viewers watching"},
+]
+
+_mentor_pool_raw = [
+    {"mentor_id": "mentor-sarah", "name": "Sarah Jenkins", "role": "Principal GPU Engineer at NVIDIA", "expertise_areas": ["CUDA", "GPU Architecture", "Distributed Systems"]},
+    {"mentor_id": "mentor-amit", "name": "Amit Sharma", "role": "AI Infrastructure Lead", "expertise_areas": ["PyTorch", "MLOps", "Distributed Training"]},
+    {"mentor_id": "mentor-priya", "name": "Priya Nair", "role": "Senior Data Scientist", "expertise_areas": ["Python", "Data Science", "Machine Learning"]},
+    {"mentor_id": "mentor-marcus", "name": "Marcus Chen", "role": "Senior Systems Developer", "expertise_areas": ["C++", "Linux Systems", "Rust"]},
+    {"mentor_id": "mentor-elena", "name": "Elena Rostova", "role": "Deep Learning Researcher", "expertise_areas": ["NLP", "Transformers", "PyTorch"]},
+    {"mentor_id": "mentor-david", "name": "David Miller", "role": "DevOps Architect", "expertise_areas": ["Kubernetes", "Docker", "Cloud Infra"]},
+    {"mentor_id": "mentor-aisha", "name": "Aisha Rahman", "role": "MLOps Engineer", "expertise_areas": ["Model Deployment", "MLflow", "FastAPI"]},
+    {"mentor_id": "mentor-yuki", "name": "Yuki Tanaka", "role": "Frontend Tech Lead", "expertise_areas": ["React", "TypeScript", "UI/UX"]},
+    {"mentor_id": "mentor-clara", "name": "Clara Dupont", "role": "Product Manager AI", "expertise_areas": ["Product Strategy", "UX Research", "Agile"]},
+    {"mentor_id": "mentor-james", "name": "James Wilson", "role": "Reinforcement Learning Expert", "expertise_areas": ["RL", "Robotics", "Python"]},
+    {"mentor_id": "mentor-ravi", "name": "Ravi Krishnamurthy", "role": "Quantitative Researcher @ Jane Street", "expertise_areas": ["Quant Finance", "C++", "Algorithmic Trading", "Statistics"]},
+    {"mentor_id": "mentor-alex", "name": "Alex Kowalski", "role": "HFT Systems Engineer", "expertise_areas": ["C++", "Low Latency", "Systems Programming", "Finance"]},
+    {"mentor_id": "mentor-zara", "name": "Zara Ahmed", "role": "Full-Time Content Creator & Food Blogger", "expertise_areas": ["Video Editing", "Cooking", "YouTube Growth", "Food Content", "Social Media"]},
+    {"mentor_id": "mentor-kai", "name": "Kai Nakamura", "role": "Creative Director & Video Producer", "expertise_areas": ["Video Production", "Storytelling", "Content Creation", "Brand Building", "Editing"]},
+]

@@ -1,34 +1,4 @@
 {
-  "organizer": {
-    "user_id": "organizer",
-    "username": "organizer",
-    "bio": "Community operations lead for AgentField Community.",
-    "skills": {
-      "Community Management": 5,
-      "Analytics": 4
-    },
-    "tags": [
-      "organizer",
-      "admin"
-    ],
-    "interests": [
-      "community-ops"
-    ],
-    "goals": [
-      "Grow community engagement",
-      "Reduce churn",
-      "Onboard quality mentors"
-    ],
-    "learning_style": "Data-driven",
-    "skill_level": "Expert",
-    "activity_log": [],
-    "metrics": {
-      "contributions_percentile": 1,
-      "beginners_helped_this_week": 0,
-      "is_mentor_eligible": false
-    },
-    "created_at": "2026-06-01T00:00:00"
-  },
   "D46cc410-1695-4fda-8d64-0e24a4fd68af": {
     "user_id": "d46cc410-1695-4fda-8d64-0e24a4fd68af",
     "username": "sakshamandmicku",
@@ -58,5 +28,93 @@
     "created_at": "2026-06-27T06:17:26.273442",
     "updated_at": "2026-06-27T06:17:26.273445",
     "last_active": "2026-06-27T06:17:26.273446"
+  },
+  "d46cc410-1695-4fda-8d64-0e24a4fd68af": {
+    "user_id": "d46cc410-1695-4fda-8d64-0e24a4fd68af",
+    "username": "sakshamandmicku",
+    "email": null,
+    "bio": "i am buiding hft matching engine ",
+    "avatar": null,
+    "skills": {},
+    "verified_skills": [],
+    "tags": [
+      "c++"
+    ],
+    "interests": [
+      "quant job"
+    ],
+    "goals": [
+      "quant job"
+    ],
+    "skill_level": null,
+    "learning_style": null,
+    "role": "member",
+    "timezone": null,
+    "github_url": null,
+    "linkedin_url": null,
+    "chat_history": [],
+    "recent_activity": [],
+    "created_at": "2026-06-27T06:20:03.041896",
+    "updated_at": "2026-06-27T06:20:03.041903",
+    "last_active": "2026-06-27T06:20:03.041905"
+  },
+  "9bb7ebcb-60b2-422b-a90f-6372c9aeb007": {
+    "user_id": "9bb7ebcb-60b2-422b-a90f-6372c9aeb007",
+    "username": "saksham10arora",
+    "email": null,
+    "bio": "system design ",
+    "avatar": null,
+    "skills": {},
+    "verified_skills": [],
+    "tags": [
+      "c",
+      "c++"
+    ],
+    "interests": [
+      "system job"
+    ],
+    "goals": [
+      "system job"
+    ],
+    "skill_level": null,
+    "learning_style": null,
+    "role": "member",
+    "timezone": null,
+    "github_url": null,
+    "linkedin_url": null,
+    "chat_history": [],
+    "recent_activity": [],
+    "created_at": "2026-06-27T07:04:33.168260",
+    "updated_at": "2026-06-27T07:04:33.168267",
+    "last_active": "2026-06-27T07:04:33.168268"
+  },
+  "c37c1c26-77ad-4451-8666-2abc758962dc": {
+    "user_id": "c37c1c26-77ad-4451-8666-2abc758962dc",
+    "username": "saksham06arora",
+    "email": null,
+    "bio": "content creator ",
+    "avatar": null,
+    "skills": {},
+    "verified_skills": [],
+    "tags": [
+      "video editing"
+    ],
+    "interests": [
+      "cooking vlogs"
+    ],
+    "goals": [
+      "cooking vlogs"
+    ],
+    "skill_level": null,
+    "learning_style": null,
+    "role": "member",
+    "timezone": null,
+    "github_url": null,
+    "linkedin_url": null,
+    "chat_history": [],
+    "recent_activity": [],
+    "created_at": "2026-06-27T07:16:12.669800",
+    "updated_at": "2026-06-27T07:16:12.669807",
+    "last_active": "2026-06-27T07:16:12.669808"
   }
 }

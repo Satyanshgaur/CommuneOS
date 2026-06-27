@@ -45,11 +45,22 @@ class Settings(BaseSettings):
             "null",  # file:// origins for local HTML files
         ]
 
-    # ─── OpenRouter LLM Settings ───────────────────────────────────────────────
+    # ─── Groq Settings (preferred — 30 RPM free tier, fast inference) ──────────
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_FALLBACK_MODEL: str = "llama3-8b-8192"
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+
+    # ─── OpenRouter LLM Settings (fallback when Groq unavailable) ───────────────
     OPENROUTER_API_KEY: Optional[str] = None
-    OPENROUTER_MODEL: str = "google/gemma-2-9b-it:free"
-    OPENROUTER_FALLBACK_MODEL: str = "qwen/qwen-2-7b-instruct:free"
+    OPENROUTER_MODEL: str = "openai/gpt-oss-20b:free"
+    OPENROUTER_FALLBACK_MODEL: str = "meta-llama/llama-3.3-70b-instruct:free"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_EXTRA_MODELS: str = "google/gemma-4-31b-it:free,nvidia/nemotron-3-super-120b-a12b:free"
+
+    @property
+    def has_groq_key(self) -> bool:
+        return bool(self.GROQ_API_KEY)
 
     # ─── LLM Tuning ───────────────────────────────────────────────────────────
     LLM_TIMEOUT_SECONDS: int = 30

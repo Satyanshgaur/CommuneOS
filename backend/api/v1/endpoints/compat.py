@@ -89,7 +89,17 @@ def _member_response(user_id: str, profile: Dict) -> Dict:
         "bio": user_data.get("bio", ""),
         "skills": skills,
         "welcome_message": f"Welcome back, {username}! Here are your personalised recommendations.",
-        "priorities": learning.get("checklist", [])[:3] if isinstance(learning.get("checklist"), list) else [],
+        "milestones": learning.get("milestones", [])[:3],
+        "roadmap_title": learning.get("roadmap_title", ""),
+        "priorities": (
+            learning.get("checklist", [])[:3]
+            if isinstance(learning.get("checklist"), list) and learning.get("checklist")
+            else [
+                (m.get("objectives", [""])[0] if isinstance(m.get("objectives"), list) else m.get("objectives", ""))
+                for m in learning.get("milestones", [])[:3]
+                if m.get("objectives")
+            ]
+        ),
         "recommended_mentor": {
             "name": mentor.get("primary_mentor", {}).get("name", mentor.get("mentor_name", "")),
             "role": mentor.get("primary_mentor", {}).get("role", mentor.get("mentor_role", "")),

@@ -80,11 +80,30 @@ async def on_startup():
     logger.info(f"  CommuneOS Agent Backend v{settings.APP_VERSION}")
     logger.info(f"  Running on http://{settings.HOST}:{settings.PORT}")
     logger.info(f"  API Docs: http://localhost:{settings.PORT}/docs")
-    logger.info(f"  LLM Model: {settings.OPENROUTER_MODEL}")
-    logger.info(f"  LLM Key: {'✅ Configured' if settings.has_llm_key else '⚠️  Missing (mock mode)'}")
+    groq_status = f"✅ Groq ({settings.GROQ_MODEL})" if settings.GROQ_API_KEY else "⚠️  No Groq key"
+    or_status = f"✅ OpenRouter ({settings.OPENROUTER_MODEL})" if settings.OPENROUTER_API_KEY else "⚠️  No OpenRouter key"
+    logger.info(f"  LLM Primary:  {groq_status}")
+    logger.info(f"  LLM Fallback: {or_status}")
     logger.info(f"  Mock Fallback: {'ON' if settings.USE_MOCK_DATA_FALLBACK else 'OFF'}")
     logger.info(f"  Rate Limiting: 60/min default, 10/min agent pipeline")
+    sb_status = "✅ Configured" if settings.SUPABASE_URL else "⚠️  Missing"
+    logger.info(f"  Supabase: {sb_status}")
     logger.info("=" * 60)
+
+    # Backfill existing local users to Supabase
+    if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
+        from services.mock_data import list_mock_users
+        from services.supabase_service import upsert_profile
+        _SEED_IDS = {"rahul", "priya", "organizer"}
+        import asyncio
+        tasks = [
+            upsert_profile(u) for u in list_mock_users()
+            if u.get("user_id") not in _SEED_IDS
+        ]
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            ok = sum(1 for r in results if r is True)
+            logger.info(f"  Supabase backfill: {ok}/{len(tasks)} profiles synced")
 
 
 @app.on_event("shutdown")

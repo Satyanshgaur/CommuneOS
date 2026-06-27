@@ -14,6 +14,7 @@ from api.v1.dependencies import get_request_id, validate_user_id_param
 from models.user import UserCreateRequest, UserProfile
 from services.cache_service import cache_service
 from services.mock_data import get_mock_user, list_mock_users, save_mock_user
+from services.supabase_service import upsert_profile, fetch_profile
 from utils.formatters import error_response, success_response
 from utils.logger import get_logger
 
@@ -36,6 +37,10 @@ async def create_user(
     user_dict = profile.model_dump(mode="json")
     save_mock_user(user_id, user_dict)
     cache_service.clear_prefix(f"user:{user_id}")
+
+    # Persist to Supabase (fire-and-forget — don't block on failure)
+    import asyncio
+    asyncio.create_task(upsert_profile(user_dict))
 
     logger.info(f"Created user: {user_id} ({profile.username})")
     return success_response(
@@ -107,11 +112,16 @@ async def get_user(
 
     user = get_mock_user(user_id)
     if not user:
-        logger.warning(f"User not found: {user_id}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User '{user_id}' not found",
-        )
+        # Try Supabase as fallback
+        user = await fetch_profile(user_id)
+        if user:
+            save_mock_user(user_id, user)  # warm local cache
+        else:
+            logger.warning(f"User not found: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User '{user_id}' not found",
+            )
 
     cache_service.set(cache_key, user, ttl=1800)
     return success_response(data=user, request_id=request_id)
