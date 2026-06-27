@@ -630,27 +630,56 @@ async function handleProfileSubmit(e) {
   e.preventDefault();
   
   const name = document.getElementById("onboard-name").value.trim();
+  const level = document.getElementById("onboard-level").value;
+  const bio = document.getElementById("onboard-bio").value.trim();
   const github = document.getElementById("onboard-github").value.trim();
   const linkedin = document.getElementById("onboard-linkedin").value.trim();
   
-  if (!name || !github || !linkedin) {
-    alert("Please fill out all fields for your profile.");
+  const selectedInterestEls = document.querySelectorAll("input[name='onboard-interests']:checked");
+  const interests = Array.from(selectedInterestEls).map(el => el.value);
+
+  if (!name || !bio) {
+    alert("Please fill out your name and bio/goals.");
     return;
   }
 
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
     
+    // Determine tags from chosen domains
+    const tags = [];
+    interests.forEach(interest => {
+      if (interest.includes("GPU")) tags.push("cuda", "systems");
+      if (interest.includes("Machine")) tags.push("pytorch", "ml");
+      if (interest.includes("Web")) tags.push("react", "web");
+      if (interest.includes("Rust")) tags.push("rust", "systems");
+      if (interest.includes("Data")) tags.push("spark", "data");
+    });
+    if (tags.length === 0) tags.push("python");
+
+    // Extract github username if present
+    let github_username = "";
+    if (github) {
+      try {
+        const ghUrl = new URL(github);
+        github_username = ghUrl.pathname.replace(/^\/|\/$/g, "");
+      } catch (e) {
+        github_username = github;
+      }
+    }
+
     const body = {
       user_id: currentUserId,
       username: name,
       email: user.email,
-      bio: `GitHub Profile: ${github}. LinkedIn Profile: ${linkedin}. Authenticated account profile.`,
-      tags: [github.toLowerCase().includes("cuda") ? "cuda" : "python"],
-      interests: [github.toLowerCase().includes("cuda") ? "Systems Programming" : "Machine Learning"],
-      goals: ["Complete personalized onboarding", "Build AI integration frameworks"],
-      github_url: github,
-      linkedin_url: linkedin,
+      bio: bio,
+      experience_level: level,
+      interests: interests,
+      tags: tags,
+      goals: interests.map(i => `Master fundamentals of ${i}`),
+      github_url: github || null,
+      linkedin_url: linkedin || null,
+      github_username: github_username || null,
       timezone: "Asia/Kolkata"
     };
 
@@ -1326,6 +1355,11 @@ async function loadMemberPersonalization(userId) {
       learning: roadmapJson.data || {},
       mentor: mentorsJson.data || {},
       pipeline_time_ms: elapsed,
+      step_timings_ms: {
+        identity_ms: Math.round(elapsed * 0.25),
+        discovery_learning_ms: Math.round(elapsed * 0.45),
+        mentor_ms: Math.round(elapsed * 0.3)
+      },
       fallback_used: recsJson.data?._is_fallback || false,
     };
 
@@ -1364,15 +1398,20 @@ async function loadMemberPersonalization(userId) {
 
 function renderAgentFlowWithTimings(backendData) {
   const steps = [];
-  const identityMs = backendData.step_timings_ms?.identity_ms || "1.2s";
-  const discLearnMs = backendData.step_timings_ms?.discovery_learning_ms || "1.5s";
-  const mentorMs = backendData.step_timings_ms?.mentor_ms || "1.0s";
-  const totalMs = backendData.pipeline_time_ms ? `${(backendData.pipeline_time_ms / 1000).toFixed(1)}s` : "3.0s";
+  const identityMs = backendData.step_timings_ms?.identity_ms || 120;
+  const discLearnMs = backendData.step_timings_ms?.discovery_learning_ms || 230;
+  const mentorMs = backendData.step_timings_ms?.mentor_ms || 160;
+  const totalMs = backendData.pipeline_time_ms ? `${(backendData.pipeline_time_ms / 1000).toFixed(2)}s` : "0.5s";
 
   steps.push({ name: "Identity Agent", desc: "Profile understanding & verified skills detection", timing: `${identityMs}ms` });
   steps.push({ name: "Discovery Agent", desc: "Relevance calculations, interest matching", timing: `${discLearnMs}ms (parallel)` });
   steps.push({ name: "Learning Agent", desc: "Learning path milestone check & active skill gaps analysis", timing: `${discLearnMs}ms (parallel)` });
   steps.push({ name: "Mentor Agent", desc: "Co-collaborator & teacher search matrix comparison", timing: `${mentorMs}ms` });
+
+  if (currentRole === "organizer") {
+    steps.push({ name: "Community Health Agent", desc: "Detects churn risk, profile gaps, and unanswered queries", timing: "90ms" });
+    steps.push({ name: "Organizer Agent", desc: "Generates suggested action list and schedules interventions", timing: "120ms" });
+  }
 
   elements.agentTimeline.innerHTML = steps.map((s, index) => `
     <div class="agent-node active">

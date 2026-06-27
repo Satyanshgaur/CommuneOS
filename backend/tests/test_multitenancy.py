@@ -22,9 +22,12 @@ def test_list_communities():
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
-    assert len(data["data"]["communities"]) == 2
+    assert len(data["data"]["communities"]) == 5
     assert any(c["community_id"] == "comm-gpu" for c in data["data"]["communities"])
     assert any(c["community_id"] == "comm-ml" for c in data["data"]["communities"])
+    assert any(c["community_id"] == "comm-web" for c in data["data"]["communities"])
+    assert any(c["community_id"] == "comm-sys" for c in data["data"]["communities"])
+    assert any(c["community_id"] == "comm-data" for c in data["data"]["communities"])
 
 
 def test_join_community_invalid():

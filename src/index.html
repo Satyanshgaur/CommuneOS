@@ -133,27 +133,65 @@
     </div>
 
     <!-- Onboarding Form Section (Shown only when 'new' user is selected) -->
-    <div id="onboarding-container" class="onboarding-card" style="display: none;">
-      <h2 class="onboarding-title">Create Personalized Environment</h2>
-      <p class="onboarding-subtitle">Input your coordinates to trigger the Identity Agent. The model will parse your repository tags and construct a personalized learning path.</p>
+    <div id="onboarding-container" class="onboarding-card" style="display: none; max-width: 600px; margin: 40px auto; padding: 32px; border-radius: var(--radius-cards);">
+      <h2 class="onboarding-title" style="margin-bottom: 8px;">Create Personalized Environment</h2>
+      <p class="onboarding-subtitle" style="margin-bottom: 24px;">Input your coordinates to trigger the Identity Agent. The model will parse your preferences and construct a personalized learning path.</p>
       
       <form id="onboarding-form">
         <div class="form-group">
           <label class="form-label" for="onboard-name">Your Full Name</label>
           <input type="text" id="onboard-name" class="form-input" placeholder="e.g. Suraj Kumar" required>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="onboard-github">GitHub Profile URL</label>
-          <input type="url" id="onboard-github" class="form-input" placeholder="e.g. https://github.com/suraj-kumar" required>
-          <span style="font-size: 11px; color: var(--color-slate); margin-top: 4px; display: block;">Used to scan tags like "cuda", "pytorch", "react" for personalized roadmap generation.</span>
+        
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" for="onboard-level">Your Skill Level</label>
+          <select id="onboard-level" class="form-input" style="background: var(--color-paper);" required>
+            <option value="Beginner">Beginner (Starting fresh, needs foundations)</option>
+            <option value="Intermediate" selected>Intermediate (Some code experience, ready to scale)</option>
+            <option value="Advanced">Advanced (Experienced developer, seeking mastery)</option>
+            <option value="Expert">Expert (Systems expert, looking to collaborate)</option>
+          </select>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="onboard-linkedin">LinkedIn Profile URL</label>
-          <input type="url" id="onboard-linkedin" class="form-input" placeholder="e.g. https://linkedin.com/in/suraj-kumar" required>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Technology Domains / Interests</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-graphite); cursor: pointer;">
+              <input type="checkbox" name="onboard-interests" value="GPU Systems & Acceleration" checked> GPU & Systems
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-graphite); cursor: pointer;">
+              <input type="checkbox" name="onboard-interests" value="Machine Learning & PyTorch"> Machine Learning
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-graphite); cursor: pointer;">
+              <input type="checkbox" name="onboard-interests" value="Web & Frontend Engineering"> Web & React
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-graphite); cursor: pointer;">
+              <input type="checkbox" name="onboard-interests" value="Rust Systems Programming"> Rust Systems
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-graphite); cursor: pointer;">
+              <input type="checkbox" name="onboard-interests" value="Data Engineering & Spark"> Data Engineering
+            </label>
+          </div>
         </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" for="onboard-bio">Biography / Career Goals</label>
+          <textarea id="onboard-bio" class="form-input" rows="3" placeholder="Describe what you want to achieve..." required style="resize: vertical; font-family: inherit;"></textarea>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" for="onboard-github">GitHub Profile URL (Optional)</label>
+          <input type="url" id="onboard-github" class="form-input" placeholder="e.g. https://github.com/suraj-kumar">
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" for="onboard-linkedin">LinkedIn Profile URL (Optional)</label>
+          <input type="url" id="onboard-linkedin" class="form-input" placeholder="e.g. https://linkedin.com/in/suraj-kumar">
+        </div>
+
         <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
-          <button type="button" class="btn-outlined" id="btn-onboard-cancel" onclick="cancelOnboarding();">Cancel</button>
-          <button type="submit" class="btn-filled">Initialize Environment & Onboard</button>
+          <button type="button" class="btn-outlined" id="btn-onboard-cancel" style="display: none;">Cancel</button>
+          <button type="submit" class="btn-filled" style="cursor: pointer; border-radius: var(--radius-buttons);">Initialize Environment & Onboard</button>
         </div>
       </form>
     </div>
