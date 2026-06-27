@@ -59,7 +59,7 @@ async def tenant_middleware(request: Request, call_next):
     Requires X-User-Id in request header (or query/path parameters).
     """
     path = request.url.path
-    if request.method == "OPTIONS" or path == "/" or path == "/health" or path.endswith("/config") or path.endswith("/community/list") or path.endswith("/community/list/") or path.endswith("/community/join") or path.endswith("/community/join/") or path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
+    if request.method == "OPTIONS" or path == "/" or path == "/health" or path.endswith("/config") or path.endswith("/community/list") or path.endswith("/community/list/") or path.endswith("/community/join") or path.endswith("/community/join/") or "/users/" in path or path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
         return await call_next(request)
         
     user_id = request.headers.get("X-User-Id")
