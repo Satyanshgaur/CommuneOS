@@ -47,8 +47,8 @@ class Settings(BaseSettings):
 
     # ─── OpenRouter LLM Settings ───────────────────────────────────────────────
     OPENROUTER_API_KEY: Optional[str] = None
-    OPENROUTER_MODEL: str = "google/gemma-4-31b-it:free"
-    OPENROUTER_FALLBACK_MODEL: str = "meta-llama/llama-3-8b-instruct:free"
+    OPENROUTER_MODEL: str = "google/gemma-2-9b-it:free"
+    OPENROUTER_FALLBACK_MODEL: str = "qwen/qwen-2-7b-instruct:free"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
 
     # ─── LLM Tuning ───────────────────────────────────────────────────────────
